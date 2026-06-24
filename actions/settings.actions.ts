@@ -1,21 +1,27 @@
 "use server";
 
-import { Role } from "@prisma/client";
+import { Role, Difficulty } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
+
 import {
   updateProgramSellable,
   deleteProgram,
   updateLandingContent,
   updateSiteSettings,
 } from "@/server/services/admin.service";
+
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/server/utils/response";
+
 import type { ApiResponse } from "@/types";
 
-// Programs Manager
+/* ------------------------------------------------
+   PROGRAMS MANAGER
+------------------------------------------------ */
+
 export async function updateProgramSellableAction(
   programId: string,
   data: {
@@ -23,14 +29,26 @@ export async function updateProgramSellableAction(
     price?: number | null;
     imageUrl?: string | null;
     features?: string[];
-    difficulty?: string | null;
+    difficulty?: Difficulty | null;
     duration?: number | null;
   },
 ): Promise<ApiResponse<{ id: string }>> {
   try {
     await requireRole([Role.ADMIN]);
-    const result = await updateProgramSellable(programId, data);
+
+    // ✅ STRICT NORMALIZATION (fixes string → enum crash)
+    const safeData = {
+      ...data,
+      difficulty:
+        data.difficulty !== undefined && data.difficulty !== null
+          ? (data.difficulty as Difficulty)
+          : undefined,
+    };
+
+    const result = await updateProgramSellable(programId, safeData);
+
     revalidatePath("/admin/programs");
+
     return createSuccessResponse({ id: result.id });
   } catch (error) {
     console.error("updateProgramSellableAction error:", error);
@@ -38,13 +56,20 @@ export async function updateProgramSellableAction(
   }
 }
 
+/* ------------------------------------------------
+   DELETE PROGRAM
+------------------------------------------------ */
+
 export async function deleteProgramAction(
   programId: string,
 ): Promise<ApiResponse<{ id: string }>> {
   try {
     await requireRole([Role.ADMIN]);
+
     const result = await deleteProgram(programId);
+
     revalidatePath("/admin/programs");
+
     return createSuccessResponse({ id: result.id });
   } catch (error) {
     console.error("deleteProgramAction error:", error);
@@ -52,7 +77,10 @@ export async function deleteProgramAction(
   }
 }
 
-// Content Manager
+/* ------------------------------------------------
+   LANDING CONTENT
+------------------------------------------------ */
+
 export async function updateLandingContentAction(
   section: string,
   data: {
@@ -65,9 +93,12 @@ export async function updateLandingContentAction(
 ): Promise<ApiResponse<{ id: string }>> {
   try {
     await requireRole([Role.ADMIN]);
+
     const result = await updateLandingContent(section, data);
+
     revalidatePath("/admin/content");
     revalidatePath("/");
+
     return createSuccessResponse({ id: result.id });
   } catch (error) {
     console.error("updateLandingContentAction error:", error);
@@ -75,7 +106,10 @@ export async function updateLandingContentAction(
   }
 }
 
-// Brand Settings
+/* ------------------------------------------------
+   SITE SETTINGS
+------------------------------------------------ */
+
 export async function updateSiteSettingsAction(
   data: {
     siteName?: string;
@@ -96,9 +130,12 @@ export async function updateSiteSettingsAction(
 ): Promise<ApiResponse<{ id: string }>> {
   try {
     await requireRole([Role.ADMIN]);
+
     const result = await updateSiteSettings(data);
+
     revalidatePath("/admin/brand");
     revalidatePath("/");
+
     return createSuccessResponse({ id: result.id });
   } catch (error) {
     console.error("updateSiteSettingsAction error:", error);

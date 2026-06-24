@@ -1,5 +1,21 @@
 import { prisma } from "@/lib/prisma";
-import { Difficulty } from "@prisma/client";
+import { Prisma, Difficulty } from "@prisma/client";
+
+/* -----------------------------
+   TYPES
+------------------------------*/
+
+export type LandingContentInput = {
+  title?: string;
+  subtitle?: string;
+  content?: Prisma.InputJsonValue;
+  isActive?: boolean;
+  order?: number;
+};
+
+/* -----------------------------
+   USERS
+------------------------------*/
 
 export async function getAdminUsers() {
   return prisma.user.findMany({
@@ -23,6 +39,10 @@ export async function getAdminUsers() {
   });
 }
 
+/* -----------------------------
+   COACHES
+------------------------------*/
+
 export async function getAdminCoaches() {
   return prisma.coachProfile.findMany({
     orderBy: { createdAt: "desc" },
@@ -37,6 +57,10 @@ export async function getAdminCoaches() {
   });
 }
 
+/* -----------------------------
+   SUBSCRIPTIONS
+------------------------------*/
+
 export async function getAdminSubscriptions() {
   return prisma.subscription.findMany({
     orderBy: { createdAt: "desc" },
@@ -50,6 +74,10 @@ export async function getAdminSubscriptions() {
     },
   });
 }
+
+/* -----------------------------
+   COACH APPROVAL
+------------------------------*/
 
 export async function approveCoach(coachProfileId: string) {
   return prisma.coachProfile.update({
@@ -123,7 +151,7 @@ export async function updateProgramSellable(
     price?: number | null;
     imageUrl?: string | null;
     features?: string[];
-    difficulty?: Difficulty | null; // ✅ FIXED
+    difficulty?: Difficulty | null;
     duration?: number | null;
   }
 ) {
@@ -131,7 +159,6 @@ export async function updateProgramSellable(
     where: { id },
     data: {
       ...data,
-      // safety: ensures no accidental string slips in
       difficulty: data.difficulty ?? undefined,
     },
   });
@@ -236,7 +263,7 @@ export async function getClientProfileById(userId: string) {
 }
 
 /* -----------------------------
-   LANDING CONTENT
+   LANDING CONTENT (FIXED)
 ------------------------------*/
 
 export async function getLandingContent() {
@@ -250,7 +277,7 @@ export async function updateLandingContent(
   data: {
     title?: string;
     subtitle?: string;
-    content?: unknown;
+    content?: Prisma.InputJsonValue;
     isActive?: boolean;
     order?: number;
   }

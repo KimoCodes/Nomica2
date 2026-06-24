@@ -1,6 +1,6 @@
 "use server";
 
-import { Role, Difficulty } from "@prisma/client";
+import { Role, Difficulty, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 
@@ -36,16 +36,7 @@ export async function updateProgramSellableAction(
   try {
     await requireRole([Role.ADMIN]);
 
-    // ✅ STRICT NORMALIZATION (fixes string → enum crash)
-    const safeData = {
-      ...data,
-      difficulty:
-        data.difficulty !== undefined && data.difficulty !== null
-          ? (data.difficulty as Difficulty)
-          : undefined,
-    };
-
-    const result = await updateProgramSellable(programId, safeData);
+    const result = await updateProgramSellable(programId, data);
 
     revalidatePath("/admin/programs");
 
@@ -86,7 +77,7 @@ export async function updateLandingContentAction(
   data: {
     title?: string;
     subtitle?: string;
-    content?: unknown;
+    content?: Prisma.InputJsonValue;
     isActive?: boolean;
     order?: number;
   },

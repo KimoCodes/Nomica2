@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Difficulty } from "@prisma/client";
 
 export async function getAdminUsers() {
   return prisma.user.findMany({
@@ -26,8 +27,12 @@ export async function getAdminCoaches() {
   return prisma.coachProfile.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      user: { select: { id: true, name: true, email: true, createdAt: true } },
-      programs: { select: { id: true } },
+      user: {
+        select: { id: true, name: true, email: true, createdAt: true },
+      },
+      programs: {
+        select: { id: true },
+      },
     },
   });
 }
@@ -60,7 +65,10 @@ export async function revokeCoach(coachProfileId: string) {
   });
 }
 
-// Programs Manager
+/* -----------------------------
+   PROGRAMS
+------------------------------*/
+
 export async function getAdminPrograms() {
   return prisma.program.findMany({
     orderBy: { createdAt: "desc" },
@@ -71,9 +79,14 @@ export async function getAdminPrograms() {
         },
       },
       weeks: {
-        select: { id: true, days: { select: { id: true } } },
+        select: {
+          id: true,
+          days: { select: { id: true } },
+        },
       },
-      assignments: { select: { id: true, isActive: true } },
+      assignments: {
+        select: { id: true, isActive: true },
+      },
     },
   });
 }
@@ -110,29 +123,46 @@ export async function updateProgramSellable(
     price?: number | null;
     imageUrl?: string | null;
     features?: string[];
-    difficulty?: string | null;
+    difficulty?: Difficulty | null; // ✅ FIXED
     duration?: number | null;
-  },
+  }
 ) {
   return prisma.program.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      // safety: ensures no accidental string slips in
+      difficulty: data.difficulty ?? undefined,
+    },
   });
 }
 
 export async function deleteProgram(id: string) {
-  return prisma.program.delete({ where: { id } });
+  return prisma.program.delete({
+    where: { id },
+  });
 }
 
-// Client Profiles
+/* -----------------------------
+   CLIENTS
+------------------------------*/
+
 export async function getAdminClients() {
   return prisma.clientProfile.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      user: { select: { id: true, name: true, email: true, createdAt: true } },
-      coach: { select: { name: true } },
+      user: {
+        select: { id: true, name: true, email: true, createdAt: true },
+      },
+      coach: {
+        select: { name: true },
+      },
       programs: {
-        select: { id: true, program: { select: { title: true } }, isActive: true },
+        select: {
+          id: true,
+          program: { select: { title: true } },
+          isActive: true,
+        },
       },
       progressLogs: {
         orderBy: { loggedAt: "desc" },
@@ -205,7 +235,10 @@ export async function getClientProfileById(userId: string) {
   });
 }
 
-// Content Manager
+/* -----------------------------
+   LANDING CONTENT
+------------------------------*/
+
 export async function getLandingContent() {
   return prisma.landingContent.findMany({
     orderBy: { order: "asc" },
@@ -214,7 +247,13 @@ export async function getLandingContent() {
 
 export async function updateLandingContent(
   section: string,
-  data: { title?: string; subtitle?: string; content?: unknown; isActive?: boolean; order?: number },
+  data: {
+    title?: string;
+    subtitle?: string;
+    content?: unknown;
+    isActive?: boolean;
+    order?: number;
+  }
 ) {
   return prisma.landingContent.upsert({
     where: { section },
@@ -223,7 +262,10 @@ export async function updateLandingContent(
   });
 }
 
-// Brand Settings
+/* -----------------------------
+   SITE SETTINGS
+------------------------------*/
+
 export async function getSiteSettings() {
   return prisma.siteSettings.findFirst();
 }
@@ -245,13 +287,18 @@ export async function updateSiteSettings(data: {
   heroSubtext?: string;
 }) {
   const existing = await prisma.siteSettings.findFirst();
+
   if (existing) {
     return prisma.siteSettings.update({
       where: { id: existing.id },
       data,
     });
   }
+
   return prisma.siteSettings.create({
-    data: { ...data, siteName: data.siteName ?? "NOMICA" },
+    data: {
+      ...data,
+      siteName: data.siteName ?? "NOMICA",
+    },
   });
 }

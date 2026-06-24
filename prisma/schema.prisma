@@ -1,0 +1,579 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  COACH
+  CLIENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum FitnessGoal {
+  LOSE_FAT
+  GAIN_MUSCLE
+  GENERAL_FITNESS
+  STRENGTH
+}
+
+enum ActivityLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Equipment {
+  NONE
+  DUMBBELLS
+  HOME_GYM
+  COMMERCIAL_GYM
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  LEGS
+  ARMS
+  MOBILITY
+  CARDIO
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  unpaid
+}
+
+enum SubscriptionPlan {
+  STARTER
+  PREMIUM
+  ELITE
+}
+
+enum PhotoView {
+  FRONT
+  SIDE
+  BACK
+}
+
+enum MediaType {
+  WORKOUT_VIDEO
+  EXERCISE_DEMO
+  TRAINING_IMAGE
+  TRANSFORMATION
+  PROGRESS_PHOTO
+  PROGRESS_VIDEO
+  HERO_REEL
+  PRODUCT_IMAGE
+  QUIZ_MEDIA
+}
+
+enum MediaVisibility {
+  PUBLIC
+  COACH_ONLY
+  CLIENT_ONLY
+  TEAM_ONLY
+}
+
+enum ProgressLogType {
+  PROGRESS_PHOTO
+  FORM_CHECK
+  WEEKLY_UPDATE
+  MEASUREMENT
+  MILESTONE
+  COACH_FEEDBACK
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  WORKOUT_ASSIGNED
+  SUBSCRIPTION_EXPIRING
+  CHECK_IN_DUE
+  COACH_ASSIGNED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(CLIENT)
+  avatar        String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  coachProfile        CoachProfile?
+  clientProfile       ClientProfile?
+  subscription        Subscription?
+  notifications       Notification[]
+  sentMessages        Message[]
+  clientConversations Conversation[]  @relation("ClientConversations")
+  coachConversations  Conversation[]  @relation("CoachConversations")
+  coachedClients      ClientProfile[] @relation("ClientCoach")
+  checkInResponses    CheckInResponse[]
+  uploadedMedia       Media[]
+  coachedProgressLogs ProgressLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, token])
+  @@index([identifier])
+}
+
+model CoachProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio             String?
+  specialties     String[]
+  yearsExperience Int?
+  certification   String?
+  approved        Boolean  @default(false)
+  onboardingComplete Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  programs Program[]
+
+  @@index([userId])
+  @@index([approved])
+}
+
+model ClientProfile {
+  id                 String         @id @default(cuid())
+  userId             String         @unique
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  age                Int?
+  gender             Gender?
+  height             Float?
+  weight             Float?
+  fitnessGoal        FitnessGoal?
+  activityLevel      ActivityLevel?
+  equipment          Equipment?
+  coachId            String?
+  coach              User?          @relation("ClientCoach", fields: [coachId], references: [id], onDelete: SetNull)
+  onboardingComplete Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  programs           ClientProgram[]
+  progressLogs         ProgressLog[]
+  checkIns             CheckIn[]
+  workoutCompletions   WorkoutCompletion[]
+
+  @@index([userId])
+  @@index([coachId])
+}
+
+model Program {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  isTemplate  Boolean      @default(false)
+  isSellable  Boolean      @default(false)
+  price       Int?
+  imageUrl    String?
+  features    String[]
+  difficulty  Difficulty?
+  duration    Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  weeks       ProgramWeek[]
+  assignments ClientProgram[]
+  media       Media[]
+
+  @@index([coachId])
+  @@index([isSellable])
+}
+
+model ProgramWeek {
+  id         String   @id @default(cuid())
+  programId  String
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  weekNumber Int
+  title      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  days  ProgramDay[]
+  media Media[]
+
+  @@unique([programId, weekNumber])
+  @@index([programId])
+}
+
+model ProgramDay {
+  id        String      @id @default(cuid())
+  weekId    String
+  week      ProgramWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  dayNumber Int
+  title     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  exercises   ProgramExercise[]
+  completions WorkoutCompletion[]
+  media       Media[]
+
+  @@unique([weekId, dayNumber])
+  @@index([weekId])
+}
+
+model Exercise {
+  id           String      @id @default(cuid())
+  name         String
+  muscleGroup  MuscleGroup
+  difficulty   Difficulty
+  instructions String      @db.Text
+  videoUrl     String?
+  coachId      String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  programExercises ProgramExercise[]
+
+  @@index([muscleGroup])
+  @@index([coachId])
+}
+
+model ProgramExercise {
+  id          String     @id @default(cuid())
+  dayId       String
+  day         ProgramDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  order       Int
+  sets        Int?
+  reps        Int?
+  duration    Int?
+  restSeconds Int?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([dayId, order])
+  @@index([dayId])
+  @@index([exerciseId])
+}
+
+model ClientProgram {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  programId       String
+  program         Program       @relation(fields: [programId], references: [id], onDelete: Restrict)
+  startDate       DateTime      @default(now())
+  endDate         DateTime?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  completions WorkoutCompletion[]
+
+  @@index([clientProfileId])
+  @@index([programId])
+  @@index([isActive])
+}
+
+model WorkoutCompletion {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  programDayId    String
+  programDay      ProgramDay    @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  clientProgramId String
+  clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
+  completedAt     DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clientProfileId])
+  @@index([programDayId])
+  @@index([clientProgramId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    User     @relation("ClientConversations", fields: [clientId], references: [id], onDelete: Cascade)
+  coachId   String
+  coach     User     @relation("CoachConversations", fields: [coachId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([clientId, coachId])
+  @@index([clientId])
+  @@index([coachId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String       @db.Text
+  imageUrl       String?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model CheckIn {
+  id                String        @id @default(cuid())
+  clientProfileId   String
+  clientProfile     ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  weekStart         DateTime
+  workoutsCompleted Int?
+  energyLevel       Int?
+  sleepQuality      Int?
+  currentWeight     Float?
+  submittedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  response CheckInResponse?
+
+  @@index([clientProfileId])
+  @@index([weekStart])
+}
+
+model CheckInResponse {
+  id        String   @id @default(cuid())
+  checkInId String   @unique
+  checkIn   CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  coachId   String
+  coach     User     @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  feedback  String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachId])
+}
+
+model ProgressLog {
+  id              String          @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile   @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coachId         String?
+  coach           User?           @relation(fields: [coachId], references: [id], onDelete: SetNull)
+
+  type            ProgressLogType @default(PROGRESS_PHOTO)
+  title           String?
+  description     String?
+
+  weight          Float?
+  bodyFat         Float?
+  waist           Float?
+  chest           Float?
+  hips            Float?
+  hipCm           Float?
+  gluteCm         Float?
+  thighCm         Float?
+  notes           String?
+
+  mediaId         String?
+  media           Media?          @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  photos          ProgressPhoto[]
+
+  coachComment    String?
+  coachRating     Int?
+  commentedAt     DateTime?
+
+  visibility      MediaVisibility @default(COACH_ONLY)
+  loggedAt        DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([clientProfileId])
+  @@index([coachId])
+  @@index([type])
+  @@index([loggedAt])
+}
+
+model ProgressPhoto {
+  id              String        @id @default(cuid())
+  logId           String
+  log             ProgressLog   @relation(fields: [logId], references: [id], onDelete: Cascade)
+  mediaId         String
+  media           Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  view            PhotoView
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([logId, mediaId])
+  @@index([logId])
+  @@index([mediaId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  plan                 SubscriptionPlan
+  status               SubscriptionStatus @default(trialing)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  payments Payment[]
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([status])
+}
+
+model Payment {
+  id              String       @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  stripePaymentId String       @unique
+  amount          Int
+  currency        String       @default("usd")
+  status          String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([subscriptionId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model Media {
+  id            String          @id @default(cuid())
+  title         String
+  description   String?
+  type          MediaType
+  url           String
+  thumbnailUrl  String?
+  fileSize      Int
+  mimeType      String
+  duration      Int?
+  width         Int?
+  height        Int?
+  uploadedById  String
+  uploadedBy    User            @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  programId     String?
+  program       Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
+  weekId        String?
+  week          ProgramWeek?    @relation(fields: [weekId], references: [id], onDelete: SetNull)
+  programDayId  String?
+  programDay    ProgramDay?     @relation(fields: [programDayId], references: [id], onDelete: SetNull)
+
+  tags            MediaTag[]
+  progressLogs    ProgressLog[]
+  progressPhotos  ProgressPhoto[]
+
+  visibility      MediaVisibility @default(COACH_ONLY)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([type])
+  @@index([uploadedById])
+  @@index([programId])
+}
+
+model MediaTag {
+  id        String @id @default(cuid())
+  mediaId   String
+  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  tag       String
+
+  @@unique([mediaId, tag])
+  @@index([tag])
+}
+
+model SiteSettings {
+  id            String   @id @default(cuid())
+  siteName      String   @default("NOMICA")
+  siteDescription String? @default("Premium Feminine Transformation Fitness")
+  contactEmail  String?
+  contactPhone  String?
+  address       String?
+  logoUrl       String?
+  faviconUrl    String?
+  instagramUrl  String?
+  tiktokUrl     String?
+  youtubeUrl    String?
+  twitterUrl    String?
+  facebookUrl   String?
+  heroTagline   String?  @default("Stop Scrolling. Start Sculpting.")
+  heroSubtext   String?
+  updatedAt     DateTime @updatedAt
+}
+
+model LandingContent {
+  id        String   @id @default(cuid())
+  section   String   @unique
+  title     String?
+  subtitle  String?
+  content   Json?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([section])
+  @@index([order])
+}

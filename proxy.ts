@@ -13,7 +13,7 @@ const protectedPrefixes = [
   { prefix: "/settings", role: null },
 ] as const;
 
-export default auth((req) => {
+export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth?.user;
   const userRole = req.auth?.user?.role;

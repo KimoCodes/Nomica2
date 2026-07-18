@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/actions/auth.actions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,7 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type FieldErrors = {
   email?: string;
@@ -66,7 +67,7 @@ export function LoginForm() {
 
     setFieldErrors({});
 
-    const result = await loginUser(formData);
+    const result = await trackLoading(() => loginUser(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to sign in");
@@ -141,23 +142,15 @@ export function LoginForm() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 px-0 pt-4">
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full group"
-            disabled={isPending}
+            loading={isPending}
+            loadingText="Signing in..."
           >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              <>
-                Sign in
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </>
-            )}
-          </Button>
+            Sign in
+            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+          </LoadingButton>
 
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}

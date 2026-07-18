@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/select";
 import type { OnboardingStep } from "@/server/validators/onboarding.schema";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type ProfileData = {
   age: number | null;
@@ -65,7 +67,7 @@ export function ClientOnboardingWizard({
     setIsPending(true);
     setError(null);
 
-    const result = await saveClientOnboardingStepAction(step, formData);
+    const result = await trackLoading(() => saveClientOnboardingStepAction(step, formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Something went wrong");
@@ -313,13 +315,8 @@ export function ClientOnboardingWizard({
             <ArrowLeft className="mr-2 size-4 transition-transform group-hover:-translate-x-0.5" />
             Back
           </Button>
-          <Button type="submit" disabled={isPending} className="group">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Saving...
-              </>
-            ) : step === TOTAL_CLIENT_STEPS ? (
+          <LoadingButton type="submit" loading={isPending} loadingText="Saving..." className="group">
+            {step === TOTAL_CLIENT_STEPS ? (
               <>
                 Complete setup
                 <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
@@ -330,7 +327,7 @@ export function ClientOnboardingWizard({
                 <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
               </>
             )}
-          </Button>
+          </LoadingButton>
         </CardFooter>
       </form>
     </Card>

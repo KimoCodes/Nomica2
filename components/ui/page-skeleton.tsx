@@ -1,6 +1,16 @@
 import { Skeleton, SkeletonCard, SkeletonStatCard } from "@/components/ui/skeleton";
 
-export default function AdminLoading() {
+type DashboardSkeletonProps = {
+  statCards?: number;
+  contentCards?: number;
+  sidebarItems?: number;
+};
+
+export function DashboardSkeleton({
+  statCards = 4,
+  contentCards = 2,
+  sidebarItems = 5,
+}: DashboardSkeletonProps) {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="hidden w-[260px] flex-col border-r border-border/50 bg-card/50 md:flex">
@@ -9,7 +19,9 @@ export default function AdminLoading() {
           <Skeleton className="h-5 w-16 rounded" />
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          <Skeleton className="h-10 rounded-xl" />
+          {Array.from({ length: sidebarItems }).map((_, i) => (
+            <Skeleton key={i} className="h-10 rounded-xl" />
+          ))}
         </nav>
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -24,11 +36,18 @@ export default function AdminLoading() {
           <div className="mx-auto max-w-7xl space-y-6">
             <Skeleton className="h-8 w-48 rounded" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: statCards }).map((_, i) => (
                 <SkeletonStatCard key={i} />
               ))}
             </div>
-            <SkeletonCard className="h-64" />
+            <div className="grid gap-6 lg:grid-cols-3">
+              {Array.from({ length: contentCards }).map((_, i) => (
+                <SkeletonCard
+                  key={i}
+                  className={i === 0 ? "lg:col-span-2" : ""}
+                />
+              ))}
+            </div>
           </div>
         </main>
       </div>

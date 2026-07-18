@@ -13,6 +13,8 @@ import {
   MUSCLE_GROUP_OPTIONS,
 } from "@/constants/exercises";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 import {
   Dialog,
   DialogContent,
@@ -65,7 +67,7 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
     setIsSaving(true);
     setError(null);
 
-    const result = await updateExerciseAction(exercise.id, formData);
+    const result = await trackLoading(() => updateExerciseAction(exercise.id, formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to update exercise");
@@ -86,7 +88,7 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
     setIsDeleting(true);
     setError(null);
 
-    const result = await deleteExerciseAction(exercise.id);
+    const result = await trackLoading(() => deleteExerciseAction(exercise.id));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to delete exercise");
@@ -214,24 +216,25 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
             </div>
 
             <DialogFooter>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save changes"}
-              </Button>
+              <LoadingButton type="submit" loading={isSaving} loadingText="Saving...">
+                Save changes
+              </LoadingButton>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Button
+      <LoadingButton
         type="button"
         variant="destructive"
         size="sm"
-        disabled={isDeleting}
+        loading={isDeleting}
+        loadingText="Deleting..."
         onClick={handleDelete}
       >
         <Trash2Icon />
-        {isDeleting ? "Deleting..." : "Delete"}
-      </Button>
+        Delete
+      </LoadingButton>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

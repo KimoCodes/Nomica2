@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { COACH_SPECIALTY_OPTIONS } from "@/constants/onboarding";
 import { submitCoachOnboarding } from "@/actions/onboarding.actions";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,7 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 export function CoachOnboardingForm() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export function CoachOnboardingForm() {
       formData.append("specialties", specialty);
     }
 
-    const result = await submitCoachOnboarding(formData);
+    const result = await trackLoading(() => submitCoachOnboarding(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Something went wrong");
@@ -149,19 +150,10 @@ export function CoachOnboardingForm() {
         </CardContent>
 
         <CardFooter className="pt-4">
-          <Button type="submit" className="w-full group" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Saving profile...
-              </>
-            ) : (
-              <>
-                Complete setup
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </>
-            )}
-          </Button>
+          <LoadingButton type="submit" loading={isPending} loadingText="Saving profile..." className="w-full group">
+            Complete setup
+            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+          </LoadingButton>
         </CardFooter>
       </form>
     </Card>

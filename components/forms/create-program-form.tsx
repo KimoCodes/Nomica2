@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProgramAction } from "@/actions/program.actions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Loader2, FileText } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 export function CreateProgramForm() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function CreateProgramForm() {
     setError(null);
     formData.set("isTemplate", "true");
 
-    const result = await createProgramAction(formData);
+    const result = await trackLoading(() => createProgramAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to create program");
@@ -68,19 +69,10 @@ export function CreateProgramForm() {
         <p className="text-xs text-muted-foreground">Optional</p>
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full group">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Creating...
-          </>
-        ) : (
-          <>
-            Create program
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </>
-        )}
-      </Button>
+      <LoadingButton type="submit" loading={isPending} loadingText="Creating..." className="w-full group">
+        Create program
+        <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+      </LoadingButton>
     </form>
   );
 }

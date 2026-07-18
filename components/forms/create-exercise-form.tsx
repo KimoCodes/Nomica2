@@ -7,7 +7,8 @@ import {
   DIFFICULTY_OPTIONS,
   MUSCLE_GROUP_OPTIONS,
 } from "@/constants/exercises";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +30,7 @@ export function CreateExerciseForm() {
     setIsPending(true);
     setError(null);
 
-    const result = await createExerciseAction(formData);
+    const result = await trackLoading(() => createExerciseAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to create exercise");
@@ -110,9 +111,9 @@ export function CreateExerciseForm() {
           />
         </div>
       </div>
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Adding..." : "Add exercise"}
-      </Button>
+      <LoadingButton type="submit" loading={isPending} loadingText="Adding...">
+        Add exercise
+      </LoadingButton>
     </form>
   );
 }

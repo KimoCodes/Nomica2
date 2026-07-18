@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { CLIENT_NAV } from "@/constants/navigation";
 import {
   MUSCLE_GROUP_LABELS,
@@ -47,6 +47,23 @@ export function ExerciseLibraryClient({
     null,
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearch = useCallback((value: string) => {
+    setIsSearching(true);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setSearch(value);
+      setIsSearching(false);
+    }, 200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return exercises.filter((ex) => {
@@ -85,10 +102,16 @@ export function ExerciseLibraryClient({
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search exercises..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              defaultValue={search}
+              onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
+              aria-label="Search exercises"
             />
+            {isSearching && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground animate-pulse-subtle">
+                Searching...
+              </span>
+            )}
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   addDayAction,
   addExerciseToDayAction,
@@ -32,6 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { trackLoading } from "@/components/ui/loading-bar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +93,7 @@ export function ProgramBuilder({
   exercises,
 }: ProgramBuilderProps) {
   const router = useRouter();
+  const [isPending] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [deleteWeekDialog, setDeleteWeekDialog] = useState<{ open: boolean; weekId: string; label: string }>({ open: false, weekId: "", label: "" });
   const [deleteDayDialog, setDeleteDayDialog] = useState<{ open: boolean; dayId: string; label: string }>({ open: false, dayId: "", label: "" });
@@ -110,21 +113,21 @@ export function ProgramBuilder({
 
   async function handleAddWeek(formData: FormData) {
     await refreshFromResult(
-      await addWeekAction(programId, formData),
+      await trackLoading(() => addWeekAction(programId, formData)),
       "Failed to add week",
     );
   }
 
   async function handleAddDay(weekId: string, formData: FormData) {
     await refreshFromResult(
-      await addDayAction(weekId, programId, formData),
+      await trackLoading(() => addDayAction(weekId, programId, formData)),
       "Failed to add day",
     );
   }
 
   async function handleUpdateWeek(weekId: string, formData: FormData) {
     await refreshFromResult(
-      await updateWeekAction(weekId, programId, formData),
+      await trackLoading(() => updateWeekAction(weekId, programId, formData)),
       "Failed to update week",
     );
   }
@@ -135,7 +138,7 @@ export function ProgramBuilder({
 
   async function confirmDeleteWeek() {
     await refreshFromResult(
-      await deleteWeekAction(deleteWeekDialog.weekId, programId),
+      await trackLoading(() => deleteWeekAction(deleteWeekDialog.weekId, programId)),
       "Failed to delete week",
     );
     setDeleteWeekDialog({ open: false, weekId: "", label: "" });
@@ -143,7 +146,7 @@ export function ProgramBuilder({
 
   async function handleUpdateDay(dayId: string, formData: FormData) {
     await refreshFromResult(
-      await updateDayAction(dayId, programId, formData),
+      await trackLoading(() => updateDayAction(dayId, programId, formData)),
       "Failed to update day",
     );
   }
@@ -154,7 +157,7 @@ export function ProgramBuilder({
 
   async function confirmDeleteDay() {
     await refreshFromResult(
-      await deleteDayAction(deleteDayDialog.dayId, programId),
+      await trackLoading(() => deleteDayAction(deleteDayDialog.dayId, programId)),
       "Failed to delete day",
     );
     setDeleteDayDialog({ open: false, dayId: "", label: "" });
@@ -162,7 +165,7 @@ export function ProgramBuilder({
 
   async function handleAddExercise(dayId: string, formData: FormData) {
     await refreshFromResult(
-      await addExerciseToDayAction(dayId, programId, formData),
+      await trackLoading(() => addExerciseToDayAction(dayId, programId, formData)),
       "Failed to add exercise",
     );
   }
@@ -172,20 +175,26 @@ export function ProgramBuilder({
     formData: FormData,
   ) {
     await refreshFromResult(
-      await updateProgramExerciseAction(programExerciseId, programId, formData),
+      await trackLoading(() => updateProgramExerciseAction(programExerciseId, programId, formData)),
       "Failed to update exercise",
     );
   }
 
   async function handleRemoveExercise(programExerciseId: string) {
     await refreshFromResult(
-      await removeExerciseFromDayAction(programExerciseId, programId),
+      await trackLoading(() => removeExerciseFromDayAction(programExerciseId, programId)),
       "Failed to remove exercise",
     );
   }
 
   return (
     <div className="space-y-6">
+      {isPending && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary animate-fade-in" role="status" aria-label="Updating program">
+          <Spinner size="xs" />
+          <span>Updating program...</span>
+        </div>
+      )}
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -204,7 +213,7 @@ export function ProgramBuilder({
             placeholder="Foundation phase"
           />
         </div>
-        <Button type="submit">Add week</Button>
+        <Button type="submit" disabled={isPending}>Add week</Button>
       </form>
 
       {weeks.length === 0 && (
@@ -250,7 +259,7 @@ export function ProgramBuilder({
                   placeholder={`Week ${week.weekNumber}`}
                 />
               </div>
-              <Button type="submit" variant="outline" size="sm">
+              <Button type="submit" variant="outline" size="sm" disabled={isPending}>
                 Save week
               </Button>
             </form>
@@ -268,7 +277,7 @@ export function ProgramBuilder({
                   placeholder="Lower body strength"
                 />
               </div>
-              <Button type="submit" variant="outline" size="sm">
+              <Button type="submit" variant="outline" size="sm" disabled={isPending}>
                 Add day
               </Button>
             </form>
@@ -311,7 +320,7 @@ export function ProgramBuilder({
                       placeholder={`Day ${day.dayNumber}`}
                     />
                   </div>
-                  <Button type="submit" variant="outline" size="sm">
+                  <Button type="submit" variant="outline" size="sm" disabled={isPending}>
                     Save day
                   </Button>
                 </form>
@@ -370,7 +379,7 @@ export function ProgramBuilder({
                         />
                       </div>
                       <div className="flex flex-wrap items-end gap-2">
-                        <Button type="submit" variant="outline" size="sm">
+                        <Button type="submit" variant="outline" size="sm" disabled={isPending}>
                           Save
                         </Button>
                         <Button
@@ -431,7 +440,7 @@ export function ProgramBuilder({
                     />
                   </div>
                   <div className="flex items-end">
-                    <Button type="submit" size="sm" className="w-full">
+                    <Button type="submit" size="sm" className="w-full" disabled={isPending}>
                       Add
                     </Button>
                   </div>

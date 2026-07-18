@@ -32,6 +32,8 @@ import {
   X,
 } from "lucide-react";
 
+import { trackLoading } from "@/components/ui/loading-bar";
+
 type Program = {
   id: string;
   title: string;
@@ -73,7 +75,7 @@ export function ProgramActions({ program }: ProgramActionsProps) {
   async function handleSave() {
     setIsPending(true);
 
-    const result = await updateProgramSellableAction(program.id, {
+    const result = await trackLoading(() => updateProgramSellableAction(program.id, {
       isSellable,
       price: price ? parseInt(price) : null,
       imageUrl: imageUrl || null,
@@ -85,7 +87,7 @@ export function ProgramActions({ program }: ProgramActionsProps) {
         : null,
 
       duration: duration ? parseInt(duration) : null,
-    });
+    }));
 
     if (result.success) {
       setShowEditDialog(false);
@@ -98,7 +100,7 @@ export function ProgramActions({ program }: ProgramActionsProps) {
   async function handleDelete() {
     setIsPending(true);
 
-    const result = await deleteProgramAction(program.id);
+    const result = await trackLoading(() => deleteProgramAction(program.id));
 
     if (result.success) {
       setShowDeleteDialog(false);

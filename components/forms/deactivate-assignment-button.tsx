@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type DeactivateAssignmentButtonProps = {
   assignmentId: string;
@@ -36,7 +37,7 @@ export function DeactivateAssignmentButton({
     setIsPending(true);
     setError(null);
 
-    const result = await deactivateAssignmentAction(formData);
+    const result = await trackLoading(() => deactivateAssignmentAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to deactivate assignment");

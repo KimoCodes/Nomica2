@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { assignProgramAction } from "@/actions/assignment.actions";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -34,7 +35,7 @@ export function AssignProgramForm({
     setError(null);
     formData.set("clientProfileId", clientProfileId);
 
-    const result = await assignProgramAction(formData);
+    const result = await trackLoading(() => assignProgramAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to assign program");
@@ -83,9 +84,9 @@ export function AssignProgramForm({
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" size="sm" disabled={isPending}>
-        {isPending ? "Assigning..." : "Assign program"}
-      </Button>
+      <LoadingButton type="submit" size="sm" loading={isPending} loadingText="Assigning...">
+        Assign program
+      </LoadingButton>
     </form>
   );
 }

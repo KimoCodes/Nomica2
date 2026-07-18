@@ -26,6 +26,8 @@ import {
 import { PLANS, formatPrice } from "@/constants/subscriptions";
 import { Loader2, ArrowUpDown, CreditCard, XCircle } from "lucide-react";
 
+import { trackLoading } from "@/components/ui/loading-bar";
+
 type AdminSubscriptionActionsProps = {
   subscriptionId: string;
   currentPlan: SubscriptionPlan;
@@ -44,7 +46,7 @@ export function AdminSubscriptionActions({
   async function handleChangePlan() {
     if (!selectedPlan || selectedPlan === currentPlan) return;
     setIsPending(true);
-    const result = await changePlanAction(selectedPlan);
+    const result = await trackLoading(() => changePlanAction(selectedPlan));
     if (result.success) {
       await simulatePaymentAction(subscriptionId);
       router.refresh();
@@ -55,7 +57,7 @@ export function AdminSubscriptionActions({
 
   async function handleCancel() {
     setIsPending(true);
-    const result = await cancelSubscriptionAction();
+    const result = await trackLoading(() => cancelSubscriptionAction());
     if (result.success) {
       router.refresh();
     }

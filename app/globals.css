@@ -271,6 +271,10 @@
     );
     background-size: 200% 100%;
   }
+
+  .animate-spinner-glow {
+    animation: spinnerGlow 2s ease-in-out infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -303,6 +307,11 @@
   100% { background-position: -200% 0; }
 }
 
+@keyframes spinnerGlow {
+  0%, 100% { box-shadow: 0 0 20px oklch(0.54 0.18 155 / 20%); }
+  50% { box-shadow: 0 0 40px oklch(0.54 0.18 155 / 40%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -317,7 +326,8 @@
   .animate-slide-up,
   .animate-slide-in-right,
   .animate-scale-in,
-  .animate-pulse-subtle {
+  .animate-pulse-subtle,
+  .animate-spinner-glow {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

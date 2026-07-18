@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Role } from "@prisma/client";
 import { registerUser } from "@/actions/auth.actions";
 import { registerSchema } from "@/lib/validations";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,7 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 import { PLANS, formatPrice } from "@/constants/subscriptions";
 
 type FieldErrors = {
@@ -75,7 +76,7 @@ export function RegisterForm() {
 
     setFieldErrors({});
 
-    const result = await registerUser(formData);
+    const result = await trackLoading(() => registerUser(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to create account");
@@ -228,23 +229,15 @@ export function RegisterForm() {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 px-0 pt-4">
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full group"
-            disabled={isPending}
+            loading={isPending}
+            loadingText="Creating account..."
           >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              <>
-                Create account
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </>
-            )}
-          </Button>
+            Create account
+            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+          </LoadingButton>
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

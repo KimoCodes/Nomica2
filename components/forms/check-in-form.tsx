@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { submitCheckInAction } from "@/actions/checkin.actions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Loader2, Dumbbell, Battery, Moon, Weight } from "lucide-react";
+import { ArrowRight, Dumbbell, Battery, Moon, Weight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type CheckInFormProps = {
   alreadySubmitted?: boolean;
@@ -21,7 +22,7 @@ export function CheckInForm({ alreadySubmitted }: CheckInFormProps) {
     setIsPending(true);
     setError(null);
 
-    const result = await submitCheckInAction(formData);
+    const result = await trackLoading(() => submitCheckInAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to submit check-in");
@@ -117,19 +118,10 @@ export function CheckInForm({ alreadySubmitted }: CheckInFormProps) {
         </div>
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full group">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Submitting...
-          </>
-        ) : (
-          <>
-            Submit check-in
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </>
-        )}
-      </Button>
+      <LoadingButton type="submit" loading={isPending} loadingText="Submitting..." className="w-full group">
+        Submit check-in
+        <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+      </LoadingButton>
     </form>
   );
 }

@@ -14,6 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
+import { trackLoading } from "@/components/ui/loading-bar";
 import {
   Menu,
   LogOut,
@@ -68,6 +70,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   function isActive(href: string) {
     if (href === "/coach" || href === "/client" || href === "/admin") {
@@ -119,14 +122,15 @@ export function DashboardLayout({
         </nav>
 
         <div className="border-t border-border/50 p-3">
-          <form action={handleLogout}>
+          <form action={async () => { setIsLoggingOut(true); await handleLogout(); }}>
             <Button
               type="submit"
               variant="ghost"
               className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+              disabled={isLoggingOut}
             >
-              <LogOut className="size-[18px]" />
-              Sign out
+              {isLoggingOut ? <Spinner size="xs" /> : <LogOut className="size-[18px]" />}
+              {isLoggingOut ? "Signing out..." : "Sign out"}
             </Button>
           </form>
         </div>
@@ -176,14 +180,15 @@ export function DashboardLayout({
                   })}
                 </nav>
                 <div className="border-t border-border/50 p-3">
-                  <form action={handleLogout}>
+          <form action={async () => { setIsLoggingOut(true); await trackLoading(() => handleLogout()); }}>
                     <Button
                       type="submit"
                       variant="ghost"
                       className="w-full justify-start gap-3 text-muted-foreground"
+                      disabled={isLoggingOut}
                     >
-                      <LogOut className="size-[18px]" />
-                      Sign out
+                      {isLoggingOut ? <Spinner size="xs" /> : <LogOut className="size-[18px]" />}
+                      {isLoggingOut ? "Signing out..." : "Sign out"}
                     </Button>
                   </form>
                 </div>
@@ -208,9 +213,9 @@ export function DashboardLayout({
                 </div>
               </div>
             )}
-            <form action={handleLogout} className="md:hidden">
-              <Button type="submit" variant="ghost" size="icon" className="text-muted-foreground">
-                <LogOut className="size-4" />
+            <form action={async () => { setIsLoggingOut(true); await handleLogout(); }} className="md:hidden">
+              <Button type="submit" variant="ghost" size="icon" className="text-muted-foreground" disabled={isLoggingOut}>
+                {isLoggingOut ? <Spinner size="xs" /> : <LogOut className="size-4" />}
               </Button>
             </form>
           </div>

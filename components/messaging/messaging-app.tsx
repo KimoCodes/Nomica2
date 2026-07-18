@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getMessagesAction } from "@/actions/message.actions";
 import { uploadChatImageAction } from "@/actions/upload.actions";
+import { Spinner } from "@/components/ui/spinner";
 import {
   connectSocket,
   disconnectSocket,
@@ -448,8 +449,9 @@ export function MessagingApp({
                   className="shrink-0"
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
+                  aria-label={isUploading ? "Uploading image" : "Upload image"}
                 >
-                  <ImageIcon className="size-5" />
+                  {isUploading ? <Spinner size="sm" /> : <ImageIcon className="size-5" />}
                 </Button>
                 <Input
                   value={draft}

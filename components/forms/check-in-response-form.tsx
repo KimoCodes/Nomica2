@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { respondToCheckInAction } from "@/actions/checkin.actions";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type CheckInResponseFormProps = {
   checkInId: string;
@@ -28,7 +29,7 @@ export function CheckInResponseForm({ checkInId }: CheckInResponseFormProps) {
       return;
     }
 
-    const result = await respondToCheckInAction(checkInId, feedback);
+    const result = await trackLoading(() => respondToCheckInAction(checkInId, feedback));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to send response");
@@ -61,19 +62,10 @@ export function CheckInResponseForm({ checkInId }: CheckInResponseFormProps) {
         />
       </div>
 
-      <Button type="submit" disabled={isPending} className="group">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Sending...
-          </>
-        ) : (
-          <>
-            Send feedback
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </>
-        )}
-      </Button>
+      <LoadingButton type="submit" loading={isPending} loadingText="Sending..." className="group">
+        Send feedback
+        <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+      </LoadingButton>
     </form>
   );
 }

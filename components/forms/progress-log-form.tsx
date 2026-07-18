@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createProgressLogAction } from "@/actions/progress.actions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Weight, Percent, Ruler, ArrowRight, Loader2 } from "lucide-react";
+import { Weight, Percent, Ruler, ArrowRight } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 export function ProgressLogForm() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export function ProgressLogForm() {
     setIsPending(true);
     setError(null);
 
-    const result = await createProgressLogAction(formData);
+    const result = await trackLoading(() => createProgressLogAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to save progress log");
@@ -141,19 +142,10 @@ export function ProgressLogForm() {
         />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full group">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          <>
-            Save progress log
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-          </>
-        )}
-      </Button>
+      <LoadingButton type="submit" loading={isPending} loadingText="Saving..." className="w-full group">
+        Save progress log
+        <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+      </LoadingButton>
     </form>
   );
 }

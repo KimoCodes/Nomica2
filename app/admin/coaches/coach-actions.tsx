@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { approveCoachAction, revokeCoachAction } from "@/actions/admin.actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { trackLoading } from "@/components/ui/loading-bar";
 
 type CoachActionsProps = {
   coachProfileId: string;
@@ -17,9 +18,9 @@ export function CoachActions({ coachProfileId, isApproved }: CoachActionsProps) 
 
   async function handleToggle() {
     setIsPending(true);
-    const result = isApproved
-      ? await revokeCoachAction(coachProfileId)
-      : await approveCoachAction(coachProfileId);
+    const result = await trackLoading(() => isApproved
+      ? revokeCoachAction(coachProfileId)
+      : approveCoachAction(coachProfileId));
 
     if (result.success) {
       router.refresh();

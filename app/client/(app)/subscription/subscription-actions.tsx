@@ -30,6 +30,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { trackLoading } from "@/components/ui/loading-bar";
+
 type SubscriptionActionsProps = {
   currentPlan: SubscriptionPlan;
   upgradePlan: SubscriptionPlan | null;
@@ -51,7 +53,7 @@ export function SubscriptionActions({
   async function handleUpgrade() {
     if (!upgradePlan) return;
     setIsPending(true);
-    const result = await changePlanAction(upgradePlan);
+    const result = await trackLoading(() => changePlanAction(upgradePlan));
     if (result.success) {
       await simulatePaymentAction(subscriptionId);
       router.refresh();
@@ -62,7 +64,7 @@ export function SubscriptionActions({
   async function handleDowngrade() {
     if (!downgradePlan) return;
     setIsPending(true);
-    const result = await changePlanAction(downgradePlan);
+    const result = await trackLoading(() => changePlanAction(downgradePlan));
     if (result.success) {
       router.refresh();
     }
@@ -71,7 +73,7 @@ export function SubscriptionActions({
 
   async function handleCancel() {
     setIsPending(true);
-    const result = await cancelSubscriptionAction();
+    const result = await trackLoading(() => cancelSubscriptionAction());
     if (result.success) {
       router.refresh();
     }

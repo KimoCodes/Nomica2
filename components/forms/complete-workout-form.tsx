@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { completeWorkoutAction } from "@/actions/workout.actions";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { trackLoading } from "@/components/ui/loading-bar";
 import { Textarea } from "@/components/ui/textarea";
 
 type CompleteWorkoutFormProps = {
@@ -25,7 +27,7 @@ export function CompleteWorkoutForm({
     setError(null);
     formData.set("programDayId", programDayId);
 
-    const result = await completeWorkoutAction(formData);
+    const result = await trackLoading(() => completeWorkoutAction(formData));
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to complete workout");
@@ -60,9 +62,9 @@ export function CompleteWorkoutForm({
         />
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : "Mark workout complete"}
-        </Button>
+        <LoadingButton type="submit" loading={isPending} loadingText="Saving...">
+          Mark workout complete
+        </LoadingButton>
         {!showNotes && (
           <Button type="button" variant="outline" onClick={() => setShowNotes(true)}>
             Add notes

@@ -214,6 +214,67 @@ export async function getMediaByProgram(programId: string) {
   });
 }
 
+export async function getClientMedia(
+  clientUserId: string,
+  options?: {
+    type?: MediaType;
+    search?: string;
+    page?: number;
+    limit?: number;
+  },
+) {
+  const page = options?.page ?? 1;
+  const limit = options?.limit ?? 20;
+  const skip = (page - 1) * limit;
+
+  const where: MediaWhereInput = {
+    OR: [
+      { uploadedById: clientUserId },
+      { visibility: "PUBLIC" },
+      { visibility: "CLIENT_ONLY" },
+    ],
+  };
+
+  if (options?.type) {
+    where.type = options.type;
+  }
+
+  if (options?.search) {
+    where.AND = [
+      {
+        OR: [
+          { title: { contains: options.search, mode: "insensitive" } },
+          { description: { contains: options.search, mode: "insensitive" } },
+        ],
+      },
+    ];
+  }
+
+  const [media, total] = await Promise.all([
+    prisma.media.findMany({
+      where,
+      include: {
+        tags: true,
+        uploadedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.media.count({ where }),
+  ]);
+
+  return {
+    media,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
 export async function getMediaStats(coachId: string) {
   const [totalMedia, videos, images, byType] = await Promise.all([
     prisma.media.count({ where: { uploadedById: coachId } }),

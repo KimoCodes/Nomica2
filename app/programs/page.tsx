@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { PRODUCTS, formatProductPrice } from "@/constants/products";
+import { getProducts } from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
 import {
   Dumbbell,
   ArrowRight,
@@ -21,13 +22,15 @@ export const metadata: Metadata = {
     "Browse NOMICA fitness programs — glute sculpt, beginner guides, stairmaster routines, and more. Science-backed progressive overload programming.",
 };
 
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   PROGRAM: Dumbbell,
   CHALLENGE: Flame,
-  TRACKER: Target,
+  BUNDLE: Target,
 };
 
-export default function ProgramsPage() {
+export default async function ProgramsPage() {
+  const products = await getProducts();
+
   return (
     <PublicLayout>
       <main className="flex flex-1 flex-col">
@@ -56,42 +59,31 @@ export default function ProgramsPage() {
 
         {/* Stats Bar */}
         <section className="border-y border-border/50 bg-muted/30 px-4 py-8">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: "Programs", value: PRODUCTS.length.toString() },
-              { label: "Workouts", value: "120+" },
-              { label: "Women Transformed", value: "2,400+" },
-              { label: "Satisfaction", value: "4.9/5" },
-            ].map((stat, index) => (
-              <div
-                key={stat.label}
-                className={`animate-slide-up stagger-${index + 1} text-center`}
-              >
-                <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
+          <div className="mx-auto max-w-6xl text-center">
+            <p className="text-2xl font-bold text-primary">{products.length}</p>
+            <p className="text-sm text-muted-foreground">Programs Available</p>
           </div>
         </section>
 
         {/* Product Grid */}
         <section className="px-4 py-16 md:py-24">
           <div className="mx-auto max-w-6xl">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {PRODUCTS.map((product, index) => {
-                const Icon = categoryIcons[product.category] ?? Dumbbell;
+            {products.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {products.map((product, index) => {
+                const Icon = kindIcons[product.kind] ?? Dumbbell;
 
                 return (
                   <Link
                     key={product.id}
                     href={`/programs/${product.slug}`}
                     className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
-                      product.id === "glute-sculpt-12wk"
+                      index === 0
                         ? "border-primary shadow-premium scale-[1.02]"
                         : "border-border/50"
                     }`}
                   >
-                    {product.id === "glute-sculpt-12wk" && (
+                    {index === 0 && (
                       <div className="absolute -top-3 left-6">
                         <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                           MOST POPULAR
@@ -105,11 +97,13 @@ export default function ProgramsPage() {
                       </div>
                       <div>
                         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {product.category}
+                          {product.kind}
                         </span>
-                        <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {product.level}
-                        </span>
+                        {product.focus && (
+                          <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            {product.focus}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -124,16 +118,20 @@ export default function ProgramsPage() {
 
                     <div className="mt-4 flex items-baseline gap-2">
                       <span className="text-3xl font-bold">
-                        {formatProductPrice(product.price)}
+                        {formatPrice(product.priceCents)}
                       </span>
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatProductPrice(product.originalPrice)}
-                      </span>
+                      {product.compareAtCents && (
+                        <span className="text-sm text-muted-foreground line-through">
+                          {formatPrice(product.compareAtCents)}
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>\u23F1 {product.duration}</span>
-                      <span>\u2699 {product.commitment}</span>
+                      <span>⏱ {product.durationLabel}</span>
+                      {product.daysPerWeek && (
+                        <span>⚙ {product.daysPerWeek} days/week</span>
+                      )}
                     </div>
 
                     <ul className="mt-4 flex-1 space-y-2">
@@ -151,12 +149,16 @@ export default function ProgramsPage() {
                     <div className="mt-6 flex items-center gap-2">
                       <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="size-3.5 fill-warning text-warning" />
-                        4.9
+                        {product._count.reviews > 0 ? `${product._count.reviews} review${product._count.reviews !== 1 ? 's' : ''}` : "New"}
                       </span>
-                      <span className="text-muted-foreground">\u00B7</span>
-                      <span className="text-sm text-muted-foreground">
-                        {product.highlights[0]?.value}
-                      </span>
+                      {product._count.reviews > 0 && (
+                        <>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-sm text-muted-foreground">
+                            {product._count.purchases} purchased
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     <div className="mt-4">
@@ -168,7 +170,13 @@ export default function ProgramsPage() {
                   </Link>
                 );
               })}
-            </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Dumbbell className="mx-auto mb-4 size-12 text-muted-foreground/30" />
+                <p>Programs will appear here once they are published.</p>
+              </div>
+            )}
           </div>
         </section>
 

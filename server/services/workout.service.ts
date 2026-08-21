@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireClientProfile } from "@/server/services/coach.service";
+import { createNotification } from "@/server/services/notification.service";
 import type { CompleteWorkoutInput } from "@/server/validators/program.schema";
 
 type ProgramDayWithExercises = {
@@ -165,6 +166,19 @@ export async function getClientWorkoutOverview(clientUserId: string) {
       ? 0
       : Math.round((completedDayIds.size / allDays.length) * 100);
 
+  const daysElapsed = allDays.length > 0
+    ? Math.max(0, differenceInCalendarDays(assignment.startDate, new Date()))
+    : 0;
+  const scheduledDay = allDays[daysElapsed % allDays.length] ?? null;
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const completedToday = scheduledDay
+    ? assignment.completions.some(
+        (c) => c.programDayId === scheduledDay.id && c.completedAt >= todayStart,
+      )
+    : false;
+
   return {
     assignment: {
       id: assignment.id,
@@ -196,7 +210,7 @@ export async function getClientWorkoutOverview(clientUserId: string) {
       weekNumber: completion.programDay.week.weekNumber,
       dayNumber: completion.programDay.dayNumber,
     })),
-    todaysWorkout: await getTodaysWorkout(clientUserId),
+    todaysWorkout: { assignment, scheduledDay, completedToday },
   };
 }
 
@@ -235,14 +249,50 @@ export async function completeWorkout(
     throw new Error("ALREADY_COMPLETED");
   }
 
-  return prisma.workoutCompletion.create({
+  const completion = await prisma.workoutCompletion.create({
     data: {
       clientProfileId: client.id,
       programDayId: input.programDayId,
       clientProgramId: assignment.id,
       notes: input.notes || null,
+      setLogs: input.setLogs
+        ? {
+            create: input.setLogs.map((log) => ({
+              programExerciseId: log.programExerciseId,
+              setNumber: log.setNumber,
+              actualReps: log.actualReps ?? null,
+              actualWeight: log.actualWeight ?? null,
+              completed: log.completed,
+            })),
+          }
+        : undefined,
+    },
+    include: {
+      setLogs: true,
     },
   });
+
+  // Notify coach of workout completion
+  try {
+    const clientWithCoach = await prisma.clientProfile.findUnique({
+      where: { id: client.id },
+      include: { user: { select: { id: true, name: true } } },
+    });
+
+    if (clientWithCoach?.coachId) {
+      await createNotification({
+        userId: clientWithCoach.coachId,
+        type: "CHECK_IN_DUE",
+        title: "Workout completed",
+        body: `${clientWithCoach.user.name ?? "Your client"} completed a workout`,
+        link: "/coach/clients",
+      });
+    }
+  } catch {
+    // Notification failure should not block completion
+  }
+
+  return completion;
 }
 
 export async function getClientDashboardWorkoutSummary(clientUserId: string) {

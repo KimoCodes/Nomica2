@@ -1,60 +1,73 @@
-import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { authConfig } from "@/lib/auth.config";
-import { ROLE_DASHBOARD } from "@/constants/routes";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-const { auth } = NextAuth(authConfig);
+const ROLE_ROUTES: Record<string, string[]> = {
+  ADMIN: ["/admin"],
+  COACH: ["/coach"],
+  CLIENT: ["/client", "/onboarding"],
+};
 
-const protectedPrefixes = [
-  { prefix: "/admin", role: "ADMIN" },
-  { prefix: "/coach", role: "COACH" },
-  { prefix: "/client", role: "CLIENT" },
-  { prefix: "/onboarding", role: "CLIENT" },
-  { prefix: "/settings", role: null },
-] as const;
+const ROLE_HOME: Record<string, string> = {
+  ADMIN: "/admin",
+  COACH: "/coach",
+  CLIENT: "/client",
+};
 
-export const proxy = auth((req) => {
-  const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth?.user;
-  const userRole = req.auth?.user?.role;
+const PUBLIC_PREFIXES = ["/login", "/register", "/verify-email", "/api", "/_next", "/pricing", "/programs", "/bundles", "/club", "/quiz", "/free-guide", "/transformations", "/terms", "/privacy", "/refund-policy"];
 
-  const isAuthRoute =
-    pathname.startsWith("/login") || pathname.startsWith("/register");
+function getSecret() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET not set");
+  return new TextEncoder().encode(secret);
+}
 
-  if (isAuthRoute && isLoggedIn && userRole) {
-    const dashboard = ROLE_DASHBOARD[userRole] ?? "/client";
-    return NextResponse.redirect(new URL(dashboard, req.url));
+async function getRoleFromToken(request: NextRequest): Promise<string | null> {
+  const token = request.cookies.get("authjs.session-token")?.value
+    ?? request.cookies.get("__Secure-authjs.session-token")?.value;
+
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, getSecret(), {
+      algorithms: ["HS256"],
+    });
+    return (payload.role as string) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) || pathname === "/" || pathname.includes(".")) {
+    return NextResponse.next();
   }
 
-  for (const route of protectedPrefixes) {
-    if (!pathname.startsWith(route.prefix)) {
-      continue;
-    }
+  const role = await getRoleFromToken(request);
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
-    if (!isLoggedIn) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (!role) {
+    if (isAuthPage) return NextResponse.next();
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-    if (route.role && userRole !== route.role) {
-      const dashboard = userRole ? ROLE_DASHBOARD[userRole] : "/login";
-      return NextResponse.redirect(new URL(dashboard ?? "/login", req.url));
+  if (isAuthPage) {
+    return NextResponse.redirect(new URL(ROLE_HOME[role] ?? "/", request.url));
+  }
+
+  for (const [routeRole, prefixes] of Object.entries(ROLE_ROUTES)) {
+    if (prefixes.some((p) => pathname.startsWith(p)) && role !== routeRole) {
+      return NextResponse.redirect(new URL(ROLE_HOME[role] ?? "/", request.url));
     }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/coach/:path*",
-    "/client/:path*",
-    "/onboarding/:path*",
-    "/onboarding",
-    "/settings/:path*",
-    "/login",
-    "/register",
-  ],
+  matcher: ["/((?!_next|.*\\..*).*)"],
 };

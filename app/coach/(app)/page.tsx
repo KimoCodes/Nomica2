@@ -5,7 +5,6 @@ import { COACH_NAV } from "@/constants/navigation";
 import { getCoachDashboardSummary } from "@/server/services/dashboard.service";
 import { getUnreadMessageCount } from "@/server/services/message.service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -20,6 +19,9 @@ import {
   ArrowRight,
   Clock,
   UserPlus,
+  Dumbbell,
+  CalendarCheck,
+  TrendingUp,
 } from "lucide-react";
 
 export default async function CoachDashboardPage() {
@@ -77,7 +79,7 @@ export default async function CoachDashboardPage() {
             Welcome back, {session.user.name?.split(" ")[0] ?? "Coach"}
           </h2>
           <p className="mt-1 text-muted-foreground">
-            Here&apos;s what&apos;s happening with your coaching business today.
+            Here&apos;s an overview of your clients and programs.
           </p>
         </div>
 
@@ -112,47 +114,51 @@ export default async function CoachDashboardPage() {
         <div className="grid gap-6 animate-slide-up stagger-5 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Recent Messages</CardTitle>
+              <CardTitle className="text-base">Recent Client Activity</CardTitle>
               <Link
-                href="/coach/messages"
+                href="/coach/clients"
                 className="text-sm font-medium text-primary hover:underline"
               >
                 View all
               </Link>
             </CardHeader>
             <CardContent>
-              {dashboard.recentMessages.length === 0 ? (
+              {dashboard.recentClientWorkouts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
-                  <MessageSquare className="mb-3 size-10 text-muted-foreground/30" />
-                  <p className="text-sm font-medium">No messages yet</p>
+                  <Dumbbell className="mb-3 size-10 text-muted-foreground/30" />
+                  <p className="text-sm font-medium">No activity yet</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Messages from your clients will appear here.
+                    Client workout completions will appear here.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {dashboard.recentMessages.slice(0, 5).map((message) => (
+                  {dashboard.recentClientWorkouts.map((workout) => (
                     <div
-                      key={message.id}
+                      key={workout.id}
                       className="flex items-center gap-3 rounded-xl border border-border/50 p-3 transition-colors hover:bg-accent/30"
                     >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        {message.sender.name?.charAt(0).toUpperCase() ?? "?"}
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-success/10 text-sm font-semibold text-success">
+                        <TrendingUp className="size-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{message.sender.name}</p>
-                          <Badge
-                            variant={message.readAt ? "secondary" : "default"}
-                            className="shrink-0"
-                          >
-                            {message.readAt ? "Read" : "New"}
-                          </Badge>
-                        </div>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {message.content || "Image attachment"}
+                        <p className="text-sm font-medium">
+                          {workout.clientProfile.user.name ?? "Client"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Completed{" "}
+                          {workout.programDay.title ??
+                            `Week ${workout.programDay.week.weekNumber}, Day ${workout.programDay.dayNumber}`}
                         </p>
                       </div>
+                      <span className="text-xs text-muted-foreground">
+                        {workout.completedAt.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -207,6 +213,96 @@ export default async function CoachDashboardPage() {
                   </p>
                 </div>
               </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 animate-slide-up stagger-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Pending Check-ins</CardTitle>
+              <Link
+                href="/coach/check-ins"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                View all
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {dashboard.pendingCheckIns.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-8 text-center">
+                  <CalendarCheck className="mb-3 size-8 text-muted-foreground/30" />
+                  <p className="text-sm font-medium">All caught up</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    No pending check-ins to review.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {dashboard.pendingCheckIns.map((checkIn) => (
+                    <div
+                      key={checkIn.id}
+                      className="flex items-center gap-3 rounded-xl border border-border/50 p-3 transition-colors hover:bg-accent/30"
+                    >
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-warning/10 text-sm font-semibold text-warning">
+                        <CalendarCheck className="size-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">
+                          {checkIn.clientProfile.user.name ?? "Client"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Week of {checkIn.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                      <Link
+                        href="/coach/check-ins"
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Review
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Program Utilization</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dashboard.programUtilization.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-8 text-center">
+                  <FolderOpen className="mb-3 size-8 text-muted-foreground/30" />
+                  <p className="text-sm font-medium">No programs assigned</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Assign programs to clients to see utilization.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {dashboard.programUtilization.map((prog) => (
+                    <div key={prog.title} className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{prog.title}</p>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{
+                              width: `${Math.min((prog.count / Math.max(dashboard.activeClients, 1)) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span className="ml-3 text-sm font-medium text-muted-foreground">
+                        {prog.count} client{prog.count === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

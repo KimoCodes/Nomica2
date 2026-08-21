@@ -15,7 +15,7 @@ export default function AuthLayout({
               <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
                 <Dumbbell className="size-6 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-bold">NoMica</span>
+              <span className="text-2xl font-bold">NOMICA</span>
             </div>
             <h2 className="text-4xl font-bold leading-tight">
               Personal coaching{" "}
@@ -27,16 +27,16 @@ export default function AuthLayout({
             </p>
             <div className="grid grid-cols-3 gap-4 pt-4">
               <div className="rounded-xl bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold">500+</p>
-                <p className="text-xs text-muted-foreground">Active Users</p>
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold">50+</p>
-                <p className="text-xs text-muted-foreground">Coaches</p>
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold">4.9</p>
-                <p className="text-xs text-muted-foreground">Rating</p>
+                <p className="text-xs text-muted-foreground">Avg Rating</p>
+              </div>
+              <div className="rounded-xl bg-muted/50 p-4 text-center">
+                <p className="text-2xl font-bold">100%</p>
+                <p className="text-xs text-muted-foreground">Coach-Led</p>
+              </div>
+              <div className="rounded-xl bg-muted/50 p-4 text-center">
+                <p className="text-2xl font-bold">24/7</p>
+                <p className="text-xs text-muted-foreground">Access</p>
               </div>
             </div>
           </div>
@@ -48,7 +48,7 @@ export default function AuthLayout({
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary">
             <Dumbbell className="size-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">NoMica</span>
+          <span className="text-xl font-bold">NOMICA</span>
         </div>
 
         {children}

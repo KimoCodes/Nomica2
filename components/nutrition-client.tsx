@@ -104,7 +104,7 @@ export function NutritionClient({
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
-            Meal Plans & Performance Fuel
+            Nutrition
           </h2>
           <p className="mt-1 text-muted-foreground">
             Nutrition guidelines and macro calculations to support your training.

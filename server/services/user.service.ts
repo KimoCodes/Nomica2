@@ -46,7 +46,10 @@ export async function createUser(input: RegisterInput) {
 
     if (input.role === Role.COACH) {
       await tx.coachProfile.create({
-        data: { userId: user.id },
+        data: {
+          userId: user.id,
+          specialties: [],
+        },
       });
     }
 
@@ -61,9 +64,21 @@ export async function createUser(input: RegisterInput) {
 }
 
 export async function validateUserCredentials(email: string, password: string) {
-  const user = await getUserByEmail(email);
+  const user = await getUserByEmail(email.toLowerCase().trim());
 
   if (!user) {
+    return null;
+  }
+
+  if (!user.emailVerified) {
+    return null;
+  }
+
+  if (
+    user.role === Role.COACH &&
+    user.coachProfile &&
+    !user.coachProfile.approved
+  ) {
     return null;
   }
 

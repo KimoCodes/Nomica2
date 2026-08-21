@@ -4,7 +4,7 @@ export default function SubscriptionLoading() {
   return (
     <div className="space-y-6 animate-fade-in">
       <Skeleton className="h-8 w-48 rounded" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonStatCard key={i} />
         ))}

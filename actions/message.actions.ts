@@ -14,6 +14,15 @@ import { getMessages } from "@/server/services/message.service";
 import { getMessagesSchema } from "@/server/validators/message.schema";
 import type { ApiResponse } from "@/types";
 import type { ConversationSummary, MessageItem } from "@/types/socket";
+import { getClientProfileByUserId } from "@/server/services/coach.service";
+
+export async function ensureClientConversationServer(): Promise<string | null> {
+  const session = await requireAuth();
+  const profile = await getClientProfileByUserId(session.user.id);
+  if (!profile?.coachId) return null;
+  const conversation = await ensureConversation(session.user.id, profile.coachId);
+  return conversation.id;
+}
 
 export async function getConversationsAction(): Promise<
   ApiResponse<{ conversations: ConversationSummary[] }>

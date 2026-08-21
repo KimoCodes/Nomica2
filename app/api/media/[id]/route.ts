@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z, ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
-import { Role } from "@prisma/client";
+import { Role, MediaVisibility } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { deleteMedia } from "@/lib/cloudinary";
+
+const patchBodySchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  visibility: z.nativeEnum(MediaVisibility).optional(),
+  tags: z.array(z.string()).optional(),
+});
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -74,7 +82,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { title, description, visibility, tags } = body;
+    const { title, description, visibility, tags } = patchBodySchema.parse(body);
 
     const updated = await prisma.media.update({
       where: { id },
@@ -100,6 +108,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ media: updated });
   } catch (error) {
     console.error("Media update error:", error);
+
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: error.flatten() },
+        { status: 400 },
+      );
+    }
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

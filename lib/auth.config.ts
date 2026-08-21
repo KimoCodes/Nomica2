@@ -1,5 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import type { Role } from "@prisma/client";
+import { SignJWT, jwtVerify } from "jose";
 
 declare module "next-auth" {
   interface User {
@@ -33,6 +34,29 @@ export const authConfig = {
     signIn: "/login",
   },
   providers: [],
+  jwt: {
+    async encode({ token, secret }) {
+      const s = Array.isArray(secret) ? secret[0] : secret;
+      const key = new TextEncoder().encode(s);
+      return new SignJWT(token as unknown as Record<string, unknown>)
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
+        .setExpirationTime("30d")
+        .sign(key);
+    },
+    async decode({ token, secret }) {
+      const s = Array.isArray(secret) ? secret[0] : secret;
+      const key = new TextEncoder().encode(s);
+      try {
+        const { payload } = await jwtVerify(token!, key, {
+          algorithms: ["HS256"],
+        });
+        return payload as any;
+      } catch {
+        return null;
+      }
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) {

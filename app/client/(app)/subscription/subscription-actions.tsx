@@ -7,7 +7,6 @@ import {
   changePlanAction,
   cancelSubscriptionAction,
   reactivateSubscriptionAction,
-  simulatePaymentAction,
 } from "@/actions/subscription.actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,55 +44,93 @@ export function SubscriptionActions({
   upgradePlan,
   downgradePlan,
   isCanceled,
-  subscriptionId,
+  subscriptionId: _subscriptionId,
 }: SubscriptionActionsProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleUpgrade() {
     if (!upgradePlan) return;
+    setError(null);
     setIsPending(true);
-    const result = await trackLoading(() => changePlanAction(upgradePlan));
-    if (result.success) {
-      await simulatePaymentAction(subscriptionId);
-      router.refresh();
+    try {
+      const result = await trackLoading(() => changePlanAction(upgradePlan));
+      if (result.success) {
+        router.refresh();
+      } else {
+        setError(result.error?.message ?? "Failed to upgrade plan");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   }
 
   async function handleDowngrade() {
     if (!downgradePlan) return;
+    setError(null);
     setIsPending(true);
-    const result = await trackLoading(() => changePlanAction(downgradePlan));
-    if (result.success) {
-      router.refresh();
+    try {
+      const result = await trackLoading(() => changePlanAction(downgradePlan));
+      if (result.success) {
+        router.refresh();
+      } else {
+        setError(result.error?.message ?? "Failed to downgrade plan");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   }
 
   async function handleCancel() {
+    setError(null);
     setIsPending(true);
-    const result = await trackLoading(() => cancelSubscriptionAction());
-    if (result.success) {
-      router.refresh();
+    try {
+      const result = await trackLoading(() => cancelSubscriptionAction());
+      if (result.success) {
+        router.refresh();
+      } else {
+        setError(result.error?.message ?? "Failed to cancel subscription");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   }
 
   async function handleReactivate() {
+    setError(null);
     setIsPending(true);
-    const result = await reactivateSubscriptionAction();
-    if (result.success) {
-      router.refresh();
+    try {
+      const result = await trackLoading(() => reactivateSubscriptionAction());
+      if (result.success) {
+        router.refresh();
+      } else {
+        setError(result.error?.message ?? "Failed to reactivate subscription");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   }
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-lg font-bold">{currentPlan}</p>
+          <p className="text-lg font-bold">{currentPlan.replace(/_/g, " ")}</p>
           <p className="text-sm text-muted-foreground">Your current plan</p>
         </div>
         <Badge variant="secondary">{isCanceled ? "Canceling" : "Active"}</Badge>
@@ -110,7 +147,7 @@ export function SubscriptionActions({
                   ) : (
                     <ArrowUpCircle className="mr-2 size-4" />
                   )}
-                  Upgrade to {upgradePlan}
+                  Upgrade to Annual
                 </Button>
               }
             />
@@ -118,8 +155,8 @@ export function SubscriptionActions({
               <AlertDialogHeader>
                 <AlertDialogTitle>Upgrade your plan?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You will be upgraded to the {upgradePlan} plan. A payment will be
-                  processed immediately.
+                  You will be upgraded to the Annual plan. A prorated payment will be
+                  processed immediately for the remainder of your billing period.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -138,7 +175,7 @@ export function SubscriptionActions({
               render={
                 <Button variant="outline" disabled={isPending}>
                   <ArrowDownCircle className="mr-2 size-4" />
-                  Downgrade to {downgradePlan}
+                  Downgrade to Monthly
                 </Button>
               }
             />
@@ -146,8 +183,8 @@ export function SubscriptionActions({
               <AlertDialogHeader>
                 <AlertDialogTitle>Downgrade your plan?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You will be downgraded to the {downgradePlan} plan at the end of
-                  your current billing period.
+                  You will be downgraded to the Monthly plan at the end of your current
+                  billing period. You will lose access to the annual rate.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

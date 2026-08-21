@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireClientProfile } from "@/server/services/coach.service";
+import { createNotification } from "@/server/services/notification.service";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -63,6 +64,27 @@ export async function submitCheckInAction(formData: FormData): Promise<ApiRespon
         });
 
     revalidatePath("/client/check-ins");
+
+    // Notify coach of new check-in
+    try {
+      const clientWithCoach = await prisma.clientProfile.findUnique({
+        where: { id: client.id },
+        include: { user: { select: { id: true } } },
+      });
+
+      if (clientWithCoach?.coachId) {
+        await createNotification({
+          userId: clientWithCoach.coachId,
+          type: "CHECK_IN_DUE",
+          title: "New check-in submitted",
+          body: `${session.user.name ?? "Your client"} submitted their weekly check-in`,
+          link: "/coach/check-ins",
+        });
+      }
+    } catch {
+      // Notification failure should not block submission
+    }
+
     return createSuccessResponse({ id: checkIn.id });
   } catch (error) {
     console.error("submitCheckInAction error:", error);
@@ -97,6 +119,30 @@ export async function respondToCheckInAction(
         feedback,
       },
     });
+
+    // Notify client of coach response
+    try {
+      const checkInWithClient = await prisma.checkIn.findUnique({
+        where: { id: checkInId },
+        include: {
+          clientProfile: {
+            include: { user: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      if (checkInWithClient) {
+        await createNotification({
+          userId: checkInWithClient.clientProfile.user.id,
+          type: "CHECK_IN_DUE",
+          title: "Coach responded to your check-in",
+          body: `Your coach left feedback on your weekly check-in`,
+          link: "/check-ins",
+        });
+      }
+    } catch {
+      // Notification failure should not block response
+    }
 
     revalidatePath("/coach/check-ins");
     return createSuccessResponse({ id: response.id });

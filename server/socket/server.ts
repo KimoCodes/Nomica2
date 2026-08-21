@@ -9,7 +9,7 @@ export function initializeSocketServer(httpServer: HttpServer) {
   io = new Server(httpServer, {
     path: "/api/socket/io",
     cors: {
-      origin: process.env.AUTH_URL ?? "http://localhost:3000",
+      origin: process.env.AUTH_URL,
       credentials: true,
     },
     addTrailingSlash: false,

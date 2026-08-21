@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { BUNDLES, getBundleBySlug, getBundleProducts, formatBundlePrice } from "@/constants/bundles";
-import { formatProductPrice } from "@/constants/products";
+import { getProductBySlug } from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
 import {
   ArrowRight,
   CheckCircle2,
@@ -17,29 +17,35 @@ import {
 
 export const runtime = "nodejs";
 
-export function generateStaticParams() {
-  return BUNDLES.map((b) => ({ slug: b.slug }));
-}
-
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const bundle = getBundleBySlug(slug);
-  if (!bundle) return { title: "Bundle Not Found" };
+  const bundle = await getProductBySlug(slug);
+  if (!bundle || bundle.kind !== "BUNDLE") return { title: "Bundle Not Found" };
   return {
     title: bundle.name,
-    description: bundle.tagline,
+    description: bundle.tagline ?? undefined,
   };
 }
 
 export default async function BundleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const bundle = getBundleBySlug(slug);
+  const bundle = await getProductBySlug(slug);
 
-  if (!bundle) notFound();
+  if (!bundle || bundle.kind !== "BUNDLE") notFound();
 
-  const products = getBundleProducts(bundle);
+  const products = bundle.bundleItems.map((bi) => bi.item);
+  const savings = bundle.compareAtCents
+    ? bundle.compareAtCents - bundle.priceCents
+    : 0;
+  const savingsPercent = bundle.compareAtCents
+    ? Math.round(
+        ((bundle.compareAtCents - bundle.priceCents) /
+          bundle.compareAtCents) *
+          100,
+      )
+    : 0;
 
   return (
     <PublicLayout>
@@ -73,7 +79,7 @@ export default async function BundleDetailPage({ params }: Props) {
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
                   <Package className="size-3.5" />
-                  {bundle.badge}
+                  Bundle
                 </div>
 
                 <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
@@ -84,24 +90,29 @@ export default async function BundleDetailPage({ params }: Props) {
                   {bundle.tagline}
                 </p>
 
-                <p className="mt-4 text-muted-foreground">
-                  {bundle.description}
-                </p>
+                {bundle.description && (
+                  <p className="mt-4 text-muted-foreground">
+                    {bundle.description}
+                  </p>
+                )}
 
                 {/* Pricing */}
                 <div className="mt-8 rounded-2xl border border-border/50 bg-card p-6">
                   <div className="flex items-baseline gap-3">
                     <span className="text-4xl font-bold">
-                      {formatBundlePrice(bundle.price)}
+                      {formatPrice(bundle.priceCents)}
                     </span>
-                    <span className="text-lg text-muted-foreground line-through">
-                      {formatBundlePrice(bundle.originalPrice)}
-                    </span>
+                    {bundle.compareAtCents && (
+                      <span className="text-lg text-muted-foreground line-through">
+                        {formatPrice(bundle.compareAtCents)}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1 text-sm font-medium text-success">
-                    Save {formatBundlePrice(bundle.savings)} (
-                    {bundle.savingsPercent}% off)
-                  </p>
+                  {savings > 0 && (
+                    <p className="mt-1 text-sm font-medium text-success">
+                      Save {formatPrice(savings)} ({savingsPercent}% off)
+                    </p>
+                  )}
 
                   <Link
                     href={`/register?bundle=${bundle.slug}`}
@@ -126,7 +137,7 @@ export default async function BundleDetailPage({ params }: Props) {
                 <div className="relative h-80">
                   {products.map((product, i) => (
                     <div
-                      key={product?.id}
+                      key={product.id}
                       className="absolute right-0 left-8 rounded-2xl border border-border/50 bg-gradient-to-br from-muted/80 to-muted/40 p-4 shadow-sm transition-all hover:scale-[1.02]"
                       style={{
                         top: `${i * 24}px`,
@@ -135,9 +146,9 @@ export default async function BundleDetailPage({ params }: Props) {
                         zIndex: products.length - i,
                       }}
                     >
-                      <p className="font-semibold">{product?.name}</p>
+                      <p className="font-semibold">{product.name}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {product?.description}
+                        {product.tagline}
                       </p>
                     </div>
                   ))}
@@ -157,7 +168,7 @@ export default async function BundleDetailPage({ params }: Props) {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {products.map((product, index) => (
                 <div
-                  key={product?.id}
+                  key={product.id}
                   className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`}
                 >
                   <div className="flex items-start gap-3">
@@ -165,25 +176,21 @@ export default async function BundleDetailPage({ params }: Props) {
                       <Dumbbell className="size-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold">{product?.name}</h3>
+                      <h3 className="font-bold">{product.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {product?.description}
+                        {product.tagline}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center gap-4 text-sm">
                     <span className="text-muted-foreground">
-                      {product?.duration}
-                    </span>
-                    <span className="text-muted-foreground">|</span>
-                    <span className="text-muted-foreground">
-                      {product?.commitment}
+                      {product.durationLabel}
                     </span>
                   </div>
 
                   <div className="mt-3 text-sm font-medium text-primary">
-                    Value: {formatProductPrice(product?.originalPrice ?? 0)}
+                    Value: {formatPrice(product.priceCents)}
                   </div>
                 </div>
               ))}
@@ -192,25 +199,27 @@ export default async function BundleDetailPage({ params }: Props) {
         </section>
 
         {/* Features */}
-        <section className="px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="mb-8 text-3xl font-bold tracking-tight">
-              Bundle Features
-            </h2>
+        {bundle.features.length > 0 && (
+          <section className="px-4 py-16 md:py-24">
+            <div className="mx-auto max-w-6xl">
+              <h2 className="mb-8 text-3xl font-bold tracking-tight">
+                Bundle Features
+              </h2>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {bundle.features.map((feature, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-card p-4"
-                >
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span>{feature}</span>
-                </div>
-              ))}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {bundle.features.map((feature, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 rounded-xl border border-border/50 bg-card p-4"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Value Breakdown */}
         <section className="border-y border-border/50 bg-muted/30 px-4 py-16 md:py-24">
@@ -222,12 +231,12 @@ export default async function BundleDetailPage({ params }: Props) {
             <div className="space-y-3">
               {products.map((product) => (
                 <div
-                  key={product?.id}
+                  key={product.id}
                   className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4"
                 >
-                  <span className="font-medium">{product?.name}</span>
+                  <span className="font-medium">{product.name}</span>
                   <span className="text-muted-foreground line-through">
-                    {formatProductPrice(product?.originalPrice ?? 0)}
+                    {formatPrice(product.priceCents)}
                   </span>
                 </div>
               ))}
@@ -236,19 +245,22 @@ export default async function BundleDetailPage({ params }: Props) {
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold">Total Value</span>
                   <span className="text-lg text-muted-foreground line-through">
-                    {formatBundlePrice(bundle.originalPrice)}
+                    {bundle.compareAtCents
+                      ? formatPrice(bundle.compareAtCents)
+                      : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold">Bundle Price</span>
                   <span className="text-2xl font-bold text-primary">
-                    {formatBundlePrice(bundle.price)}
+                    {formatPrice(bundle.priceCents)}
                   </span>
                 </div>
-                <div className="mt-2 text-right text-sm font-medium text-success">
-                  You Save {formatBundlePrice(bundle.savings)} (
-                  {bundle.savingsPercent}% off)
-                </div>
+                {savings > 0 && (
+                  <div className="mt-2 text-right text-sm font-medium text-success">
+                    You Save {formatPrice(savings)} ({savingsPercent}% off)
+                  </div>
+                )}
               </div>
             </div>
 
@@ -332,7 +344,7 @@ export default async function BundleDetailPage({ params }: Props) {
               Ready to Transform?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of women who&apos;ve transformed their bodies with
+              Join women who&apos;ve transformed their bodies with
               NOMICA programs.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

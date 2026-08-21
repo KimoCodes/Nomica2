@@ -9,6 +9,7 @@ import {
 import { getClientWorkoutOverview } from "@/server/services/workout.service";
 import { CompleteWorkoutForm } from "@/components/forms/complete-workout-form";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { FeatureGate } from "@/components/shared/feature-gate";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -59,6 +60,7 @@ export default async function ClientWorkoutsPage() {
       userName={session.user.name}
       userRole="Client"
     >
+      <FeatureGate userId={session.user.id} userRole={Role.CLIENT} feature="workouts">
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
@@ -112,7 +114,7 @@ export default async function ClientWorkoutsPage() {
                   <p className="text-2xl font-bold">
                     {overview.stats.totalWorkouts}
                   </p>
-                  <p className="text-xs text-muted-foreground">Total Days</p>
+                  <p className="text-xs text-muted-foreground">Total Workouts</p>
                 </div>
               </div>
             </CardContent>
@@ -218,8 +220,9 @@ export default async function ClientWorkoutsPage() {
             <CardContent>
               <div className="space-y-2">
                 {overview.days.map((day) => (
-                  <div
+                  <a
                     key={day.id}
+                    href={`/client/workouts/${day.id}`}
                     className="flex items-center justify-between rounded-xl border border-border/50 px-4 py-3 transition-colors hover:bg-accent/30"
                   >
                     <div className="flex items-center gap-3">
@@ -236,7 +239,7 @@ export default async function ClientWorkoutsPage() {
                     <Badge variant={day.completed ? "default" : "secondary"}>
                       {day.completed ? "Done" : `${day.exercises.length} exercises`}
                     </Badge>
-                  </div>
+                  </a>
                 ))}
               </div>
             </CardContent>
@@ -284,6 +287,7 @@ export default async function ClientWorkoutsPage() {
           </Card>
         </div>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 }

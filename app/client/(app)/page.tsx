@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
+import { ACTIVE_STATUSES } from "@/constants/subscriptions";
 import { getClientDashboardSummary } from "@/server/services/dashboard.service";
 import { getClientDashboardWorkoutSummary } from "@/server/services/workout.service";
 import { getUnreadMessageCount } from "@/server/services/message.service";
+import { getClientFreeTrial } from "@/server/services/free-trial.service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import {
   Card,
@@ -21,26 +23,38 @@ import {
   CheckCircle2,
   Clock,
   Zap,
+  Flame,
+  Crown,
+  Gift,
 } from "lucide-react";
+import { WeightTrendChart } from "@/components/charts/weight-trend-chart";
 
 export default async function ClientDashboardPage() {
   const session = await requireRole([Role.CLIENT]);
-  const [workout, unreadMessages, dashboard] = await Promise.all([
+  const [workout, unreadMessages, dashboard, freeTrial] = await Promise.all([
     getClientDashboardWorkoutSummary(session.user.id),
     getUnreadMessageCount(session.user.id),
     getClientDashboardSummary(session.user.id),
+    getClientFreeTrial(session.user.id),
   ]);
 
-  const weightChange =
-    dashboard.latestProgress?.weight && dashboard.previousProgress?.weight
-      ? dashboard.latestProgress.weight - dashboard.previousProgress.weight
-      : null;
   const checkInStatus = dashboard.currentCheckIn?.submittedAt
     ? dashboard.currentCheckIn.response
       ? "Reviewed"
       : "Submitted"
     : "Due this week";
-  const subscriptionStatus = dashboard.subscription?.status ?? "unpaid";
+  const subStatus = dashboard.subscription?.status ?? null;
+  const now = new Date();
+  const trialDaysRemaining = freeTrial
+    ? Math.max(0, Math.ceil((freeTrial.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const hasActiveTrial = trialDaysRemaining > 0;
+  const hasActiveSubscription = subStatus !== null && ACTIVE_STATUSES.includes(subStatus);
+  const subscriptionLabel = hasActiveSubscription
+    ? subStatus!.replaceAll("_", " ")
+    : hasActiveTrial
+      ? "Free Trial"
+      : "None";
 
   return (
     <DashboardLayout
@@ -50,12 +64,63 @@ export default async function ClientDashboardPage() {
       userRole="Client"
     >
       <div className="space-y-8">
+        {hasActiveTrial && (
+          <Card className="border-primary/30 bg-primary/5 animate-slide-up">
+            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Gift className="size-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold">Free Trial Active</p>
+                  <p className="text-sm text-muted-foreground">
+                    You have {trialDaysRemaining} day{trialDaysRemaining === 1 ? "" : "s"} left.
+                    Subscribe to keep access after your trial expires.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/client/subscription"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:-translate-y-0.5"
+              >
+                View plans
+                <ArrowRight className="size-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {!hasActiveSubscription && !hasActiveTrial && (
+          <Card className="border-primary/20 bg-primary/5 animate-slide-up">
+            <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Crown className="size-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold">Unlock your full potential</p>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a plan to access workouts, progress tracking, nutrition, and more.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/client/subscription"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:-translate-y-0.5"
+              >
+                Choose a plan
+                <ArrowRight className="size-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
             Welcome back, {session.user.name?.split(" ")[0] ?? "there"}
           </h2>
           <p className="mt-1 text-muted-foreground">
-            Let&apos;s keep the momentum going. Here&apos;s your fitness overview.
+            Here&apos;s your fitness overview for this week.
           </p>
         </div>
 
@@ -98,30 +163,22 @@ export default async function ClientDashboardPage() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Weight Progress
+                    Workouts This Week
                   </p>
-                  <p className="text-lg font-bold">
-                    {dashboard.latestProgress?.weight
-                      ? `${dashboard.latestProgress.weight} kg`
-                      : "--"}
-                  </p>
+                  <p className="text-3xl font-bold">{dashboard.weeklyCompletions}</p>
                 </div>
-                <div className="rounded-xl bg-chart-3/10 p-2.5 icon-hover">
-                  <TrendingUp className="size-5 text-chart-3" />
+                <div className="rounded-xl bg-primary/10 p-2.5 icon-hover">
+                  <Flame className="size-5 text-primary" />
                 </div>
               </div>
               <div className="mt-4">
-                {weightChange !== null ? (
-                  <p className="text-xs font-medium">
-                    <span className={weightChange > 0 ? "text-chart-5" : "text-success"}>
-                      {weightChange > 0 ? "+" : ""}
-                      {weightChange.toFixed(1)} kg
-                    </span>
-                    <span className="text-muted-foreground"> from last log</span>
+                {dashboard.streak > 0 ? (
+                  <p className="text-xs font-medium text-success">
+                    {dashboard.streak} day streak — keep it up!
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Log progress to see trends
+                    Complete a workout to start a streak
                   </p>
                 )}
               </div>
@@ -135,7 +192,7 @@ export default async function ClientDashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">
                     Messages
                   </p>
-                  <p className="text-lg font-bold">{unreadMessages}</p>
+                  <p className="text-3xl font-bold">{unreadMessages}</p>
                 </div>
                 <div className="rounded-xl bg-warning/10 p-2.5 icon-hover">
                   <MessageSquare className="size-5 text-warning" />
@@ -223,11 +280,11 @@ export default async function ClientDashboardPage() {
                       <p className="text-2xl font-bold">
                         {dashboard.latestProgress?.weight ? `${dashboard.latestProgress.weight}` : "--"}
                       </p>
-                      <p className="text-xs text-muted-foreground">Current kg</p>
+                      <p className="text-xs text-muted-foreground">Weight (kg)</p>
                     </div>
                     <div className="rounded-xl bg-muted/50 p-3">
                       <p className="text-2xl font-bold capitalize">
-                        {subscriptionStatus === "active" ? "Active" : subscriptionStatus}
+                        {subscriptionLabel}
                       </p>
                       <p className="text-xs text-muted-foreground">Subscription</p>
                     </div>
@@ -295,6 +352,15 @@ export default async function ClientDashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="animate-slide-up stagger-6">
+          <CardHeader>
+            <CardTitle className="text-base">Weight Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WeightTrendChart data={dashboard.weightTrend} />
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

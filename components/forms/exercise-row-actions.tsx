@@ -128,7 +128,7 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
 
           <form action={handleUpdate} className="space-y-4">
             {error && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}

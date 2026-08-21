@@ -13,13 +13,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PendingCheckInCard } from "@/components/pending-checkin-card";
 import {
   CalendarCheck,
   AlertCircle,
   CheckCircle2,
-  Battery,
-  Moon,
-  Dumbbell,
 } from "lucide-react";
 
 export default async function CoachCheckInsPage() {
@@ -79,54 +77,7 @@ export default async function CoachCheckInsPage() {
             <h3 className="mb-4 text-lg font-semibold">Pending Reviews</h3>
             <div className="space-y-4">
               {pendingCheckIns.map((checkIn) => (
-                <Card key={checkIn.id} className="border-warning/20">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                          {checkIn.clientProfile.user.name?.charAt(0).toUpperCase() ?? "?"}
-                        </div>
-                        <div>
-                          <p className="font-semibold">
-                            {checkIn.clientProfile.user.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Week of {checkIn.weekStart.toLocaleDateString()}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            {checkIn.workoutsCompleted != null && (
-                              <span className="flex items-center gap-1.5">
-                                <Dumbbell className="size-3.5" />
-                                {checkIn.workoutsCompleted} workouts
-                              </span>
-                            )}
-                            {checkIn.energyLevel != null && (
-                              <span className="flex items-center gap-1.5">
-                                <Battery className="size-3.5" />
-                                Energy: {checkIn.energyLevel}/10
-                              </span>
-                            )}
-                            {checkIn.sleepQuality != null && (
-                              <span className="flex items-center gap-1.5">
-                                <Moon className="size-3.5" />
-                                Sleep: {checkIn.sleepQuality}/10
-                              </span>
-                            )}
-                            {checkIn.currentWeight != null && (
-                              <span className="flex items-center gap-1.5">
-                                <Dumbbell className="size-3.5" />
-                                {checkIn.currentWeight} kg
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <Badge className="bg-warning/10 text-warning border-warning/20">
-                        Pending
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                <PendingCheckInCard key={checkIn.id} checkIn={checkIn} />
               ))}
             </div>
           </div>

@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { requestCache } from "@/lib/request-cache";
 
 export async function getCoachProfileByUserId(userId: string) {
-  return prisma.coachProfile.findUnique({
-    where: { userId },
-  });
+  return requestCache(`coach:${userId}`, () =>
+    prisma.coachProfile.findUnique({
+      where: { userId },
+    }),
+  );
 }
 
 export async function requireCoachProfile(userId: string) {
@@ -17,9 +20,11 @@ export async function requireCoachProfile(userId: string) {
 }
 
 export async function getClientProfileByUserId(userId: string) {
-  return prisma.clientProfile.findUnique({
-    where: { userId },
-  });
+  return requestCache(`client:${userId}`, () =>
+    prisma.clientProfile.findUnique({
+      where: { userId },
+    }),
+  );
 }
 
 export async function requireClientProfile(userId: string) {

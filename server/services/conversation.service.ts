@@ -60,40 +60,44 @@ export async function getConversationsForUser(userId: string) {
     orderBy: { updatedAt: "desc" },
   });
 
-  const results = await Promise.all(
-    conversations.map(async (conversation) => {
-      const otherUser =
-        conversation.clientId === userId
-          ? conversation.coach
-          : conversation.client;
+  if (conversations.length === 0) return [];
 
-      const unreadCount = await prisma.message.count({
-        where: {
-          conversationId: conversation.id,
-          senderId: { not: userId },
-          readAt: null,
-        },
-      });
+  const unreadCounts = await prisma.message.groupBy({
+    by: ["conversationId"],
+    where: {
+      conversationId: { in: conversations.map((c) => c.id) },
+      senderId: { not: userId },
+      readAt: null,
+    },
+    _count: { id: true },
+  });
 
-      return {
-        id: conversation.id,
-        clientId: conversation.clientId,
-        coachId: conversation.coachId,
-        updatedAt: conversation.updatedAt.toISOString(),
-        otherUser,
-        lastMessage: conversation.messages[0]
-          ? {
-              content: conversation.messages[0].content,
-              createdAt: conversation.messages[0].createdAt.toISOString(),
-              senderId: conversation.messages[0].senderId,
-            }
-          : null,
-        unreadCount,
-      };
-    }),
+  const unreadMap = new Map(
+    unreadCounts.map((r) => [r.conversationId, r._count.id]),
   );
 
-  return results;
+  return conversations.map((conversation) => {
+    const otherUser =
+      conversation.clientId === userId
+        ? conversation.coach
+        : conversation.client;
+
+    return {
+      id: conversation.id,
+      clientId: conversation.clientId,
+      coachId: conversation.coachId,
+      updatedAt: conversation.updatedAt.toISOString(),
+      otherUser,
+      lastMessage: conversation.messages[0]
+        ? {
+            content: conversation.messages[0].content,
+            createdAt: conversation.messages[0].createdAt.toISOString(),
+            senderId: conversation.messages[0].senderId,
+          }
+        : null,
+      unreadCount: unreadMap.get(conversation.id) ?? 0,
+    };
+  });
 }
 
 export function getConversationRoomId(conversationId: string) {

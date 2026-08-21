@@ -1,7 +1,7 @@
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { getCoachProfile } from "@/server/services/onboarding.service";
+import { prisma } from "@/lib/prisma";
 
 export default async function CoachAppLayout({
   children,
@@ -9,11 +9,15 @@ export default async function CoachAppLayout({
   children: React.ReactNode;
 }) {
   const session = await requireRole([Role.COACH]);
-  const profile = await getCoachProfile(session.user.id);
+
+  const profile = await prisma.coachProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { onboardingComplete: true },
+  });
 
   if (!profile?.onboardingComplete) {
     redirect("/coach/onboarding");
   }
 
-  return children;
+  return <>{children}</>;
 }

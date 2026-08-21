@@ -4,6 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { LeadMagnetForm } from "@/components/shared/lead-magnet-form";
+import { getProducts } from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
 import {
   Dumbbell,
   ArrowRight,
@@ -24,7 +26,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "NOMICA — Premium Feminine Transformation Fitness",
   description:
-    "The only fitness platform built around progressive overload science, glute-focused programming, and the confidence you deserve. Join 2,400+ women transformed.",
+    "The only fitness platform built around progressive overload science, glute-focused programming, and the confidence you deserve.",
   openGraph: {
     title: "NOMICA — Stop Scrolling. Start Sculpting.",
     description:
@@ -143,7 +145,10 @@ const faqs = [
   },
 ];
 
-export default function HomePage() {
+
+export default async function HomePage() {
+  const products = await getProducts({ kind: "PROGRAM" });
+
   return (
     <PublicLayout>
       <main className="flex flex-1 flex-col">
@@ -177,7 +182,7 @@ export default function HomePage() {
 
                 <p className="mt-2 animate-slide-up stagger-2 text-sm text-muted-foreground">
                   No random workouts. No guessing. Just a clear path to the body
-                  you&apos;ve been visualizing.
+                  you want.
                 </p>
 
                 <div className="mt-10 flex animate-slide-up stagger-3 flex-wrap gap-4">
@@ -211,7 +216,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <span>
-                    4.9/5 from 2,400+ women transformed
+                    Rated highly by our members
                   </span>
                 </div>
               </div>
@@ -227,7 +232,7 @@ export default function HomePage() {
                       <div>
                         <p className="font-semibold">NOMICA Method Preview</p>
                         <p className="text-sm text-muted-foreground">
-                          Internally hosted workout reel
+                          See the NOMICA method in action
                         </p>
                       </div>
                     </div>
@@ -300,7 +305,7 @@ export default function HomePage() {
                 The NOMICA Method
               </p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                3 Steps to Your Dream Body
+                3 Steps to Start Your Transformation
               </h2>
             </div>
 
@@ -343,82 +348,16 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  name: "12-Week Glute Sculpt",
-                  price: "$47",
-                  description:
-                    "Build sculpted, powerful glutes in 12 weeks. The program that started it all.",
-                  features: [
-                    "48 workout videos",
-                    "Progressive overload system",
-                    "Video demos for all exercises",
-                    "Coach feedback on form",
-                  ],
-                  popular: true,
-                },
-                {
-                  name: "Beginner Gym Guide",
-                  price: "$37",
-                  description:
-                    "Walk into any gym with confidence. Perfect for beginners.",
-                  features: [
-                    "24 workout videos",
-                    "Gym equipment walkthrough",
-                    "Form basics for every lift",
-                    "Starter weight recommendations",
-                  ],
-                  popular: false,
-                },
-                {
-                  name: "Stairmaster Program",
-                  price: "$27",
-                  description:
-                    "The ultimate lower body cardio sculptor. 4 weeks to results.",
-                  features: [
-                    "16 stairmaster routines",
-                    "Heart rate zone training",
-                    "Progressive difficulty",
-                    "Glute activation warm-ups",
-                  ],
-                  popular: false,
-                },
-                {
-                  name: "14-Day Booty Challenge",
-                  price: "$14",
-                  description:
-                    "14 days to wake up your glutes. Quick, effective, beginner-friendly.",
-                  features: [
-                    "14 daily workout videos",
-                    "Bodyweight + band exercises",
-                    "Daily motivation emails",
-                    "Community challenge group",
-                  ],
-                  popular: false,
-                },
-                {
-                  name: "Workout Tracker",
-                  price: "$12",
-                  description:
-                    "Track every rep, see every gain. Your digital workout journal.",
-                  features: [
-                    "Digital workout journal",
-                    "Progress photo organizer",
-                    "Measurement tracker",
-                    "Monthly progress reports",
-                  ],
-                  popular: false,
-                },
-              ].map((product, index) => (
+              {products.slice(0, 5).map((product, index) => (
                 <div
-                  key={product.name}
+                  key={product.id}
                   className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
-                    product.popular
+                    index === 0
                       ? "border-primary shadow-premium scale-[1.02]"
                       : "border-border/50"
                   }`}
                 >
-                  {product.popular && (
+                  {index === 0 && (
                     <div className="absolute -top-3 left-6">
                       <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                         MOST POPULAR
@@ -432,19 +371,20 @@ export default function HomePage() {
 
                   <h3 className="text-lg font-bold">{product.name}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {product.description}
+                    {product.tagline}
                   </p>
 
                   <div className="mt-4">
-                    <span className="text-3xl font-bold">{product.price}</span>
+                    <span className="text-3xl font-bold">
+                      {formatPrice(product.priceCents)}
+                    </span>
                     <span className="text-sm text-muted-foreground">
-                      {" "}
-                      one-time
+                      {" "}one-time
                     </span>
                   </div>
 
                   <ul className="mt-6 flex-1 space-y-3">
-                    {product.features.map((feature) => (
+                    {product.features.slice(0, 4).map((feature) => (
                       <li
                         key={feature}
                         className="flex items-center gap-2 text-sm"
@@ -456,10 +396,10 @@ export default function HomePage() {
                   </ul>
 
                   <Link
-                    href="/register"
+                    href={`/programs/${product.slug}`}
                     className={cn(
                       buttonVariants({
-                        variant: product.popular ? "default" : "outline",
+                        variant: index === 0 ? "default" : "outline",
                       }),
                       "mt-6 w-full group/btn",
                     )}
@@ -490,108 +430,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  name: "Sarah, 28",
-                  program: "12-Week Glute Sculpt",
-                  quote:
-                    "I never thought I could love my body this much. The structure changed everything. I finally know what I'm doing and why.",
-                  metrics: ['-4" waist', '+3" hips', "12 lbs lost"],
-                  beforeAfter: true,
-                },
-                {
-                  name: "Jessica, 32",
-                  program: "Beginner Gym Guide",
-                  quote:
-                    "I walked into the gym terrified. Now I'm the one other women ask for advice. NOMICA gave me confidence I never knew I had.",
-                  metrics: ['-2" waist', '+2" hips', "8 lbs lost"],
-                  beforeAfter: true,
-                },
-                {
-                  name: "Michelle, 25",
-                  program: "14-Day Booty Challenge",
-                  quote:
-                    "I started with the 14-day challenge and was hooked. 3 months later, my glutes are unrecognizable. Best investment I've ever made.",
-                  metrics: ['-3" waist', '+4" hips', "15 lbs lost"],
-                  beforeAfter: true,
-                },
-              ].map((testimonial, index) => (
-                <div
-                  key={testimonial.name}
-                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
-                >
-                  {testimonial.beforeAfter && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                      <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">
-                        Before
-                      </div>
-                      <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-primary/10 text-sm text-primary">
-                        After
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="mb-4 text-sm italic text-muted-foreground">
-                    &ldquo;{testimonial.quote}&rdquo;
-                  </p>
-
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {testimonial.metrics.map((metric) => (
-                      <span
-                        key={metric}
-                        className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                      >
-                        {metric}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {testimonial.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {testimonial.program}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="size-3 fill-warning text-warning"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                { label: "Women Transformed", value: "2,400+" },
-                { label: "Programs Completed", value: "12,000+" },
-                { label: "Would Recommend", value: "98%" },
-                { label: "Average Rating", value: "4.9/5" },
-              ].map((stat, index) => (
-                <div
-                  key={stat.label}
-                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 text-center`}
-                >
-                  <p className="text-3xl font-bold text-primary">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
+            <div className="text-center text-muted-foreground">
+              <p>Transformation stories coming soon from our members.</p>
             </div>
           </div>
         </section>
@@ -728,7 +568,7 @@ export default function HomePage() {
             </div>
 
             <p className="mt-8 text-sm text-muted-foreground">
-              \u2605\u2605\u2605\u2605\u2605 Join 2,400+ women who stopped
+              ★★★★★ Join women who stopped
               waiting and started transforming.
             </p>
           </div>

@@ -432,7 +432,7 @@ export function MessagingApp({
 
             <form onSubmit={handleSubmit} className="border-t border-border/50 p-4">
               {error && (
-                <p className="mb-3 text-sm text-destructive">{error}</p>
+                <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>
               )}
               <div className="flex items-center gap-3">
                 <input
@@ -459,6 +459,7 @@ export function MessagingApp({
                   placeholder="Write a message..."
                   disabled={isSending || isUploading}
                   className="flex-1"
+                  aria-label="Type a message"
                 />
                 <Button
                   type="submit"

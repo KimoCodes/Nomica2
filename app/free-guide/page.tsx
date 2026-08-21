@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
+import { sendFreeGuideAction } from "@/actions/free-guide.actions";
 import {
   ArrowRight,
   CheckCircle2,
@@ -15,17 +16,35 @@ import {
   Dumbbell,
   Heart,
   Zap,
+  Loader2,
 } from "lucide-react";
 
 export default function FreeGuidePage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (email) {
-      setSubmitted(true);
+    if (!email) return;
+
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.set("email", email);
+
+    const result = await sendFreeGuideAction(formData);
+
+    if (!result.success) {
+      setError(result.error ?? "Something went wrong. Please try again.");
+      setLoading(false);
+      return;
     }
+
+    setSubmitted(true);
+    setLoading(false);
   }
 
   return (
@@ -75,17 +94,8 @@ export default function FreeGuidePage() {
                 </ul>
 
                 <div className="mt-8 animate-slide-up stagger-8 flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="size-10 rounded-full border-2 border-background bg-muted"
-                      />
-                    ))}
-                  </div>
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold">12,000+</span> women have
-                    downloaded this guide
+                    Free download — trusted by our community
                   </p>
                 </div>
               </div>
@@ -135,6 +145,11 @@ export default function FreeGuidePage() {
                       </div>
 
                       <form onSubmit={handleSubmit} className="space-y-4">
+                        {error && (
+                          <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                            {error}
+                          </div>
+                        )}
                         <div>
                           <Input
                             type="email"
@@ -142,18 +157,30 @@ export default function FreeGuidePage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            disabled={loading}
+                            aria-label="Email address"
                             className="h-12 text-center"
                           />
                         </div>
                         <button
                           type="submit"
+                          disabled={loading}
                           className={cn(
                             buttonVariants({ size: "lg" }),
                             "w-full group shadow-premium",
                           )}
                         >
-                          Send Me the Guide
-                          <Mail className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+                          {loading ? (
+                            <>
+                              <Loader2 className="mr-2 size-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              Send Me the Guide
+                              <Mail className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+                            </>
+                          )}
                         </button>
                       </form>
 
@@ -207,7 +234,7 @@ export default function FreeGuidePage() {
               ].map((item, index) => (
                 <div
                   key={item.title}
-                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6`}
+                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`}
                 >
                   <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
                     <item.icon className="size-6 text-primary" />
@@ -240,7 +267,7 @@ export default function FreeGuidePage() {
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-card p-4"
+                  className="flex items-start gap-3 rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium"
                 >
                   <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
                   <span>{item}</span>

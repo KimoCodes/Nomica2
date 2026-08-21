@@ -1,16 +1,16 @@
-  970  mnp run dev
-  971  npm  dev run
-  972  npm dev run
-  973  npm run dev
-  974  # Apply new migration\nnpm run db:migrate\nnpm run dev
-  975  cd ..
-  976  cd 
-  977  ls
-  978  cd ..
-  979  cd nono
-  980  ls
-  981  npm dev run
-  982  npm run dev
-  983  pwd
-  984  npm run dev
-  985   source /Applications/XAMPP/xamppfiles/htdocs/nono/.venv/bin/activate
+  988  grep "verify_referral.php" *
+  989  grep "verify_referral" *.*
+  990  git add .
+  991  clear
+  992  git add .
+  993  git commit -m "ch"
+  994  cd ../../Applications/XAMPP/htdocs/guestbridgerwanda_real_project
+  995  opencode
+  996  system_profiler SPHardwareDataType | grep "Serial Number"
+  997  ioreg -i | grep IOPlatformSerialNumber"
+  998  ioreg -i | grep IOPlatformSerialNumber
+  999  ioreg -l | grep IOPlatformSerialNumber
+ 1000  system_profiler SPHardwareDataType | grep -E "Model Identifier|Chip|Serial Number"
+ 1001  npm studio
+ 1002  npm help
+ 1003  clear

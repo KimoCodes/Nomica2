@@ -52,6 +52,7 @@ export async function getProgramsByCoach(coachUserId: string) {
       _count: { select: { assignments: true } },
     },
     orderBy: { updatedAt: "desc" },
+    take: 50,
   });
 }
 

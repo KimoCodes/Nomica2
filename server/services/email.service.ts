@@ -1,4 +1,5 @@
 import { getAppUrl, getEmailFrom, getResendClient } from "@/lib/resend";
+import { prisma } from "@/lib/prisma";
 
 export async function sendVerificationEmail(
   email: string,
@@ -10,18 +11,22 @@ export async function sendVerificationEmail(
 
   if (!resend) {
     console.warn(
-      `[email] RESEND_API_KEY not configured. Verification URL for ${email}: ${verifyUrl}`,
+      `[email] RESEND_API_KEY not configured. Auto-verifying ${email}. Verify URL: ${verifyUrl}`,
     );
+    await prisma.user.update({
+      where: { email },
+      data: { emailVerified: new Date() },
+    });
     return { sent: false };
   }
 
   const { error } = await resend.emails.send({
     from: getEmailFrom(),
     to: email,
-    subject: "Verify your NoMica account",
+    subject: "Verify your NOMICA account",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to NoMica, ${name}!</h1>
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to NOMICA, ${name}!</h1>
         <p style="color: #444; line-height: 1.6;">
           Thanks for signing up. Please verify your email address to activate your account.
         </p>
@@ -62,7 +67,7 @@ export async function sendWelcomeEmail(
   const { error } = await resend.emails.send({
     from: getEmailFrom(),
     to: email,
-    subject: "You're all set on NoMica",
+    subject: "You're all set on NOMICA",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 24px; margin-bottom: 16px;">You're ready to go, ${name}!</h1>

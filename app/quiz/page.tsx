@@ -10,7 +10,6 @@ import {
   getQuizRecommendation,
   type QuizAnswer,
 } from "@/constants/quiz";
-import { formatClubPrice } from "@/constants/club";
 import {
   ArrowRight,
   ArrowLeft,
@@ -105,7 +104,11 @@ export default function QuizPage() {
 
               <div className="mt-6">
                 <span className="text-4xl font-bold">
-                  {formatClubPrice(recommendation.price)}
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 0,
+                  }).format(recommendation.price)}
                 </span>
                 {recommendation.type === "club" && (
                   <span className="text-muted-foreground">/mo</span>

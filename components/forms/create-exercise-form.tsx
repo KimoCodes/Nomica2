@@ -49,7 +49,7 @@ export function CreateExerciseForm() {
   return (
     <form id="create-exercise-form" action={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}

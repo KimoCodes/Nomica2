@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { BUNDLES, formatBundlePrice } from "@/constants/bundles";
-import { PRODUCTS } from "@/constants/products";
+import { getBundleProducts } from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
 import {
   ArrowRight,
   CheckCircle2,
@@ -21,7 +21,9 @@ export const metadata: Metadata = {
     "Save big with NOMICA program bundles. Get multiple fitness programs at a discounted price — up to 30% off.",
 };
 
-export default function BundlesPage() {
+export default async function BundlesPage() {
+  const bundles = await getBundleProducts();
+
   return (
     <PublicLayout>
       <main className="flex flex-1 flex-col">
@@ -90,196 +92,127 @@ export default function BundlesPage() {
         {/* Bundle Grid */}
         <section className="px-4 py-16 md:py-24">
           <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 md:grid-cols-3">
-              {BUNDLES.map((bundle, index) => (
-                <Link
-                  key={bundle.id}
-                  href={`/bundles/${bundle.slug}`}
-                  className={`animate-slide-up stagger-${index + 1} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
-                    bundle.highlight
-                      ? "border-primary shadow-premium scale-[1.02]"
-                      : "border-border/50"
-                  }`}
-                >
-                  {/* Badge */}
-                  <div className="mb-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        bundle.highlight
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {bundle.badge}
-                    </span>
-                  </div>
+            {bundles.length > 0 ? (
+              <div className="grid gap-8 md:grid-cols-3">
+                {bundles.map((bundle, index) => {
+                const savings = bundle.compareAtCents
+                  ? bundle.compareAtCents - bundle.priceCents
+                  : 0;
+                const savingsPercent = bundle.compareAtCents
+                  ? Math.round(
+                      ((bundle.compareAtCents - bundle.priceCents) /
+                        bundle.compareAtCents) *
+                        100,
+                    )
+                  : 0;
 
-                  {/* Stacked Cards Visual */}
-                  <div className="relative mb-6 h-24">
-                    {bundle.productIds.slice(0, 3).map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute left-0 right-4 rounded-xl border border-border/50 bg-muted/50"
-                        style={{
-                          top: `${i * 12}px`,
-                          height: "48px",
-                          zIndex: 3 - i,
-                        }}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Info */}
-                  <h2 className="text-xl font-bold">{bundle.name}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {bundle.tagline}
-                  </p>
-
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {bundle.description}
-                  </p>
-
-                  {/* Pricing */}
-                  <div className="mt-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold">
-                        {formatBundlePrice(bundle.price)}
-                      </span>
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatBundlePrice(bundle.originalPrice)}
+                return (
+                  <Link
+                    key={bundle.id}
+                    href={`/bundles/${bundle.slug}`}
+                    className={`animate-slide-up stagger-${index + 1} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                      index === 0
+                        ? "border-primary shadow-premium scale-[1.02]"
+                        : "border-border/50"
+                    }`}
+                  >
+                    <div className="mb-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          index === 0
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {index === 0 ? "BEST VALUE" : "BUNDLE"}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-medium text-success">
-                      Save {formatBundlePrice(bundle.savings)} (
-                      {bundle.savingsPercent}% off)
-                    </p>
-                  </div>
 
-                  {/* Products Included */}
-                  <div className="mt-6 flex-1">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Includes:
+                    {/* Stacked Cards Visual */}
+                    <div className="relative mb-6 h-24">
+                      {(bundle.bundleItems ?? [])
+                        .slice(0, 3)
+                        .map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute left-0 right-4 rounded-xl border border-border/50 bg-muted/50"
+                            style={{
+                              top: `${i * 12}px`,
+                              height: "48px",
+                              zIndex: 3 - i,
+                            }}
+                          />
+                        ))}
+                    </div>
+
+                    <h2 className="text-xl font-bold">{bundle.name}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {bundle.tagline}
                     </p>
-                    <ul className="space-y-2">
-                      {bundle.productIds.map((id) => {
-                        const product = PRODUCTS.find((p) => p.id === id);
-                        return (
+
+                    <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
+                      {bundle.description}
+                    </p>
+
+                    <div className="mt-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold">
+                          {formatPrice(bundle.priceCents)}
+                        </span>
+                        {bundle.compareAtCents && (
+                          <span className="text-sm text-muted-foreground line-through">
+                            {formatPrice(bundle.compareAtCents)}
+                          </span>
+                        )}
+                      </div>
+                      {savings > 0 && (
+                        <p className="mt-1 text-sm font-medium text-success">
+                          Save {formatPrice(savings)} ({savingsPercent}% off)
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Products Included */}
+                    <div className="mt-6 flex-1">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Includes:
+                      </p>
+                      <ul className="space-y-2">
+                        {(bundle.bundleItems ?? []).map((bi) => (
                           <li
-                            key={id}
+                            key={bi.id}
                             className="flex items-center gap-2 text-sm"
                           >
                             <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
-                            {product?.name ?? id}
+                            {bi.item.name}
                           </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
+                        ))}
+                      </ul>
+                    </div>
 
-                  {/* Features */}
-                  <ul className="mt-6 space-y-2">
-                    {bundle.features.slice(0, 4).map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-center gap-2 text-sm text-muted-foreground"
+                    <div className="mt-6">
+                      <span
+                        className={cn(
+                          buttonVariants({
+                            variant: index === 0 ? "default" : "outline",
+                          }),
+                          "w-full group/btn",
+                        )}
                       >
-                        <CheckCircle2 className="size-3.5 shrink-0 text-success" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA */}
-                  <div className="mt-6">
-                    <span
-                      className={cn(
-                        buttonVariants({
-                          variant: bundle.highlight ? "default" : "outline",
-                        }),
-                        "w-full group/btn",
-                      )}
-                    >
-                      Get the Bundle
-                      <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Comparison */}
-        <section className="border-y border-border/50 bg-muted/30 px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">
-              Compare Bundles
-            </h2>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="pb-4 text-left font-medium text-muted-foreground">
-                      Feature
-                    </th>
-                    {BUNDLES.map((b) => (
-                      <th
-                        key={b.id}
-                        className="pb-4 text-center font-medium text-muted-foreground"
-                      >
-                        {b.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(
-                    [
-                      { label: "12-Week Glute Sculpt", check: [false, true, true] },
-                      { label: "Beginner Gym Guide", check: [true, false, true] },
-                      { label: "Stairmaster Program", check: [false, true, true] },
-                      { label: "14-Day Booty Challenge", check: [true, false, true] },
-                      { label: "Workout Tracker", check: [true, true, true] },
-                      { label: "Total Workouts", check: null, values: ["38", "64", "120+"] },
-                    ] as { label: string; check: boolean[] | null; values?: string[] }[]
-                  ).map((row, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      <td className="py-3 font-medium">{row.label}</td>
-                      {row.check
-                        ? row.check.map((has, j) => (
-                            <td key={j} className="py-3 text-center">
-                              {has ? (
-                                <CheckCircle2 className="mx-auto size-4 text-primary" />
-                              ) : (
-                                <span className="text-muted-foreground/30">\u2014</span>
-                              )}
-                            </td>
-                          ))
-                        : row.values?.map((val, j) => (
-                            <td key={j} className="py-3 text-center font-bold">
-                              {val}
-                            </td>
-                          ))}
-                    </tr>
-                  ))}
-                  <tr>
-                    <td className="py-4 font-bold">Price</td>
-                    {BUNDLES.map((b) => (
-                      <td key={b.id} className="py-4 text-center">
-                        <span className="text-lg font-bold">
-                          {formatBundlePrice(b.price)}
-                        </span>
-                        <br />
-                        <span className="text-xs text-muted-foreground line-through">
-                          {formatBundlePrice(b.originalPrice)}
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                        Get the Bundle
+                        <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Package className="mx-auto mb-4 size-12 text-muted-foreground/30" />
+                <p>Bundles will appear here once they are published.</p>
+              </div>
+            )}
           </div>
         </section>
 

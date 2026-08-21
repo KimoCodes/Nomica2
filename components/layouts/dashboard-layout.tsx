@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { trackLoading } from "@/components/ui/loading-bar";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   Menu,
   LogOut,
@@ -31,6 +32,9 @@ import {
   Footprints,
   CreditCard,
   Film,
+  ListChecks,
+  Target,
+  Heart,
 } from "lucide-react";
 
 type NavItem = {
@@ -59,6 +63,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   settings: Settings,
   subscription: CreditCard,
   media: Film,
+  habits: ListChecks,
+  goals: Target,
+  favorites: Heart,
+  nutrition: Footprints,
+  timers: Footprints,
 };
 
 export function DashboardLayout({
@@ -81,17 +90,25 @@ export function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        className="sr-only z-[100] bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:rounded-lg"
+      >
+        Skip to content
+      </a>
+
       <aside className="hidden w-[260px] flex-col border-r border-border/50 bg-card/50 md:flex">
         <div className="flex h-16 items-center gap-2.5 border-b border-border/50 px-5">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
             <Dumbbell className="size-4 text-primary" />
           </div>
           <Link href="/" className="text-lg font-bold tracking-tight">
-            NoMica
+            NOMICA
           </Link>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 p-3">
+        <nav aria-label="Dashboard navigation" className="flex flex-1 flex-col gap-1 p-3">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = iconMap[item.icon ?? item.href.split("/").pop() ?? ""] ?? LayoutDashboard;
@@ -154,7 +171,7 @@ export function DashboardLayout({
                     <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                       <Dumbbell className="size-3.5 text-primary" />
                     </div>
-                    NoMica
+                    NOMICA
                   </DialogTitle>
                 </DialogHeader>
                 <nav className="flex flex-col gap-1 p-3">
@@ -200,6 +217,7 @@ export function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell />
             {userName && (
               <div className="hidden items-center gap-2.5 md:flex">
                 <div className="text-right">
@@ -221,7 +239,7 @@ export function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main id="main-content" className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl animate-fade-in">{children}</div>
         </main>
       </div>

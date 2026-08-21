@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getConversationForUser,
 } from "@/server/services/conversation.service";
+import { createNotification } from "@/server/services/notification.service";
 import type { SendMessageInput } from "@/server/validators/message.schema";
 
 function serializeMessage(message: {
@@ -77,6 +78,31 @@ export async function createMessage(
 
     return created;
   });
+
+  // Create notification for recipient
+  try {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: input.conversationId },
+      select: { clientId: true, coachId: true },
+    });
+
+    if (conversation) {
+      const recipientId =
+        conversation.clientId === senderId
+          ? conversation.coachId
+          : conversation.clientId;
+
+      await createNotification({
+        userId: recipientId,
+        type: "NEW_MESSAGE",
+        title: "New message",
+        body: message.content.slice(0, 100) || "Sent an image",
+        link: "/messages",
+      });
+    }
+  } catch {
+    // Notification failure should not block message creation
+  }
 
   return serializeMessage(message);
 }

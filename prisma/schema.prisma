@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -44,7 +44,10 @@ enum MuscleGroup {
   CHEST
   BACK
   LEGS
+  GLUTES
+  SHOULDERS
   ARMS
+  CORE
   MOBILITY
   CARDIO
 }
@@ -64,9 +67,34 @@ enum SubscriptionStatus {
 }
 
 enum SubscriptionPlan {
-  STARTER
-  PREMIUM
-  ELITE
+  ALL_ACCESS_MONTHLY
+  ALL_ACCESS_ANNUAL
+}
+
+enum PaymentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROOF_REQUESTED
+}
+
+enum ProductKind {
+  PROGRAM
+  CHALLENGE
+  BUNDLE
+}
+
+enum ProductFocus {
+  SWEAT
+  SCULPT
+  CLIMB
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  CANCELED
 }
 
 enum PhotoView {
@@ -107,8 +135,24 @@ enum NotificationType {
   NEW_MESSAGE
   WORKOUT_ASSIGNED
   SUBSCRIPTION_EXPIRING
+  SUBSCRIPTION_APPROVED
+  SUBSCRIPTION_REVOKED
   CHECK_IN_DUE
   COACH_ASSIGNED
+  PAYMENT_SUBMITTED
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  PAYMENT_PROOF_REQUESTED
+  FREE_TRIAL_GRANTED
+  FREE_TRIAL_EXPIRING
+  FREE_TRIAL_EXPIRED
+  FREE_TRIAL_CANCELLED
+}
+
+enum FreeTrialStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
 
 model User {
@@ -122,17 +166,29 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  coachProfile        CoachProfile?
-  clientProfile       ClientProfile?
-  subscription        Subscription?
+  coachProfile          CoachProfile?
+  clientProfile         ClientProfile?
+  subscription          Subscription?
+  approvedSubscriptions Subscription[] @relation("ApprovedBy")
+  paymentRequests       PaymentRequest[] @relation("PaymentRequestClient")
+  coachedPaymentRequests PaymentRequest[] @relation("PaymentRequestCoach")
+  reviewedPaymentRequests PaymentRequest[] @relation("PaymentRequestReviewer")
+  auditLogs             PaymentRequestAuditLog[] @relation("AuditLogPerformer")
   notifications       Notification[]
-  sentMessages        Message[]
-  clientConversations Conversation[]  @relation("ClientConversations")
-  coachConversations  Conversation[]  @relation("CoachConversations")
-  coachedClients      ClientProfile[] @relation("ClientCoach")
-  checkInResponses    CheckInResponse[]
-  uploadedMedia       Media[]
-  coachedProgressLogs ProgressLog[]
+  sentMessages          Message[]
+  clientConversations   Conversation[]    @relation("ClientConversations")
+  coachConversations    Conversation[]    @relation("CoachConversations")
+  coachedClients        ClientProfile[]   @relation("ClientCoach")
+  checkInResponses      CheckInResponse[]
+  uploadedMedia         Media[]
+  coachedProgressLogs   ProgressLog[]
+  purchases             Purchase[]
+  reviews               Review[]
+  habits                Habit[]
+  goals                 Goal[]
+  favorites             Favorite[]
+  freeTrials            FreeTrial[] @relation("FreeTrialRecipient")
+  grantedFreeTrials     FreeTrial[] @relation("FreeTrialGrantor")
 
   @@index([email])
   @@index([role])
@@ -150,17 +206,17 @@ model VerificationToken {
 }
 
 model CoachProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio             String?
-  specialties     String[]
-  yearsExperience Int?
-  certification   String?
-  approved        Boolean  @default(false)
-  onboardingComplete Boolean @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                String?
+  specialties        String[]
+  yearsExperience    Int?
+  certification      String?
+  approved           Boolean  @default(false)
+  onboardingComplete Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   programs Program[]
 
@@ -186,9 +242,9 @@ model ClientProfile {
   updatedAt          DateTime       @updatedAt
 
   programs           ClientProgram[]
-  progressLogs         ProgressLog[]
-  checkIns             CheckIn[]
-  workoutCompletions   WorkoutCompletion[]
+  progressLogs       ProgressLog[]
+  checkIns           CheckIn[]
+  workoutCompletions WorkoutCompletion[]
 
   @@index([userId])
   @@index([coachId])
@@ -213,9 +269,104 @@ model Program {
   weeks       ProgramWeek[]
   assignments ClientProgram[]
   media       Media[]
+  product     Product?
 
   @@index([coachId])
   @@index([isSellable])
+}
+
+/// A purchasable catalog item (source of truth: NOMICA_Fitness_Catalog.pdf).
+/// PROGRAM/CHALLENGE products point at the Program that holds their workout
+/// content; BUNDLE products reference their children through BundleItem.
+model Product {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  kind           ProductKind
+  name           String
+  tagline        String?
+  description    String?       @db.Text
+  priceCents     Int
+  compareAtCents Int?
+  durationLabel  String
+  durationWeeks  Int?
+  durationDays   Int?
+  daysPerWeek    Int?
+  focus          ProductFocus?
+  features       String[]
+  imageUrl       String?
+  isActive       Boolean       @default(true)
+  sortOrder      Int           @default(0)
+
+  programId String?  @unique
+  program   Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
+
+  bundleItems BundleItem[] @relation("BundleParent")
+  includedIn  BundleItem[] @relation("BundleChild")
+  purchases   Purchase[]
+  reviews     Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, isActive, sortOrder])
+}
+
+model BundleItem {
+  id       String  @id @default(cuid())
+  bundleId String
+  bundle   Product @relation("BundleParent", fields: [bundleId], references: [id], onDelete: Cascade)
+  itemId   String
+  item     Product @relation("BundleChild", fields: [itemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([bundleId, itemId])
+  @@index([itemId])
+}
+
+/// One-time purchase of a Product. Entitlements are derived from COMPLETED
+/// purchases (never stored directly) — see server/services/entitlement.service.ts.
+model Purchase {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  status            PurchaseStatus @default(PENDING)
+  amountCents       Int
+  currency          String         @default("usd")
+  provider          String         @default("dev")
+  providerSessionId String?        @unique
+  providerPaymentId String?        @unique
+  completedAt       DateTime?
+  refundedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([productId, status])
+}
+
+model Review {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  rating      Int
+  title       String?
+  body        String  @db.Text
+  isVerified  Boolean @default(false)
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId, isPublished])
 }
 
 model ProgramWeek {
@@ -283,6 +434,8 @@ model ProgramExercise {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  setLogs WorkoutSetLog[]
+
   @@unique([dayId, order])
   @@index([dayId])
   @@index([exerciseId])
@@ -320,9 +473,29 @@ model WorkoutCompletion {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  setLogs WorkoutSetLog[]
+
   @@index([clientProfileId])
   @@index([programDayId])
   @@index([clientProgramId])
+}
+
+model WorkoutSetLog {
+  id                  String            @id @default(cuid())
+  workoutCompletionId String
+  workoutCompletion   WorkoutCompletion @relation(fields: [workoutCompletionId], references: [id], onDelete: Cascade)
+  programExerciseId   String
+  programExercise     ProgramExercise   @relation(fields: [programExerciseId], references: [id], onDelete: Cascade)
+  setNumber           Int
+  actualReps          Int?
+  actualWeight        Float?
+  completed           Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([workoutCompletionId, programExerciseId, setNumber])
+  @@index([workoutCompletionId])
+  @@index([programExerciseId])
 }
 
 model Conversation {
@@ -391,38 +564,38 @@ model CheckInResponse {
 }
 
 model ProgressLog {
-  id              String          @id @default(cuid())
+  id              String        @id @default(cuid())
   clientProfileId String
-  clientProfile   ClientProfile   @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   coachId         String?
-  coach           User?           @relation(fields: [coachId], references: [id], onDelete: SetNull)
+  coach           User?         @relation(fields: [coachId], references: [id], onDelete: SetNull)
 
-  type            ProgressLogType @default(PROGRESS_PHOTO)
-  title           String?
-  description     String?
+  type        ProgressLogType @default(PROGRESS_PHOTO)
+  title       String?
+  description String?
 
-  weight          Float?
-  bodyFat         Float?
-  waist           Float?
-  chest           Float?
-  hips            Float?
-  hipCm           Float?
-  gluteCm         Float?
-  thighCm         Float?
-  notes           String?
+  weight  Float?
+  bodyFat Float?
+  waist   Float?
+  chest   Float?
+  hips    Float?
+  hipCm   Float?
+  gluteCm Float?
+  thighCm Float?
+  notes   String?
 
-  mediaId         String?
-  media           Media?          @relation(fields: [mediaId], references: [id], onDelete: SetNull)
-  photos          ProgressPhoto[]
+  mediaId String?
+  media   Media?          @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  photos  ProgressPhoto[]
 
-  coachComment    String?
-  coachRating     Int?
-  commentedAt     DateTime?
+  coachComment String?
+  coachRating  Int?
+  commentedAt  DateTime?
 
-  visibility      MediaVisibility @default(COACH_ONLY)
-  loggedAt        DateTime        @default(now())
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  visibility MediaVisibility @default(COACH_ONLY)
+  loggedAt   DateTime        @default(now())
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 
   @@index([clientProfileId])
   @@index([coachId])
@@ -431,15 +604,15 @@ model ProgressLog {
 }
 
 model ProgressPhoto {
-  id              String        @id @default(cuid())
-  logId           String
-  log             ProgressLog   @relation(fields: [logId], references: [id], onDelete: Cascade)
-  mediaId         String
-  media           Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  view            PhotoView
+  id      String      @id @default(cuid())
+  logId   String
+  log     ProgressLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  mediaId String
+  media   Media       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  view    PhotoView
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([logId, mediaId])
   @@index([logId])
@@ -458,6 +631,9 @@ model Subscription {
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean            @default(false)
+  approvedById         String?
+  approvedBy           User?              @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt           DateTime?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -482,6 +658,50 @@ model Payment {
   @@index([subscriptionId])
 }
 
+model PaymentRequest {
+  id                String               @id @default(cuid())
+  clientUserId      String
+  clientUser        User                 @relation("PaymentRequestClient", fields: [clientUserId], references: [id], onDelete: Cascade)
+  coachUserId       String?
+  coachUser         User?                @relation("PaymentRequestCoach", fields: [coachUserId], references: [id], onDelete: SetNull)
+  plan              SubscriptionPlan
+  amount            Int
+  currency          String               @default("USD")
+  paymentMethod     String
+  transactionRef    String?
+  proofUrl          String
+  proofFileName     String?
+  notes             String?
+  status            PaymentRequestStatus @default(PENDING)
+  reviewNote        String?
+  reviewedById      String?
+  reviewedBy        User?                @relation("PaymentRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  auditLogs         PaymentRequestAuditLog[]
+
+  @@index([clientUserId])
+  @@index([coachUserId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentRequestAuditLog {
+  id               String        @id @default(cuid())
+  paymentRequestId String
+  paymentRequest   PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
+  action           String
+  performedById    String
+  performedBy      User          @relation("AuditLogPerformer", fields: [performedById], references: [id], onDelete: Cascade)
+  note             String?
+  createdAt        DateTime      @default(now())
+
+  @@index([paymentRequestId])
+  @@index([performedById])
+}
+
 model Notification {
   id        String           @id @default(cuid())
   userId    String
@@ -500,35 +720,35 @@ model Notification {
 }
 
 model Media {
-  id            String          @id @default(cuid())
-  title         String
-  description   String?
-  type          MediaType
-  url           String
-  thumbnailUrl  String?
-  fileSize      Int
-  mimeType      String
-  duration      Int?
-  width         Int?
-  height        Int?
-  uploadedById  String
-  uploadedBy    User            @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  type         MediaType
+  url          String
+  thumbnailUrl String?
+  fileSize     Int
+  mimeType     String
+  duration     Int?
+  width        Int?
+  height       Int?
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
 
-  programId     String?
-  program       Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
-  weekId        String?
-  week          ProgramWeek?    @relation(fields: [weekId], references: [id], onDelete: SetNull)
-  programDayId  String?
-  programDay    ProgramDay?     @relation(fields: [programDayId], references: [id], onDelete: SetNull)
+  programId    String?
+  program      Program?     @relation(fields: [programId], references: [id], onDelete: SetNull)
+  weekId       String?
+  week         ProgramWeek? @relation(fields: [weekId], references: [id], onDelete: SetNull)
+  programDayId String?
+  programDay   ProgramDay?  @relation(fields: [programDayId], references: [id], onDelete: SetNull)
 
-  tags            MediaTag[]
-  progressLogs    ProgressLog[]
-  progressPhotos  ProgressPhoto[]
+  tags           MediaTag[]
+  progressLogs   ProgressLog[]
+  progressPhotos ProgressPhoto[]
 
-  visibility      MediaVisibility @default(COACH_ONLY)
+  visibility MediaVisibility @default(COACH_ONLY)
 
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([type])
   @@index([uploadedById])
@@ -536,32 +756,32 @@ model Media {
 }
 
 model MediaTag {
-  id        String @id @default(cuid())
-  mediaId   String
-  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  tag       String
+  id      String @id @default(cuid())
+  mediaId String
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  tag     String
 
   @@unique([mediaId, tag])
   @@index([tag])
 }
 
 model SiteSettings {
-  id            String   @id @default(cuid())
-  siteName      String   @default("NOMICA")
-  siteDescription String? @default("Premium Feminine Transformation Fitness")
-  contactEmail  String?
-  contactPhone  String?
-  address       String?
-  logoUrl       String?
-  faviconUrl    String?
-  instagramUrl  String?
-  tiktokUrl     String?
-  youtubeUrl    String?
-  twitterUrl    String?
-  facebookUrl   String?
-  heroTagline   String?  @default("Stop Scrolling. Start Sculpting.")
-  heroSubtext   String?
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  siteName        String   @default("NOMICA")
+  siteDescription String?  @default("Premium Feminine Transformation Fitness")
+  contactEmail    String?
+  contactPhone    String?
+  address         String?
+  logoUrl         String?
+  faviconUrl      String?
+  instagramUrl    String?
+  tiktokUrl       String?
+  youtubeUrl      String?
+  twitterUrl      String?
+  facebookUrl     String?
+  heroTagline     String?  @default("Stop Scrolling. Start Sculpting.")
+  heroSubtext     String?
+  updatedAt       DateTime @updatedAt
 }
 
 model LandingContent {
@@ -577,4 +797,108 @@ model LandingContent {
 
   @@index([section])
   @@index([order])
+}
+
+enum HabitType {
+  WATER
+  SLEEP
+  PROTEIN
+  STRETCHING
+  STEPS
+  VITAMINS
+}
+
+model Habit {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      HabitType
+  target    Int        @default(1)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  logs HabitLog[]
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  value     Int      @default(1)
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+  @@index([habitId])
+  @@index([date])
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+model Goal {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String
+  targetValue Float?
+  currentValue Float?
+  unit        String?
+  status      GoalStatus @default(ACTIVE)
+  deadline    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum FavoriteType {
+  EXERCISE
+  PROGRAM
+  RECIPE
+  ARTICLE
+}
+
+model Favorite {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      FavoriteType
+  targetId  String
+  createdAt DateTime    @default(now())
+
+  @@unique([userId, type, targetId])
+  @@index([userId])
+  @@index([type])
+}
+
+model FreeTrial {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation("FreeTrialRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  grantedById  String
+  grantedBy    User            @relation("FreeTrialGrantor", fields: [grantedById], references: [id], onDelete: Cascade)
+  durationDays Int
+  startDate    DateTime        @default(now())
+  endDate      DateTime
+  status       FreeTrialStatus @default(ACTIVE)
+  reason       String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([grantedById])
+  @@index([status])
+  @@index([endDate])
 }

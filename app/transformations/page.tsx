@@ -7,25 +7,31 @@ import {
   TransformationCard,
   TransformationCarousel,
   StatsBar,
-  TestimonialCard,
 } from "@/components/social-proof";
 import {
   TRANSFORMATIONS,
-  TESTIMONIALS,
   getFeaturedTransformations,
 } from "@/constants/transformations";
-import { ArrowRight, Award } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { Star, Award, ArrowRight } from "lucide-react";
 
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Transformations",
   description:
-    "See real women's fitness transformations with NOMICA. Before & after results, success stories, and testimonials from 4,500+ members.",
+    "See real women's fitness transformations with NOMICA. Before & after results, success stories, and testimonials from our members.",
 };
 
-export default function TransformationsPage() {
+export default async function TransformationsPage() {
   const featured = getFeaturedTransformations();
+
+  const reviews = await prisma.review.findMany({
+    where: { isPublished: true },
+    include: { user: { select: { name: true } }, product: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 6,
+  });
 
   return (
     <PublicLayout>
@@ -39,16 +45,15 @@ export default function TransformationsPage() {
           <div className="mx-auto max-w-6xl text-center">
             <div className="mb-6 inline-flex animate-slide-up items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
               <Award className="size-3.5" />
-              Real Results
+              Member Results
             </div>
 
             <h1 className="animate-slide-up stagger-1 text-4xl font-bold tracking-tight md:text-5xl">
-              Real Women.{" "}
-              <span className="text-gradient">Real Transformations.</span>
+              See What&apos;s Possible
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl animate-slide-up stagger-2 text-lg text-muted-foreground">
-              See what&apos;s possible with the right program and support.
+              Every transformation here started with a NOMICA program.
               These are real members who transformed their bodies with NOMICA.
             </p>
           </div>
@@ -58,18 +63,20 @@ export default function TransformationsPage() {
         <StatsBar />
 
         {/* Featured Transformations - Carousel */}
-        <section className="px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="mb-4 text-center text-3xl font-bold tracking-tight">
-              Featured Transformations
-            </h2>
-            <p className="mb-12 text-center text-lg text-muted-foreground">
-              These members achieved incredible results with NOMICA programs
-            </p>
+        {featured.length > 0 && (
+          <section className="px-4 py-16 md:py-24">
+            <div className="mx-auto max-w-6xl">
+              <h2 className="mb-4 text-center text-3xl font-bold tracking-tight">
+                Featured Transformations
+              </h2>
+              <p className="mb-12 text-center text-lg text-muted-foreground">
+                These members achieved incredible results with NOMICA programs
+              </p>
 
-            <TransformationCarousel transformations={featured} />
-          </div>
-        </section>
+              <TransformationCarousel transformations={featured} />
+            </div>
+          </section>
+        )}
 
         {/* All Transformations */}
         <section className="border-y border-border/50 bg-muted/30 px-4 py-16 md:py-24">
@@ -78,49 +85,74 @@ export default function TransformationsPage() {
               All Transformations
             </h2>
             <p className="mb-12 text-center text-lg text-muted-foreground">
-              Every transformation is a story of dedication and consistency
+              These members followed the system and got results.
             </p>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {TRANSFORMATIONS.map((t, index) => (
-                <div
-                  key={t.id}
-                  className={`animate-slide-up stagger-${(index % 6) + 1}`}
-                >
-                  <TransformationCard
-                    transformation={t}
-                    variant="compact"
-                  />
-                </div>
-              ))}
-            </div>
+            {TRANSFORMATIONS.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {TRANSFORMATIONS.map((t, index) => (
+                  <div
+                    key={t.id}
+                    className={`animate-slide-up stagger-${(index % 6) + 1}`}
+                  >
+                    <TransformationCard
+                      transformation={t}
+                      variant="compact"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <p>Transformation stories will appear here as our members share their journeys.</p>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="mb-12 text-center text-3xl font-bold tracking-tight">
-              What Our Members Say
-            </h2>
+        {/* Member Reviews from DB */}
+        {reviews.length > 0 && (
+          <section className="px-4 py-16 md:py-24">
+            <div className="mx-auto max-w-6xl">
+              <h2 className="mb-12 text-center text-3xl font-bold tracking-tight">
+                What Our Members Say
+              </h2>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {TESTIMONIALS.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className={`animate-slide-up stagger-${(index % 6) + 1}`}
-                >
-                  <TestimonialCard
-                    quote={testimonial.quote}
-                    name={testimonial.name}
-                    role={testimonial.role}
-                    rating={testimonial.rating}
-                  />
-                </div>
-              ))}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="flex flex-col rounded-2xl border border-border/50 bg-card p-6"
+                  >
+                    <div className="mb-4 flex gap-1">
+                      {Array.from({ length: review.rating }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className="size-4 fill-primary text-primary"
+                        />
+                      ))}
+                    </div>
+                    {review.title && (
+                      <h3 className="font-semibold">{review.title}</h3>
+                    )}
+                    <p className="flex-1 text-muted-foreground">
+                      &ldquo;{review.body}&rdquo;
+                    </p>
+                    <div className="mt-4">
+                      <p className="font-semibold">
+                        {review.user.name ?? "Anonymous"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {review.product.name}
+                        {review.isVerified && " · Verified purchase"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* CTA */}
         <section className="border-t border-border/50 bg-muted/30 px-4 py-16 md:py-24">
@@ -129,7 +161,7 @@ export default function TransformationsPage() {
               Ready to Write Your Story?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of women who&apos;ve transformed their bodies
+              Join women who&apos;ve transformed their bodies
               with NOMICA. Your transformation starts today.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

@@ -103,10 +103,10 @@ export async function completeCoachOnboarding(
   return prisma.coachProfile.update({
     where: { userId },
     data: {
-      bio: data.bio,
-      specialties: data.specialties,
+      bio: data.bio.trim(),
+      specialties: data.specialties.filter(Boolean),
       yearsExperience: data.yearsExperience,
-      certification: data.certification || null,
+      certification: data.certification?.trim() || null,
       onboardingComplete: true,
     },
     include: { user: { select: { name: true, email: true } } },

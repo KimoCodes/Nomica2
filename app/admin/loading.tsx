@@ -9,7 +9,9 @@ export default function AdminLoading() {
           <Skeleton className="h-5 w-16 rounded" />
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          <Skeleton className="h-10 rounded-xl" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 rounded-xl" />
+          ))}
         </nav>
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">

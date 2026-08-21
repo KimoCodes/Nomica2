@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ExerciseLibraryClient } from "@/components/exercise-library-client";
+import { FeatureGate } from "@/components/shared/feature-gate";
 
 export default async function ExerciseLibraryPage() {
   const session = await requireRole([Role.CLIENT]);
@@ -16,12 +17,15 @@ export default async function ExerciseLibraryPage() {
       videoUrl: true,
     },
     orderBy: { name: "asc" },
+    take: 200,
   });
 
   return (
-    <ExerciseLibraryClient
-      exercises={exercises}
-      userName={session.user.name}
-    />
+    <FeatureGate userId={session.user.id} userRole={Role.CLIENT} feature="exerciseLibrary">
+      <ExerciseLibraryClient
+        exercises={exercises}
+        userName={session.user.name}
+      />
+    </FeatureGate>
   );
 }

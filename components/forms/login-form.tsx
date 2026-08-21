@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { loginUser } from "@/actions/auth.actions";
+import { useSearchParams } from "next/navigation";
+import { preCheckLogin } from "@/actions/auth.actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
 
@@ -22,10 +22,37 @@ type FieldErrors = {
 };
 
 export function LoginForm() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const formRef = useRef<HTMLFormElement>(null);
+  const csrfRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError === "CredentialsSignin") {
+      setError("Invalid email or password");
+    }
+
+    const registered = searchParams.get("registered");
+    const plan = searchParams.get("plan");
+    if (registered === "true") {
+      setSuccess("Account created successfully! Sign in to continue.");
+      if (plan) {
+        sessionStorage.setItem("selectedPlan", plan);
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetch("/api/auth/csrf")
+      .then((r) => r.json())
+      .then((data) => {
+        if (csrfRef.current) csrfRef.current.value = data.csrfToken;
+      });
+  }, []);
 
   function validateField(name: string, value: string) {
     const errors: FieldErrors = { ...fieldErrors };
@@ -43,14 +70,15 @@ export function LoginForm() {
     setFieldErrors(errors);
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setIsPending(true);
     setError(null);
 
+    const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    // Client-side validation
     const errors: FieldErrors = {};
     if (!email) errors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
@@ -67,16 +95,27 @@ export function LoginForm() {
 
     setFieldErrors({});
 
-    const result = await trackLoading(() => loginUser(formData));
+    const preCheck = await trackLoading(() => preCheckLogin(email));
 
-    if (!result.success) {
-      setError(result.error?.message ?? "Failed to sign in");
+    if (!preCheck.success) {
+      setError(preCheck.error?.message ?? "Failed to sign in");
       setIsPending(false);
       return;
     }
 
-    router.push(result.data?.redirectTo ?? "/client");
-    router.refresh();
+    const redirectTo = preCheck.data?.redirectTo ?? "/client";
+
+    const selectedPlan = sessionStorage.getItem("selectedPlan");
+    const callbackUrl = selectedPlan
+      ? `/client/subscription?plan=${selectedPlan}`
+      : redirectTo;
+
+    sessionStorage.removeItem("selectedPlan");
+
+    const callbackInput = formRef.current?.elements.namedItem("callbackUrl") as HTMLInputElement;
+    if (callbackInput) callbackInput.value = callbackUrl;
+
+    formRef.current?.submit();
   }
 
   return (
@@ -88,10 +127,20 @@ export function LoginForm() {
         </p>
       </CardHeader>
 
-      <form action={handleSubmit}>
+      <form ref={formRef} action="/api/auth/callback/credentials" method="POST" onSubmit={handleSubmit}>
+        <input type="hidden" name="csrfToken" ref={csrfRef} />
+        <input type="hidden" name="callbackUrl" value="/client" />
+
         <CardContent className="space-y-4 px-0">
+          {success && (
+            <div aria-live="polite" className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              <CheckCircle2 className="size-4 shrink-0" />
+              {success}
+            </div>
+          )}
+
           {error && (
-            <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -114,7 +163,7 @@ export function LoginForm() {
               />
             </div>
             {fieldErrors.email && (
-              <p className="text-xs text-destructive">{fieldErrors.email}</p>
+              <p role="alert" className="text-xs text-destructive">{fieldErrors.email}</p>
             )}
           </div>
 
@@ -136,7 +185,7 @@ export function LoginForm() {
               />
             </div>
             {fieldErrors.password && (
-              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+              <p role="alert" className="text-xs text-destructive">{fieldErrors.password}</p>
             )}
           </div>
         </CardContent>

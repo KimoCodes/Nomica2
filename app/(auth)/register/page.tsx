@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { RegisterForm } from "@/components/forms/register-form";
 
 export const metadata: Metadata = {
-  title: "Create Account",
+  title: "Create account",
   description:
-    "Create your NOMICA account and start your fitness transformation journey today.",
+    "Create your NOMICA account and start training with expert coaching.",
 };
 
 export default function RegisterPage() {

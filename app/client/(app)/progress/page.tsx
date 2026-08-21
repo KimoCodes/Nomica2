@@ -7,7 +7,9 @@ import { requireClientProfile } from "@/server/services/coach.service";
 import { ProgressLogForm } from "@/components/forms/progress-log-form";
 import { ProgressUploadForm } from "./progress-upload-form";
 import { ProgressTimeline } from "./progress-timeline";
+import { WeightTrendChart } from "@/components/charts/weight-trend-chart";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { FeatureGate } from "@/components/shared/feature-gate";
 import {
   Card,
   CardContent,
@@ -38,11 +40,12 @@ export default async function ClientProgressPage() {
       userName={session.user.name}
       userRole="Client"
     >
+      <FeatureGate userId={session.user.id} userRole={Role.CLIENT} feature="progress">
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Progress Tracking</h2>
           <p className="mt-1 text-muted-foreground">
-            Log measurements and track your fitness journey over time.
+            Log measurements and track your progress over time.
           </p>
         </div>
 
@@ -120,6 +123,17 @@ export default async function ClientProgressPage() {
           </Card>
         </div>
 
+        {overview.weightTrend.length > 0 && (
+          <Card className="animate-slide-up stagger-5">
+            <CardHeader>
+              <CardTitle className="text-base">Weight Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WeightTrendChart data={overview.weightTrend} />
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="timeline" className="space-y-6">
           <TabsList>
             <TabsTrigger value="timeline" className="gap-2">
@@ -170,6 +184,7 @@ export default async function ClientProgressPage() {
           </TabsContent>
         </Tabs>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 }

@@ -34,7 +34,7 @@ export function CreateProgramForm() {
   return (
     <form action={handleSubmit} className="space-y-5">
       {error && (
-        <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}

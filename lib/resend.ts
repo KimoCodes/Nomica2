@@ -15,9 +15,13 @@ export function getResendClient(): Resend | null {
 }
 
 export function getAppUrl(): string {
-  return process.env.AUTH_URL ?? "http://localhost:3000";
+  const url = process.env.AUTH_URL;
+  if (!url) {
+    throw new Error("AUTH_URL environment variable is not set");
+  }
+  return url;
 }
 
 export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM ?? "NoMica <onboarding@resend.dev>";
+  return process.env.EMAIL_FROM ?? "NOMICA <onboarding@resend.dev>";
 }

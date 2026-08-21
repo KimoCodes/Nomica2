@@ -12,7 +12,7 @@ export default function OnboardingLayout({
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
             <Dumbbell className="size-6 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-bold">NoMica</span>
+          <span className="text-2xl font-bold">NOMICA</span>
         </div>
         {children}
       </div>

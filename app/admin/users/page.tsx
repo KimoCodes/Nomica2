@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { UserActions } from "@/components/admin/user-actions";
 import { Users, UserCheck, UserX } from "lucide-react";
 
 const roleColors: Record<string, string> = {
@@ -96,6 +97,7 @@ export default async function AdminUsersPage() {
             <Badge variant="secondary">{users.length}</Badge>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -104,6 +106,7 @@ export default async function AdminUsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Joined</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,7 +126,7 @@ export default async function AdminUsersPage() {
                         </Badge>
                       ) : user.subscription ? (
                         <Badge variant={user.subscription.status === "active" ? "default" : "secondary"}>
-                          {user.subscription.status}
+                          {user.subscription.status.replaceAll("_", " ")}
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -132,10 +135,14 @@ export default async function AdminUsersPage() {
                     <TableCell className="text-right text-sm text-muted-foreground">
                       {user.createdAt.toLocaleDateString()}
                     </TableCell>
+                    <TableCell>
+                      <UserActions user={user} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

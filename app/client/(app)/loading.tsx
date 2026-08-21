@@ -9,7 +9,7 @@ export default function ClientLoading() {
           <Skeleton className="h-5 w-16 rounded" />
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 12 }).map((_, i) => (
             <Skeleton key={i} className="h-10 rounded-xl" />
           ))}
         </nav>

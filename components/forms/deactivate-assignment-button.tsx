@@ -54,7 +54,7 @@ export function DeactivateAssignmentButton({
 
   return (
     <div className="space-y-2">
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
       <AlertDialog>
         <AlertDialogTrigger render={<Button type="button" variant="outline" size="sm" disabled={isPending} />}>
           {isPending ? "Deactivating..." : "Deactivate"}

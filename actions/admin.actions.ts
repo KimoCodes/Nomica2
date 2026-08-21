@@ -3,7 +3,12 @@
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
-import { approveCoach, revokeCoach } from "@/server/services/admin.service";
+import {
+  approveCoach,
+  revokeCoach,
+  updateUserRole,
+  deleteUser,
+} from "@/server/services/admin.service";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -37,5 +42,39 @@ export async function revokeCoachAction(
   } catch (error) {
     console.error("revokeCoachAction error:", error);
     return createErrorResponse("Failed to revoke coach", "INTERNAL_ERROR");
+  }
+}
+
+export async function updateUserRoleAction(
+  userId: string,
+  role: "ADMIN" | "COACH" | "CLIENT",
+): Promise<ApiResponse<{ id: string }>> {
+  try {
+    await requireRole([Role.ADMIN]);
+    const result = await updateUserRole(userId, role);
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
+    return createSuccessResponse({ id: result.id });
+  } catch (error) {
+    console.error("updateUserRoleAction error:", error);
+    return createErrorResponse("Failed to update user role", "INTERNAL_ERROR");
+  }
+}
+
+export async function deleteUserAction(
+  userId: string,
+): Promise<ApiResponse<{ id: string }>> {
+  try {
+    await requireRole([Role.ADMIN]);
+    const result = await deleteUser(userId);
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
+    return createSuccessResponse({ id: result.id });
+  } catch (error) {
+    console.error("deleteUserAction error:", error);
+    return createErrorResponse(
+      error instanceof Error ? error.message : "Failed to delete user",
+      "INTERNAL_ERROR",
+    );
   }
 }

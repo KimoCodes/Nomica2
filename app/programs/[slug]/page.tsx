@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { getProductBySlug, PRODUCTS, formatProductPrice } from "@/constants/products";
+import { getProductBySlug, getProducts } from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
 import {
   Dumbbell,
   ArrowRight,
@@ -19,22 +20,18 @@ import {
 
 export const runtime = "nodejs";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Program Not Found" };
 
   return {
     title: `${product.name} | NOMICA`,
-    description: product.tagline,
+    description: product.tagline ?? undefined,
   };
 }
 
@@ -44,15 +41,30 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const relatedProducts = PRODUCTS.filter(
-    (p) => p.id !== product.id,
-  ).slice(0, 3);
+  const allProducts = await getProducts();
+  const relatedProducts = allProducts
+    .filter((p) => p.id !== product.id)
+    .slice(0, 3);
+
+  const totalWorkouts =
+    product.program?.weeks?.reduce(
+      (acc, week) =>
+        acc + week.days.reduce((dAcc, day) => dAcc + day.exercises.length, 0),
+      0,
+    ) ?? 0;
+
+  const avgRating = product.reviews.length
+    ? (
+        product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+        product.reviews.length
+      ).toFixed(1)
+    : null;
 
   return (
     <PublicLayout>
@@ -85,40 +97,24 @@ export default async function ProductPage({
                   <div>
                     <p className="font-semibold">Preview Workouts</p>
                     <p className="text-sm text-muted-foreground">
-                      {product.sampleExercises.length} sample exercises
+                      {totalWorkouts || "Sample"} exercises
                     </p>
                   </div>
                 </div>
               </div>
-
-              {/* Sample Exercises */}
-              {product.sampleExercises.length > 0 && (
-                <div className="mt-4 grid grid-cols-4 gap-2">
-                  {product.sampleExercises.map((exercise, i) => (
-                    <div
-                      key={i}
-                      className="flex flex-col items-center rounded-xl border border-border/50 bg-card p-3 text-center transition-all hover:shadow-premium"
-                    >
-                      <Play className="mb-1 size-4 text-primary" />
-                      <p className="text-xs font-medium">{exercise.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {exercise.duration}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Right: Product Info */}
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  {product.category}
+                  {product.kind}
                 </span>
-                <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                  {product.level}
-                </span>
+                {product.focus && (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+                    {product.focus}
+                  </span>
+                )}
               </div>
 
               <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
@@ -131,28 +127,35 @@ export default async function ProductPage({
 
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="text-4xl font-bold">
-                  {formatProductPrice(product.price)}
+                  {formatPrice(product.priceCents)}
                 </span>
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatProductPrice(product.originalPrice)}
-                </span>
-                <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                  Save {formatProductPrice(product.originalPrice - product.price)}
-                </span>
+                {product.compareAtCents && (
+                  <>
+                    <span className="text-lg text-muted-foreground line-through">
+                      {formatPrice(product.compareAtCents)}
+                    </span>
+                    <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                      Save{" "}
+                      {formatPrice(product.compareAtCents - product.priceCents)}
+                    </span>
+                  </>
+                )}
               </div>
 
               <div className="mt-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Clock className="size-4" />
-                  {product.duration}
+                  {product.durationLabel}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <BarChart3 className="size-4" />
-                  {product.commitment}
-                </span>
+                {product.daysPerWeek && (
+                  <span className="flex items-center gap-1.5">
+                    <BarChart3 className="size-4" />
+                    {product.daysPerWeek} days/week
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <Zap className="size-4" />
-                  {product.equipment}
+                  {product.focus ?? "All levels"}
                 </span>
               </div>
 
@@ -172,83 +175,75 @@ export default async function ProductPage({
                   <Shield className="size-3" />
                   30-day money-back guarantee
                 </span>
-                <span>\u00B7</span>
+                <span>·</span>
                 <span>Instant access</span>
               </div>
 
               <div className="mt-6 flex items-center gap-2">
-                <div className="flex -space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="size-4 fill-warning text-warning"
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-medium">4.9/5</span>
+                {avgRating && (
+                  <>
+                    <div className="flex -space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className="size-4 fill-warning text-warning"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium">{avgRating}/5</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({product._count.reviews} reviews)
+                    </span>
+                  </>
+                )}
                 <span className="text-sm text-muted-foreground">
-                  ({product.highlights[0]?.value})
+                  · {product._count.purchases} purchased
                 </span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Highlights */}
-        <section className="border-y border-border/50 bg-muted/30 px-4 py-12">
-          <div className="mx-auto grid max-w-6xl grid-cols-3 gap-6">
-            {product.highlights.map((highlight, i) => (
-              <div key={i} className="text-center">
-                <p className="text-3xl font-bold text-primary">
-                  {highlight.value}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {highlight.label}
-                </p>
+        {/* What's Inside - Program Structure */}
+        {product.program?.weeks && product.program.weeks.length > 0 && (
+          <section className="px-4 py-16 md:py-24">
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-12 text-center">
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Program Structure
+                </h2>
               </div>
-            ))}
-          </div>
-        </section>
 
-        {/* What's Inside */}
-        <section className="px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold tracking-tight">
-                What&apos;s Inside
-              </h2>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {product.phases.map((phase, index) => (
-                <div
-                  key={index}
-                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
-                >
-                  <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
-                    <span className="text-lg font-bold text-primary">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+              <div className="grid gap-6 md:grid-cols-3">
+                {product.program.weeks.slice(0, 3).map((week, index) => (
+                  <div
+                    key={week.id}
+                    className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
+                  >
+                    <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
+                      <span className="text-lg font-bold text-primary">
+                        {String(week.weekNumber).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold">
+                      {week.title ?? `Week ${week.weekNumber}`}
+                    </h3>
+                    <p className="mt-4 text-sm font-medium text-primary">
+                      {week.days.length} training days
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold">{phase.name}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {phase.description}
-                  </p>
-                  <p className="mt-4 text-sm font-medium text-primary">
-                    {phase.workoutCount} workouts
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Features */}
         <section className="border-y border-border/50 bg-muted/30 px-4 py-16 md:py-24">
           <div className="mx-auto max-w-6xl">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight">
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
                   Everything You Need
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
@@ -275,25 +270,24 @@ export default async function ProductPage({
                     <div>
                       <p className="font-semibold">{product.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {product.duration} \u00B7 {product.commitment}
+                        {product.durationLabel}
+                        {product.daysPerWeek &&
+                          ` · ${product.daysPerWeek} days/week`}
                       </p>
                     </div>
                   </div>
                   <div className="mt-6 grid grid-cols-3 gap-4">
                     <div className="rounded-xl bg-muted/50 p-4 text-center">
                       <p className="text-2xl font-bold">
-                        {product.phases.reduce(
-                          (acc, p) => acc + p.workoutCount,
-                          0,
-                        ) || "14"}
+                        {totalWorkouts || "—"}
                       </p>
                       <p className="text-xs text-muted-foreground">Workouts</p>
                     </div>
                     <div className="rounded-xl bg-muted/50 p-4 text-center">
                       <p className="text-2xl font-bold">
-                        {product.phases.length || "3"}
+                        {product.program?.weeks?.length ?? "—"}
                       </p>
-                      <p className="text-xs text-muted-foreground">Phases</p>
+                      <p className="text-xs text-muted-foreground">Weeks</p>
                     </div>
                     <div className="rounded-xl bg-muted/50 p-4 text-center">
                       <p className="text-2xl font-bold">100%</p>
@@ -306,14 +300,64 @@ export default async function ProductPage({
           </div>
         </section>
 
+        {/* Reviews */}
+        {product.reviews.length > 0 && (
+          <section className="px-4 py-16 md:py-24">
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-12 text-center">
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Member Reviews
+                </h2>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {product.reviews.slice(0, 6).map((review) => (
+                  <div
+                    key={review.id}
+                    className="rounded-2xl border border-border/50 bg-card p-6"
+                  >
+                    <div className="mb-3 flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`size-4 ${i < review.rating ? "fill-warning text-warning" : "text-muted-foreground/30"}`}
+                        />
+                      ))}
+                    </div>
+                    {review.title && (
+                      <h3 className="font-semibold">{review.title}</h3>
+                    )}
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {review.body}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {review.user.name?.charAt(0) ?? "U"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {review.user.name ?? "Anonymous"}
+                        </p>
+                        {review.isVerified && (
+                          <p className="text-xs text-success">Verified purchase</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* CTA */}
         <section className="px-4 py-16 md:py-24">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               Ready to Start?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join thousands of women who transformed their bodies with this
+              Join women who transformed their bodies with this
               program.
             </p>
             <Link
@@ -323,7 +367,7 @@ export default async function ProductPage({
                 "mt-8 group shadow-premium",
               )}
             >
-              Get {product.name} — {formatProductPrice(product.price)}
+              Get {product.name} — {formatPrice(product.priceCents)}
               <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -348,11 +392,13 @@ export default async function ProductPage({
                   </p>
                   <div className="mt-4 flex items-baseline gap-2">
                     <span className="text-2xl font-bold">
-                      {formatProductPrice(p.price)}
+                      {formatPrice(p.priceCents)}
                     </span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatProductPrice(p.originalPrice)}
-                    </span>
+                    {p.compareAtCents && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        {formatPrice(p.compareAtCents)}
+                      </span>
+                    )}
                   </div>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
                     View Program

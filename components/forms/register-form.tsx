@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Role } from "@prisma/client";
 import { registerUser } from "@/actions/auth.actions";
-import { registerSchema } from "@/lib/validations";
+import { registerSchema } from "@/server/validators/auth.schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,7 +24,7 @@ import {
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
-import { PLANS, formatPrice } from "@/constants/subscriptions";
+import { PLANS, formatPlanPrice } from "@/constants/subscriptions";
 
 type FieldErrors = {
   name?: string;
@@ -35,7 +35,7 @@ type FieldErrors = {
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultPlan = searchParams.get("plan") || "STARTER";
+  const defaultPlan = searchParams.get("plan") || "ALL_ACCESS_MONTHLY";
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -84,7 +84,11 @@ export function RegisterForm() {
       return;
     }
 
-    router.push("/login?registered=true");
+    const plan = formData.get("plan") as string;
+    const redirectUrl = plan
+      ? `/login?registered=true&plan=${plan}`
+      : "/login?registered=true";
+    router.push(redirectUrl);
   }
 
   return (
@@ -92,14 +96,14 @@ export function RegisterForm() {
       <CardHeader className="px-0 pb-6">
         <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Start your fitness journey today
+          Create your account and start training
         </p>
       </CardHeader>
 
       <form action={handleSubmit}>
         <CardContent className="space-y-4 px-0">
           {error && (
-            <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -122,7 +126,7 @@ export function RegisterForm() {
               />
             </div>
             {fieldErrors.name && (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
+              <p role="alert" className="text-xs text-destructive">{fieldErrors.name}</p>
             )}
           </div>
 
@@ -144,7 +148,7 @@ export function RegisterForm() {
               />
             </div>
             {fieldErrors.email && (
-              <p className="text-xs text-destructive">{fieldErrors.email}</p>
+              <p role="alert" className="text-xs text-destructive">{fieldErrors.email}</p>
             )}
           </div>
 
@@ -166,7 +170,7 @@ export function RegisterForm() {
               />
             </div>
             {fieldErrors.password && (
-              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+              <p role="alert" className="text-xs text-destructive">{fieldErrors.password}</p>
             )}
             <p className="text-xs text-muted-foreground">
               Min 8 characters with uppercase, lowercase, and a number
@@ -219,7 +223,7 @@ export function RegisterForm() {
                       )}
                     </div>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      {formatPrice(plan.monthlyPrice)}/mo — {plan.description}
+                      {formatPlanPrice(plan)} — {plan.description}
                     </p>
                   </div>
                 </label>

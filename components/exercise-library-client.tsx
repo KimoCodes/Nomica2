@@ -22,6 +22,7 @@ import {
   Filter,
   X,
 } from "lucide-react";
+import { FavoriteButton } from "@/components/favorite-button";
 
 type Exercise = {
   id: string;
@@ -92,7 +93,7 @@ export function ExerciseLibraryClient({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Exercise Library</h2>
           <p className="mt-1 text-muted-foreground">
-            Search by muscle group, equipment, or movement pattern.
+            Search by name or muscle group.
           </p>
         </div>
 
@@ -116,6 +117,7 @@ export function ExerciseLibraryClient({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-card px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            aria-expanded={showFilters}
           >
             <Filter className="size-4" />
             Filters
@@ -241,8 +243,11 @@ export function ExerciseLibraryClient({
                   </div>
                 )}
                 <CardContent className="p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold">{exercise.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold">{exercise.name}</h3>
+                    </div>
+                    <FavoriteButton type="EXERCISE" targetId={exercise.id} size="sm" />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Badge variant="outline" className="font-normal text-xs">

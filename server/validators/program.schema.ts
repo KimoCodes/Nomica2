@@ -61,6 +61,17 @@ export const deactivateAssignmentSchema = z.object({
 export const completeWorkoutSchema = z.object({
   programDayId: z.string().cuid(),
   notes: z.string().max(500).trim().optional().or(z.literal("")),
+  setLogs: z
+    .array(
+      z.object({
+        programExerciseId: z.string().cuid(),
+        setNumber: z.number().int().min(1),
+        actualReps: z.number().int().min(0).optional(),
+        actualWeight: z.number().min(0).optional(),
+        completed: z.boolean().default(false),
+      }),
+    )
+    .optional(),
 });
 
 export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;

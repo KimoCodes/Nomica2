@@ -50,18 +50,3 @@ export function Spinner({ size = "default", className, label }: SpinnerProps) {
     </div>
   );
 }
-
-type InlineLoaderProps = {
-  text?: string;
-  size?: SpinnerSize;
-  className?: string;
-};
-
-export function InlineLoader({ text = "Loading", size = "sm", className }: InlineLoaderProps) {
-  return (
-    <span className={cn("inline-flex items-center gap-2 text-sm text-muted-foreground", className)}>
-      <Spinner size={size} />
-      <span>{text}...</span>
-    </span>
-  );
-}

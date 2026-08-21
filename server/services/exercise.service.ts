@@ -13,6 +13,7 @@ export async function getExercisesForCoach(coachUserId: string) {
       OR: [{ coachId: null }, { coachId: coach.id }],
     },
     orderBy: [{ muscleGroup: "asc" }, { name: "asc" }],
+    take: 200,
   });
 }
 

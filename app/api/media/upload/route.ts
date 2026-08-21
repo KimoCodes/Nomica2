@@ -7,6 +7,12 @@ import { prisma } from "@/lib/prisma";
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const VALID_VISIBILITY = new Set<MediaVisibility>([
+  "PUBLIC",
+  "COACH_ONLY",
+  "CLIENT_ONLY",
+  "TEAM_ONLY",
+]);
 
 function getMediaType(
   mimeType: string,
@@ -82,6 +88,10 @@ export async function POST(request: NextRequest) {
     const folder = getUploadFolder(session.user.role, purpose ?? undefined);
     const mediaType = getMediaType(file.type, purpose ?? undefined);
 
+    const visibilityValue = VALID_VISIBILITY.has(visibility as MediaVisibility)
+      ? (visibility as MediaVisibility)
+      : "COACH_ONLY";
+
     const uploadResult = await uploadMedia(buffer, file.name, folder);
 
     const media = await prisma.media.create({
@@ -97,7 +107,7 @@ export async function POST(request: NextRequest) {
         width: uploadResult.width,
         height: uploadResult.height,
         uploadedById: session.user.id,
-        visibility: visibility as MediaVisibility,
+        visibility: visibilityValue,
         programId: programId || undefined,
         weekId: weekId || undefined,
         programDayId: programDayId || undefined,
@@ -125,6 +135,13 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (error instanceof Error && error.message === "CLOUDINARY_NOT_CONFIGURED") {
+      return NextResponse.json(
+        { error: "Media uploads are not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your environment variables." },
+        { status: 503 },
+      );
     }
 
     return NextResponse.json(

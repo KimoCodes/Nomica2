@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import { requireAuth } from "@/lib/auth";
 import { CLIENT_NAV, COACH_NAV, ADMIN_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { ProfileForm, PasswordForm } from "@/components/forms/settings-forms";
 import {
   Card,
   CardContent,
@@ -9,7 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Shield, Calendar } from "lucide-react";
+import { User, Mail, Shield, Calendar, Bell } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 
 type NavItem = { label: string; href: string; icon: string };
 
@@ -30,6 +32,11 @@ export default async function SettingsPage() {
   const role = session.user.role ?? Role.CLIENT;
   const navItems = ROLE_NAV[role] ?? CLIENT_NAV;
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { createdAt: true },
+  });
+
   return (
     <DashboardLayout
       title="Settings"
@@ -46,6 +53,7 @@ export default async function SettingsPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
+          {/* Profile */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Profile Information</CardTitle>
@@ -79,35 +87,68 @@ export default async function SettingsPage() {
                     {role.toLowerCase()}
                   </Badge>
                 </div>
+                {user?.createdAt && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <Calendar className="size-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Joined:</span>
+                    <span className="font-medium">
+                      {user.createdAt.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
+          {/* Edit Profile */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Account Details</CardTitle>
+              <CardTitle className="text-base">Edit Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfileForm
+                name={session.user.name ?? ""}
+                email={session.user.email ?? ""}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Password */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PasswordForm />
+            </CardContent>
+          </Card>
+
+          {/* Notifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Notifications</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-xl bg-muted/50 p-4">
+              <div className="rounded-xl border border-border/50 p-4">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-primary/10 p-2">
-                    <Calendar className="size-4 text-primary" />
+                    <Bell className="size-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Member since</p>
+                    <p className="text-sm font-medium">Email notifications</p>
                     <p className="text-xs text-muted-foreground">
-                      Account active
+                      Receive updates about your workouts, check-ins, and messages.
                     </p>
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-xl border border-dashed py-8 text-center">
-                <p className="text-sm font-medium">More settings coming soon</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Password change, notification preferences, and data export will be available in a future update.
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Notification preferences will be available in a future update.
+              </p>
             </CardContent>
           </Card>
         </div>

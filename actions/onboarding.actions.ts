@@ -152,6 +152,12 @@ export async function submitCoachOnboarding(
     if (error instanceof Error && error.message === "ONBOARDING_ALREADY_COMPLETE") {
       return createSuccessResponse({ redirectTo: "/coach" });
     }
+    if (error instanceof Error && error.message === "PROFILE_NOT_FOUND") {
+      return createErrorResponse(
+        "Your coach profile could not be found. Please sign in again.",
+        "PROFILE_NOT_FOUND",
+      );
+    }
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return createErrorResponse("You must be signed in", "UNAUTHORIZED");
     }

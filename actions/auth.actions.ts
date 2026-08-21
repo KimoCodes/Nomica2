@@ -1,16 +1,13 @@
 "use server";
 
-import { headers } from "next/headers";
-import { Role, SubscriptionPlan } from "@prisma/client";
-import { AuthError } from "next-auth";
-import { signIn, signOut } from "@/lib/auth";
+import { Role } from "@prisma/client";
+import { signOut } from "@/lib/auth";
 import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/server/utils/response";
 import {
   checkRateLimit,
-  getClientIp,
 } from "@/server/utils/rate-limit";
 import {
   createUser,
@@ -18,21 +15,16 @@ import {
   verifyEmailToken,
 } from "@/server/services/user.service";
 import { sendVerificationEmail } from "@/server/services/email.service";
-import { createSubscription } from "@/server/services/subscription.service";
-import { getPostLoginRedirect } from "@/server/services/onboarding.service";
 import {
-  loginSchema,
   registerSchema,
 } from "@/server/validators/auth.schema";
 import type { ApiResponse } from "@/types";
 
 const AUTH_RATE_LIMIT = { limit: 5, windowMs: 15 * 60 * 1000 };
 
-async function enforceAuthRateLimit(action: string) {
-  const headerList = await headers();
-  const ip = getClientIp(headerList);
+async function enforceAuthRateLimit(action: string, email: string) {
   const result = checkRateLimit(
-    `${action}:${ip}`,
+    `${action}:${email.toLowerCase()}`,
     AUTH_RATE_LIMIT.limit,
     AUTH_RATE_LIMIT.windowMs,
   );
@@ -46,8 +38,6 @@ export async function registerUser(
   formData: FormData,
 ): Promise<ApiResponse<{ message: string }>> {
   try {
-    await enforceAuthRateLimit("register");
-
     const raw = {
       name: formData.get("name"),
       email: formData.get("email"),
@@ -64,21 +54,16 @@ export async function registerUser(
       );
     }
 
+    await enforceAuthRateLimit("register", parsed.data.email);
+
     const user = await createUser(parsed.data);
     const verification = await createVerificationToken(user.email);
-    await sendVerificationEmail(user.email, user.name, verification.token);
-
-    if (parsed.data.role === Role.CLIENT) {
-      const plan = (formData.get("plan") as string) || "STARTER";
-      const validPlans = ["STARTER", "PREMIUM", "ELITE"];
-      if (validPlans.includes(plan)) {
-        await createSubscription(user.id, plan as SubscriptionPlan);
-      }
-    }
+    const { sent } = await sendVerificationEmail(user.email, user.name, verification.token);
 
     return createSuccessResponse({
-      message:
-        "Account created. Please check your email to verify your account.",
+      message: sent
+        ? "Account created. Please check your email to verify your account."
+        : "Account created. You can now sign in.",
     });
   } catch (error) {
     if (error instanceof Error && error.message === "EMAIL_EXISTS") {
@@ -97,45 +82,47 @@ export async function registerUser(
   }
 }
 
-export async function loginUser(
-  formData: FormData,
+export async function preCheckLogin(
+  email: string,
 ): Promise<ApiResponse<{ redirectTo: string }>> {
   try {
-    await enforceAuthRateLimit("login");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return createErrorResponse("Invalid email address", "VALIDATION_ERROR");
+    }
 
-    const raw = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
+    await enforceAuthRateLimit("login", email);
 
-    const parsed = loginSchema.safeParse(raw);
+    const { getUserByEmail } = await import("@/server/services/user.service");
+    const existingUser = await getUserByEmail(email);
 
-    if (!parsed.success) {
+    if (existingUser && !existingUser.emailVerified) {
       return createErrorResponse(
-        parsed.error.issues[0]?.message ?? "Invalid input",
-        "VALIDATION_ERROR",
+        "Please verify your email before signing in. Check your inbox for the verification link.",
+        "EMAIL_NOT_VERIFIED",
       );
     }
 
-    await signIn("credentials", {
-      email: parsed.data.email,
-      password: parsed.data.password,
-      redirect: false,
-    });
+    if (
+      existingUser?.role === Role.COACH &&
+      existingUser.coachProfile &&
+      !existingUser.coachProfile.approved
+    ) {
+      return createErrorResponse(
+        "Your coach account is pending approval. You will be notified once approved.",
+        "COACH_NOT_APPROVED",
+      );
+    }
 
-    const { getUserByEmail } = await import("@/server/services/user.service");
-    const user = await getUserByEmail(parsed.data.email);
-
-    const redirectTo = user
-      ? await getPostLoginRedirect(user.id, user.role)
+    const redirectTo = existingUser
+      ? existingUser.role === "ADMIN"
+        ? "/admin"
+        : existingUser.role === "COACH"
+          ? existingUser.coachProfile?.onboardingComplete ? "/coach" : "/coach/onboarding"
+          : existingUser.clientProfile?.onboardingComplete ? "/client" : "/onboarding"
       : "/client";
 
     return createSuccessResponse({ redirectTo });
   } catch (error) {
-    if (error instanceof AuthError) {
-      return createErrorResponse("Invalid email or password", "INVALID_CREDENTIALS");
-    }
-
     if (error instanceof Error && error.message === "RATE_LIMITED") {
       return createErrorResponse(
         "Too many login attempts. Please try again later.",
@@ -143,7 +130,7 @@ export async function loginUser(
       );
     }
 
-    console.error("loginUser error:", error);
+    console.error("preCheckLogin error:", error);
     return createErrorResponse("Failed to sign in", "INTERNAL_ERROR");
   }
 }

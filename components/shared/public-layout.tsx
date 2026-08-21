@@ -15,7 +15,7 @@ type PublicLayoutProps = {
 const navLinks = [
   { label: "Programs", href: "/programs" },
   { label: "Bundles", href: "/bundles" },
-  { label: "Club", href: "/club" },
+  { label: "Sculpt Club", href: "/club" },
   { label: "Results", href: "/transformations" },
   { label: "Pricing", href: "/pricing" },
 ] as const;
@@ -44,7 +44,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
             <Dumbbell className="size-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold tracking-tight">NoMica</span>
+          <span className="text-lg font-bold tracking-tight">NOMICA</span>
         </Link>
 
         {/* Desktop nav */}
@@ -109,7 +109,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
                   <Dumbbell className="size-4 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-bold tracking-tight">NoMica</span>
+                <span className="text-lg font-bold tracking-tight">NOMICA</span>
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
@@ -162,7 +162,9 @@ export function PublicLayout({ children }: PublicLayoutProps) {
         </div>
       )}
 
-      {children}
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
 
       <footer className="shrink-0 border-t border-border/50 bg-card/50 px-4 py-12 md:px-6">
         <div className="mx-auto max-w-6xl">
@@ -173,11 +175,11 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                   <Dumbbell className="size-3.5 text-primary" />
                 </div>
-                <span className="text-sm font-semibold">NoMica</span>
+                <span className="text-sm font-semibold">NOMICA</span>
               </Link>
               <p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">
-                Premium feminine transformation fitness. Structured programs,
-                progressive overload science, and real coach support.
+                Expert-led feminine fitness. Structured programs, progressive
+                overload methodology, and dedicated coach support.
               </p>
             </div>
 
@@ -299,33 +301,21 @@ export function PublicLayout({ children }: PublicLayoutProps) {
 
           <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} NoMica. All rights reserved.
+              &copy; {new Date().getFullYear()} NOMICA. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/terms"
                 className="transition-colors hover:text-foreground"
               >
-                Instagram
-              </a>
-              <a
-                href="https://tiktok.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                Terms
+              </Link>
+              <Link
+                href="/privacy"
                 className="transition-colors hover:text-foreground"
               >
-                TikTok
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-foreground"
-              >
-                YouTube
-              </a>
+                Privacy
+              </Link>
             </div>
           </div>
         </div>

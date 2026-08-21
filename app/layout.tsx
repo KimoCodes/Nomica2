@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "NoMica",
-    template: "%s | NoMica",
+    default: "NOMICA",
+    template: "%s | NOMICA",
   },
   description:
-    "Personalized fitness coaching platform for clients and coaches",
+    "NOMICA — Personalized fitness coaching with custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
 };
 
 export default function RootLayout({
@@ -32,6 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

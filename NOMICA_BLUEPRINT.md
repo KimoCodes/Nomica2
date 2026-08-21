@@ -46,7 +46,7 @@
 | **Friction reduction** | Quiz funnel captures email before asking for payment |
 | **Commitment escalation** | Free guide → Quiz → Low-ticket → Membership funnel ladder |
 
-### Color System
+### Color System. Blackelephant@1234567890
 
 ```
 Primary:        oklch(0.54 0.18 155)  — NOMICA Green (energy, growth, vitality)

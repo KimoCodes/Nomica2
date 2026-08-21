@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ensureConversation } from "@/server/services/conversation.service";
 import { requireCoachProfile } from "@/server/services/coach.service";
 import { requireOwnedProgram } from "@/server/services/program.service";
+import { createNotification } from "@/server/services/notification.service";
 import type { AssignProgramInput } from "@/server/validators/program.schema";
 
 export async function getCoachClients(coachUserId: string) {
@@ -21,6 +22,7 @@ export async function getCoachClients(coachUserId: string) {
       },
     },
     orderBy: { updatedAt: "desc" },
+    take: 100,
   });
 }
 
@@ -50,7 +52,7 @@ export async function assignProgramToClient(
       },
     });
 
-    return tx.clientProgram.create({
+    const assignment = await tx.clientProgram.create({
       data: {
         clientProfileId: input.clientProfileId,
         programId: input.programId,
@@ -60,10 +62,30 @@ export async function assignProgramToClient(
       include: {
         program: { select: { id: true, title: true } },
         clientProfile: {
-          include: { user: { select: { name: true } } },
+          include: { user: { select: { id: true, name: true } } },
         },
       },
     });
+
+    // Notify client of new program assignment
+    try {
+      const program = await tx.program.findUnique({
+        where: { id: input.programId },
+        select: { title: true },
+      });
+
+      await createNotification({
+        userId: assignment.clientProfile.user.id,
+        type: "WORKOUT_ASSIGNED",
+        title: "New program assigned",
+        body: `Your coach assigned you "${program?.title ?? "a new program"}"`,
+        link: "/workouts",
+      });
+    } catch {
+      // Notification failure should not block assignment
+    }
+
+    return assignment;
   });
 }
 

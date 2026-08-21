@@ -35,7 +35,8 @@ type UploadFolder =
   | "client-progress/videos"
   | "site/hero"
   | "site/products"
-  | "site/quiz";
+  | "site/quiz"
+  | "payment-proofs";
 
 type UploadResult = {
   url: string;
@@ -95,35 +96,20 @@ export async function uploadMedia(
   return result;
 }
 
-export async function deleteMedia(publicId: string): Promise<void> {
+export async function deleteMedia(publicIdOrUrl: string): Promise<void> {
   const client = getCloudinaryClient();
+  const publicId = extractPublicId(publicIdOrUrl);
   await client.uploader.destroy(publicId);
 }
 
-export function getOptimizedUrl(
-  publicId: string,
-  options?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    format?: "auto" | "webp" | "jpg" | "png";
-  },
-): string {
-  const client = getCloudinaryClient();
-  return client.url(publicId, {
-    width: options?.width,
-    height: options?.height,
-    quality: options?.quality ?? "auto",
-    format: options?.format ?? "auto",
-    crop: "fill",
-  });
-}
-
-export function getVideoThumbnailUrl(publicId: string): string {
-  const client = getCloudinaryClient();
-  return client.url(publicId, {
-    resource_type: "video",
-    format: "jpg",
-    seek: 2,
-  });
+function extractPublicId(urlOrId: string): string {
+  if (urlOrId.startsWith("http")) {
+    const parts = urlOrId.split("/");
+    const uploadIndex = parts.findIndex((p) => p === "upload");
+    if (uploadIndex !== -1 && uploadIndex + 2 < parts.length) {
+      const withVersion = parts.slice(uploadIndex + 1).join("/");
+      return withVersion.replace(/\.[^.]+$/, "");
+    }
+  }
+  return urlOrId.replace(/\.[^.]+$/, "");
 }

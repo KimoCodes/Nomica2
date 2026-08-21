@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { getClientCheckIns, getCurrentWeekCheckIn } from "@/server/services/checkin.service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { CheckInForm } from "@/components/forms/check-in-form";
 import {
   Card,
   CardContent,
@@ -68,7 +69,7 @@ export default async function ClientCheckInsPage() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">Coach Response</p>
                   <p className="text-lg font-bold">
-                    {hasResponse ? "Received" : submittedThisWeek ? "Awaiting" : "N/A"}
+                    {hasResponse ? "Received" : submittedThisWeek ? "Awaiting" : "Not yet submitted"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-success/10 p-2.5 icon-hover">
@@ -106,6 +107,17 @@ export default async function ClientCheckInsPage() {
               <p className="mt-2 text-xs text-muted-foreground">
                 Week of {currentCheckIn.weekStart.toLocaleDateString()}
               </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!submittedThisWeek && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Submit This Week&apos;s Check-in</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CheckInForm />
             </CardContent>
           </Card>
         )}

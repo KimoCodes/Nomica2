@@ -2,7 +2,9 @@
 
 import { Role, Difficulty, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/auth";
+import { requireAuth, requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { hashPassword, verifyPassword } from "@/server/utils/password";
 
 import {
   updateProgramSellable,
@@ -17,6 +19,77 @@ import {
 } from "@/server/utils/response";
 
 import type { ApiResponse } from "@/types";
+
+/* ------------------------------------------------
+   USER PROFILE
+------------------------------------------------ */
+
+export async function updateProfileAction(
+  formData: FormData,
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const session = await requireAuth();
+    const name = formData.get("name") as string;
+
+    if (!name || name.trim().length < 2) {
+      return createErrorResponse("Name must be at least 2 characters", "VALIDATION_ERROR");
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { name: name.trim() },
+    });
+
+    revalidatePath("/settings");
+    return createSuccessResponse({ message: "Profile updated" });
+  } catch (error) {
+    console.error("updateProfileAction error:", error);
+    return createErrorResponse("Failed to update profile", "INTERNAL_ERROR");
+  }
+}
+
+export async function changePasswordAction(
+  formData: FormData,
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const session = await requireAuth();
+    const currentPassword = formData.get("currentPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+
+    if (!currentPassword || !newPassword) {
+      return createErrorResponse("Both fields are required", "VALIDATION_ERROR");
+    }
+
+    if (newPassword.length < 8) {
+      return createErrorResponse("New password must be at least 8 characters", "VALIDATION_ERROR");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { password: true },
+    });
+
+    if (!user) {
+      return createErrorResponse("User not found", "NOT_FOUND");
+    }
+
+    const isValid = await verifyPassword(currentPassword, user.password);
+    if (!isValid) {
+      return createErrorResponse("Current password is incorrect", "INVALID_PASSWORD");
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { password: hashedPassword },
+    });
+
+    return createSuccessResponse({ message: "Password changed" });
+  } catch (error) {
+    console.error("changePasswordAction error:", error);
+    return createErrorResponse("Failed to change password", "INTERNAL_ERROR");
+  }
+}
 
 /* ------------------------------------------------
    PROGRAMS MANAGER

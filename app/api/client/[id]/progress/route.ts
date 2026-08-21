@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z, ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { Role, ProgressLogType, MediaVisibility } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { uploadMedia } from "@/lib/cloudinary";
+import { createNotification } from "@/server/services/notification.service";
+
+const postBodySchema = z.object({
+  type: z.nativeEnum(ProgressLogType).default("PROGRESS_PHOTO"),
+  title: z.string().max(200).optional().nullable(),
+  description: z.string().max(1000).optional().nullable(),
+  weight: z.coerce.number().positive().max(500).optional().nullable(),
+  waistCm: z.coerce.number().positive().max(300).optional().nullable(),
+  hipCm: z.coerce.number().positive().max(300).optional().nullable(),
+  gluteCm: z.coerce.number().positive().max(300).optional().nullable(),
+  thighCm: z.coerce.number().positive().max(300).optional().nullable(),
+  notes: z.string().max(1000).optional().nullable(),
+  photoAngles: z.string().optional().nullable(),
+});
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -100,31 +115,31 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const formData = await request.formData();
-    const type = (formData.get("type") as string) || "PROGRESS_PHOTO";
-    const title = (formData.get("title") as string) || null;
-    const description = (formData.get("description") as string) || null;
-    const weight = formData.get("weight")
-      ? parseFloat(formData.get("weight") as string)
-      : null;
-    const waist = formData.get("waistCm")
-      ? parseFloat(formData.get("waistCm") as string)
-      : null;
-    const hips = formData.get("hipCm")
-      ? parseFloat(formData.get("hipCm") as string)
-      : null;
-    const notes = (formData.get("notes") as string) || null;
-    const photoAngles = (formData.get("photoAngles") as string) || null;
+    const parsed = postBodySchema.parse({
+      type: formData.get("type"),
+      title: formData.get("title"),
+      description: formData.get("description"),
+      weight: formData.get("weight"),
+      waistCm: formData.get("waistCm"),
+      hipCm: formData.get("hipCm"),
+      gluteCm: formData.get("gluteCm"),
+      thighCm: formData.get("thighCm"),
+      notes: formData.get("notes"),
+      photoAngles: formData.get("photoAngles"),
+    });
 
     const log = await prisma.progressLog.create({
       data: {
         clientProfileId: clientId,
-        type: type as ProgressLogType,
-        title,
-        description,
-        weight,
-        waist,
-        hips,
-        notes,
+        type: parsed.type,
+        title: parsed.title,
+        description: parsed.description,
+        weight: parsed.weight,
+        waist: parsed.waistCm,
+        hipCm: parsed.hipCm,
+        gluteCm: parsed.gluteCm,
+        thighCm: parsed.thighCm,
+        notes: parsed.notes,
         visibility: MediaVisibility.COACH_ONLY,
       },
     });
@@ -136,7 +151,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const angles = photoAngles?.split(",") ?? [];
+    const angles = parsed.photoAngles?.split(",") ?? [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -161,7 +176,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       const media = await prisma.media.create({
         data: {
-          title: `${title ?? "Progress"} - ${file.name}`,
+          title: `${parsed.title ?? "Progress"} - ${file.name}`,
           type: isVideo ? "PROGRESS_VIDEO" : "PROGRESS_PHOTO",
           url: uploadResult.url,
           thumbnailUrl: uploadResult.thumbnailUrl,
@@ -199,12 +214,46 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
 
+    // Notify coach of progress upload
+    try {
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { id: clientId },
+        include: { user: { select: { id: true, name: true } } },
+      });
+
+      if (clientProfile?.coachId) {
+        await createNotification({
+          userId: clientProfile.coachId,
+          type: "CHECK_IN_DUE",
+          title: "New progress uploaded",
+          body: `${clientProfile.user.name ?? "Your client"} uploaded progress ${parsed.type === "PROGRESS_PHOTO" ? "photos" : "video"}`,
+          link: "/coach/clients",
+        });
+      }
+    } catch {
+      // Notification failure should not block upload
+    }
+
     return NextResponse.json({ log: fullLog }, { status: 201 });
   } catch (error) {
     console.error("Progress upload error:", error);
 
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: error.flatten() },
+        { status: 400 },
+      );
+    }
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (error instanceof Error && error.message === "CLOUDINARY_NOT_CONFIGURED") {
+      return NextResponse.json(
+        { error: "Media uploads are not configured. Please set CLOUDINARY environment variables." },
+        { status: 503 },
+      );
     }
 
     return NextResponse.json(

@@ -1,6 +1,8 @@
 import { STATS } from "@/constants/transformations";
 
 export function StatsBar() {
+  if (STATS.length === 0) return null;
+
   return (
     <section className="border-y border-border/50 bg-muted/30 px-4 py-8">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 md:grid-cols-4">

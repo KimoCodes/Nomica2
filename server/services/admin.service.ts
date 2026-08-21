@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, Difficulty } from "@prisma/client";
+import { createNotification } from "@/server/services/notification.service";
 
 /* -----------------------------
    TYPES
@@ -20,6 +21,7 @@ export type LandingContentInput = {
 export async function getAdminUsers() {
   return prisma.user.findMany({
     orderBy: { createdAt: "desc" },
+    take: 100,
     select: {
       id: true,
       name: true,
@@ -39,6 +41,26 @@ export async function getAdminUsers() {
   });
 }
 
+export async function updateUserRole(userId: string, role: "ADMIN" | "COACH" | "CLIENT") {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+}
+
+export async function deleteUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user?.role === "ADMIN") {
+    throw new Error("Cannot delete admin users");
+  }
+
+  return prisma.user.delete({ where: { id: userId } });
+}
+
 /* -----------------------------
    COACHES
 ------------------------------*/
@@ -46,6 +68,7 @@ export async function getAdminUsers() {
 export async function getAdminCoaches() {
   return prisma.coachProfile.findMany({
     orderBy: { createdAt: "desc" },
+    take: 100,
     include: {
       user: {
         select: { id: true, name: true, email: true, createdAt: true },
@@ -64,8 +87,10 @@ export async function getAdminCoaches() {
 export async function getAdminSubscriptions() {
   return prisma.subscription.findMany({
     orderBy: { createdAt: "desc" },
+    take: 100,
     include: {
       user: { select: { name: true, email: true } },
+      approvedBy: { select: { name: true, email: true } },
       payments: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -75,15 +100,66 @@ export async function getAdminSubscriptions() {
   });
 }
 
+export async function getCoachClientSubscriptions(coachUserId: string) {
+  const clients = await prisma.clientProfile.findMany({
+    where: { coachId: coachUserId },
+    select: {
+      id: true,
+      userId: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          subscription: {
+            select: {
+              id: true,
+              status: true,
+              plan: true,
+              approvedAt: true,
+              approvedBy: { select: { name: true } },
+              currentPeriodEnd: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return clients.map((client) => ({
+    id: client.id,
+    userId: client.userId,
+    name: client.user.name,
+    email: client.user.email,
+    subscription: client.user.subscription,
+  }));
+}
+
 /* -----------------------------
    COACH APPROVAL
 ------------------------------*/
 
 export async function approveCoach(coachProfileId: string) {
-  return prisma.coachProfile.update({
+  const profile = await prisma.coachProfile.update({
     where: { id: coachProfileId },
     data: { approved: true },
+    include: { user: { select: { id: true, name: true } } },
   });
+
+  try {
+    await createNotification({
+      userId: profile.user.id,
+      type: "COACH_ASSIGNED",
+      title: "Coach account approved",
+      body: "Your coach account has been approved. You can now access all coach features.",
+      link: "/coach",
+    });
+  } catch {
+    // Notification failure should not block approval
+  }
+
+  return profile;
 }
 
 export async function revokeCoach(coachProfileId: string) {
@@ -100,6 +176,7 @@ export async function revokeCoach(coachProfileId: string) {
 export async function getAdminPrograms() {
   return prisma.program.findMany({
     orderBy: { createdAt: "desc" },
+    take: 100,
     include: {
       coach: {
         select: {
@@ -177,6 +254,7 @@ export async function deleteProgram(id: string) {
 export async function getAdminClients() {
   return prisma.clientProfile.findMany({
     orderBy: { createdAt: "desc" },
+    take: 100,
     include: {
       user: {
         select: { id: true, name: true, email: true, createdAt: true },

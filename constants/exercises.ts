@@ -4,7 +4,10 @@ export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   CHEST: "Chest",
   BACK: "Back",
   LEGS: "Legs",
+  GLUTES: "Glutes",
+  SHOULDERS: "Shoulders",
   ARMS: "Arms",
+  CORE: "Core",
   MOBILITY: "Mobility",
   CARDIO: "Cardio",
 };

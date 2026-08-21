@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { completeWorkoutAction } from "@/actions/workout.actions";
+import { completeWorkout } from "@/actions/workout.actions";
+import type { ApiResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
@@ -25,9 +26,13 @@ export function CompleteWorkoutForm({
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
     setError(null);
-    formData.set("programDayId", programDayId);
 
-    const result = await trackLoading(() => completeWorkoutAction(formData));
+    const result: ApiResponse<{ message: string }> = await trackLoading(() =>
+      completeWorkout({
+        programDayId,
+        notes: (formData.get("notes") as string) || undefined,
+      }),
+    );
 
     if (!result.success) {
       setError(result.error?.message ?? "Failed to complete workout");
@@ -50,7 +55,7 @@ export function CompleteWorkoutForm({
   return (
     <form action={handleSubmit} className="space-y-3">
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useCallback } from "react";
 import {
   addDayAction,
   addExerciseToDayAction,
@@ -196,7 +196,7 @@ export function ProgramBuilder({
         </div>
       )}
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </div>
       )}
@@ -395,56 +395,12 @@ export function ProgramBuilder({
                   ))}
                 </div>
 
-                <form
-                  action={(fd) => handleAddExercise(day.id, fd)}
-                  className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6"
-                >
-                  <div className="space-y-1 sm:col-span-2">
-                    <Label htmlFor={`exercise-${day.id}`}>Exercise</Label>
-                    <input type="hidden" name="exerciseId" />
-                    <Select onValueChange={(value: string | null) => {
-                      const hiddenInput = document.querySelector('input[name="exerciseId"]') as HTMLInputElement;
-                      if (hiddenInput && value) hiddenInput.value = value;
-                    }}>
-                      <SelectTrigger id={`exercise-${day.id}`}>
-                        <SelectValue placeholder="Select exercise" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {exercises.map((exercise) => (
-                          <SelectItem key={exercise.id} value={exercise.id}>
-                            {exercise.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor={`sets-${day.id}`}>Sets</Label>
-                    <Input id={`sets-${day.id}`} name="sets" type="number" min={1} placeholder="3" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor={`reps-${day.id}`}>Reps</Label>
-                    <Input id={`reps-${day.id}`} name="reps" type="number" min={1} placeholder="10" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor={`rest-${day.id}`}>Rest (s)</Label>
-                    <Input id={`rest-${day.id}`} name="restSeconds" type="number" min={0} placeholder="60" />
-                  </div>
-                  <div className="space-y-1 sm:col-span-2 lg:col-span-5">
-                    <Label htmlFor={`notes-${day.id}`}>Notes</Label>
-                    <Textarea
-                      id={`notes-${day.id}`}
-                      name="notes"
-                      rows={2}
-                      placeholder="Tempo, load guidance, substitutions..."
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button type="submit" size="sm" className="w-full" disabled={isPending}>
-                      Add
-                    </Button>
-                  </div>
-                </form>
+                <AddExerciseForm
+                  dayId={day.id}
+                  exercises={exercises}
+                  isPending={isPending}
+                  onAdd={handleAddExercise}
+                />
               </div>
             ))}
           </CardContent>
@@ -487,5 +443,90 @@ export function ProgramBuilder({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+type Exercise = {
+  id: string;
+  name: string;
+  muscleGroup: string;
+};
+
+function AddExerciseForm({
+  dayId,
+  exercises,
+  isPending,
+  onAdd,
+}: {
+  dayId: string;
+  exercises: Exercise[];
+  isPending: boolean;
+  onAdd: (dayId: string, formData: FormData) => void;
+}) {
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = useCallback(
+    (fd: FormData) => {
+      onAdd(dayId, fd);
+      formRef.current?.reset();
+      if (hiddenInputRef.current) hiddenInputRef.current.value = "";
+    },
+    [dayId, onAdd],
+  );
+
+  return (
+    <form
+      ref={formRef}
+      action={handleSubmit}
+      className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6"
+    >
+      <div className="space-y-1 sm:col-span-2">
+        <Label htmlFor={`exercise-${dayId}`}>Exercise</Label>
+        <input type="hidden" name="exerciseId" ref={hiddenInputRef} />
+        <Select
+          onValueChange={(value: string | null) => {
+            if (hiddenInputRef.current && value) hiddenInputRef.current.value = value;
+          }}
+        >
+          <SelectTrigger id={`exercise-${dayId}`}>
+            <SelectValue placeholder="Select exercise" />
+          </SelectTrigger>
+          <SelectContent>
+            {exercises.map((exercise) => (
+              <SelectItem key={exercise.id} value={exercise.id}>
+                {exercise.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`sets-${dayId}`}>Sets</Label>
+        <Input id={`sets-${dayId}`} name="sets" type="number" min={1} placeholder="3" />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`reps-${dayId}`}>Reps</Label>
+        <Input id={`reps-${dayId}`} name="reps" type="number" min={1} placeholder="10" />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`rest-${dayId}`}>Rest (s)</Label>
+        <Input id={`rest-${dayId}`} name="restSeconds" type="number" min={0} placeholder="60" />
+      </div>
+      <div className="space-y-1 sm:col-span-2 lg:col-span-5">
+        <Label htmlFor={`notes-${dayId}`}>Notes</Label>
+        <Textarea
+          id={`notes-${dayId}`}
+          name="notes"
+          rows={2}
+          placeholder="Tempo, load guidance, substitutions..."
+        />
+      </div>
+      <div className="flex items-end">
+        <Button type="submit" size="sm" className="w-full" disabled={isPending}>
+          Add
+        </Button>
+      </div>
+    </form>
   );
 }

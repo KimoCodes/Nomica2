@@ -131,6 +131,12 @@ enum ProgressLogType {
   COACH_FEEDBACK
 }
 
+enum TransformationStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
 enum NotificationType {
   NEW_MESSAGE
   WORKOUT_ASSIGNED
@@ -245,6 +251,7 @@ model ClientProfile {
   progressLogs       ProgressLog[]
   checkIns           CheckIn[]
   workoutCompletions WorkoutCompletion[]
+  transformations    TransformationSubmission[]
 
   @@index([userId])
   @@index([coachId])
@@ -619,6 +626,36 @@ model ProgressPhoto {
   @@index([mediaId])
 }
 
+model TransformationSubmission {
+  id              String                @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile         @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+
+  name            String
+  quote           String                @db.Text
+  story           String                @db.Text
+
+  beforePhotoId   String?
+  beforePhoto     Media?                @relation("TransformationBefore", fields: [beforePhotoId], references: [id], onDelete: SetNull)
+  afterPhotoId    String?
+  afterPhoto      Media?                @relation("TransformationAfter", fields: [afterPhotoId], references: [id], onDelete: SetNull)
+
+  beforeWeight    Float?
+  afterWeight     Float?
+  duration        String?
+  programName     String?
+
+  status          TransformationStatus  @default(SUBMITTED)
+  coachNote       String?               @db.Text
+  reviewedAt      DateTime?
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([clientProfileId])
+  @@index([status])
+}
+
 model Subscription {
   id                   String             @id @default(cuid())
   userId               String             @unique
@@ -744,6 +781,8 @@ model Media {
   tags           MediaTag[]
   progressLogs   ProgressLog[]
   progressPhotos ProgressPhoto[]
+  transformationsBefore TransformationSubmission[] @relation("TransformationBefore")
+  transformationsAfter  TransformationSubmission[] @relation("TransformationAfter")
 
   visibility MediaVisibility @default(COACH_ONLY)
 

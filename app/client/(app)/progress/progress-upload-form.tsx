@@ -39,7 +39,7 @@ export function ProgressUploadForm({ clientProfileId }: ProgressUploadFormProps)
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    const validFiles = files.filter((f) => f.size <= 50 * 1024 * 1024);
+    const validFiles = files.filter((f) => f.size <= 1.5 * 1024 * 1024 * 1024);
 
     if (validFiles.length !== files.length) {
       setError("Some files were too large (max 50MB). They were skipped.");

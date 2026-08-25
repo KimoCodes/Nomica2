@@ -40,8 +40,8 @@ export function MediaUploadButton() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 100 * 1024 * 1024) {
-      setError("File too large. Maximum size is 100MB.");
+    if (file.size > 1.5 * 1024 * 1024 * 1024) {
+      setError("File too large. Maximum size is 1.5GB.");
       return;
     }
 

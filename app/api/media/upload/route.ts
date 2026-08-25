@@ -4,7 +4,7 @@ import { Role, MediaType, MediaVisibility } from "@prisma/client";
 import { uploadMedia } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_FILE_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const VALID_VISIBILITY = new Set<MediaVisibility>([
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 100MB." },
+        { error: "File too large. Maximum size is 1.5GB." },
         { status: 400 },
       );
     }

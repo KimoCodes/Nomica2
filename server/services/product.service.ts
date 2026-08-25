@@ -5,6 +5,7 @@ type ProductFilter = {
   kind?: ProductKind;
   focus?: ProductFocus;
   isActive?: boolean;
+  take?: number;
 };
 
 export async function getProducts(filter: ProductFilter = {}) {
@@ -15,6 +16,7 @@ export async function getProducts(filter: ProductFilter = {}) {
       ...(filter.focus && { focus: filter.focus }),
     },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    ...(filter.take && { take: filter.take }),
     include: {
       _count: {
         select: { purchases: { where: { status: "COMPLETED" } }, reviews: true },
@@ -97,6 +99,18 @@ export async function getBundleProducts() {
       _count: {
         select: { purchases: { where: { status: "COMPLETED" } } },
       },
+    },
+  });
+}
+
+export async function getPublishedReviews(limit = 4) {
+  return prisma.review.findMany({
+    where: { isPublished: true },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: {
+      user: { select: { name: true } },
+      product: { select: { name: true } },
     },
   });
 }

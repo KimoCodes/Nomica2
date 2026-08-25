@@ -7,6 +7,7 @@ import { requireClientProfile } from "@/server/services/coach.service";
 import { ProgressLogForm } from "@/components/forms/progress-log-form";
 import { ProgressUploadForm } from "./progress-upload-form";
 import { ProgressTimeline } from "./progress-timeline";
+import { TransformationSubmitForm } from "./transformation-submit-form";
 import { WeightTrendChart } from "@/components/charts/weight-trend-chart";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { FeatureGate } from "@/components/shared/feature-gate";
@@ -17,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Minus, Ruler, Weight, Camera, Upload } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Ruler, Weight, Camera, Upload, Share2 } from "lucide-react";
 
 export default async function ClientProgressPage() {
   const session = await requireRole([Role.CLIENT]);
@@ -148,6 +149,10 @@ export default async function ClientProgressPage() {
               <Ruler className="size-4" />
               Quick Log
             </TabsTrigger>
+            <TabsTrigger value="share" className="gap-2">
+              <Share2 className="size-4" />
+              Share Transformation
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="timeline">
@@ -179,6 +184,21 @@ export default async function ClientProgressPage() {
               </CardHeader>
               <CardContent>
                 <ProgressLogForm />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="share">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Share Your Transformation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Submit your transformation story with before and after photos.
+                  Your coach will review it before it appears publicly.
+                </p>
+                <TransformationSubmitForm clientProfileId={clientProfile.id} />
               </CardContent>
             </Card>
           </TabsContent>

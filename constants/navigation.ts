@@ -8,6 +8,7 @@ export const COACH_NAV = [
   { label: "Media", href: "/coach/media", icon: "media" },
   { label: "Messages", href: "/coach/messages", icon: "messages" },
   { label: "Check-ins", href: "/coach/check-ins", icon: "check-ins" },
+  { label: "Transformations", href: "/coach/transformations", icon: "progress" },
 ] as const;
 
 export const CLIENT_NAV = [

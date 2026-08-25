@@ -4,7 +4,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { LeadMagnetForm } from "@/components/shared/lead-magnet-form";
-import { getProducts } from "@/server/services/product.service";
+import { TestimonialCard } from "@/components/social-proof";
+import { getProducts, getPublishedReviews } from "@/server/services/product.service";
+import { getApprovedTransformations } from "@/server/services/transformation.service";
 import { formatPrice } from "@/constants/subscriptions";
 import {
   Dumbbell,
@@ -147,7 +149,9 @@ const faqs = [
 
 
 export default async function HomePage() {
-  const products = await getProducts({ kind: "PROGRAM" });
+  const products = await getProducts({ kind: "PROGRAM", take: 3 });
+  const reviews = await getPublishedReviews(4);
+  const transformations = await getApprovedTransformations(4);
 
   return (
     <PublicLayout>
@@ -347,69 +351,75 @@ export default async function HomePage() {
               </h2>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {products.slice(0, 5).map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
-                    index === 0
-                      ? "border-primary shadow-premium scale-[1.02]"
-                      : "border-border/50"
-                  }`}
-                >
-                  {index === 0 && (
-                    <div className="absolute -top-3 left-6">
-                      <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                        MOST POPULAR
+            {products.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {products.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                      index === 0
+                        ? "border-primary shadow-premium scale-[1.02]"
+                        : "border-border/50"
+                    }`}
+                  >
+                    {index === 0 && (
+                      <div className="absolute -top-3 left-6">
+                        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                          MOST POPULAR
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
+                      <Dumbbell className="size-6 text-primary" />
+                    </div>
+
+                    <h3 className="text-lg font-bold">{product.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {product.tagline}
+                    </p>
+
+                    <div className="mt-4">
+                      <span className="text-3xl font-bold">
+                        {formatPrice(product.priceCents)}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {" "}one-time
                       </span>
                     </div>
-                  )}
 
-                  <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                    <Dumbbell className="size-6 text-primary" />
+                    <ul className="mt-6 flex-1 space-y-3">
+                      {product.features.slice(0, 4).map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      href={`/programs/${product.slug}`}
+                      className={cn(
+                        buttonVariants({
+                          variant: index === 0 ? "default" : "outline",
+                        }),
+                        "mt-6 w-full group/btn",
+                      )}
+                    >
+                      Get Instant Access
+                      <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
+                    </Link>
                   </div>
-
-                  <h3 className="text-lg font-bold">{product.name}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {product.tagline}
-                  </p>
-
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold">
-                      {formatPrice(product.priceCents)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {" "}one-time
-                    </span>
-                  </div>
-
-                  <ul className="mt-6 flex-1 space-y-3">
-                    {product.features.slice(0, 4).map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <CheckCircle2 className="size-4 shrink-0 text-primary" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href={`/programs/${product.slug}`}
-                    className={cn(
-                      buttonVariants({
-                        variant: index === 0 ? "default" : "outline",
-                      }),
-                      "mt-6 w-full group/btn",
-                    )}
-                  >
-                    Get Instant Access
-                    <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
-                  </Link>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">
+                Programs coming soon. Stay tuned!
+              </p>
+            )}
           </div>
         </section>
 
@@ -430,9 +440,105 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="text-center text-muted-foreground">
-              <p>Transformation stories coming soon from our members.</p>
-            </div>
+            {transformations.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {transformations.map((t) => (
+                  <div
+                    key={t.id}
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg"
+                  >
+                    <div className="grid grid-cols-2 gap-1">
+                      <div className="relative aspect-[3/4] bg-muted">
+                        {t.beforePhoto ? (
+                          <img
+                            src={t.beforePhoto.thumbnailUrl ?? t.beforePhoto.url}
+                            alt="Before"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                            Before
+                          </div>
+                        )}
+                        <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
+                          Before
+                        </span>
+                      </div>
+                      <div className="relative aspect-[3/4] bg-muted">
+                        {t.afterPhoto ? (
+                          <img
+                            src={t.afterPhoto.thumbnailUrl ?? t.afterPhoto.url}
+                            alt="After"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                            After
+                          </div>
+                        )}
+                        <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2 py-0.5 text-xs text-primary-foreground">
+                          After
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-6">
+                      <p className="text-lg font-semibold">
+                        {t.clientProfile.user.name}
+                      </p>
+                      {t.duration && (
+                        <p className="text-sm text-muted-foreground">
+                          {t.duration}
+                          {t.programName ? ` · ${t.programName}` : ""}
+                        </p>
+                      )}
+
+                      <blockquote className="mt-3 flex-1 text-sm text-muted-foreground">
+                        &ldquo;{t.quote}&rdquo;
+                      </blockquote>
+
+                      {(t.beforeWeight || t.afterWeight) && (
+                        <div className="mt-4 flex gap-4 text-sm">
+                          {t.beforeWeight && (
+                            <span>
+                              <span className="text-muted-foreground">Start: </span>
+                              <span className="font-medium">{t.beforeWeight} kg</span>
+                            </span>
+                          )}
+                          {t.afterWeight && (
+                            <span>
+                              <span className="text-muted-foreground">End: </span>
+                              <span className="font-medium">{t.afterWeight} kg</span>
+                            </span>
+                          )}
+                          {t.beforeWeight && t.afterWeight && (
+                            <span className="font-medium text-success">
+                              -{(t.beforeWeight - t.afterWeight).toFixed(1)} kg
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {reviews.map((review) => (
+                  <TestimonialCard
+                    key={review.id}
+                    quote={review.body}
+                    name={review.user.name}
+                    role={review.product.name}
+                    rating={review.rating}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <p>Transformation stories coming soon from our members.</p>
+              </div>
+            )}
           </div>
         </section>
 

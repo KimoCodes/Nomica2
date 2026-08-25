@@ -19,7 +19,7 @@ const postBodySchema = z.object({
   photoAngles: z.string().optional().nullable(),
 });
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 

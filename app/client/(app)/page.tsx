@@ -28,6 +28,9 @@ import {
   Gift,
 } from "lucide-react";
 import { WeightTrendChart } from "@/components/charts/weight-trend-chart";
+import { FitnessIntelligenceCards } from "@/components/fitness-intelligence-cards";
+import { WorkoutRecommendationCard } from "@/components/workout-recommendation-card";
+import { BadgesSection } from "@/components/badges-section";
 
 export default async function ClientDashboardPage() {
   const session = await requireRole([Role.CLIENT]);
@@ -361,6 +364,13 @@ export default async function ClientDashboardPage() {
             <WeightTrendChart data={dashboard.weightTrend} />
           </CardContent>
         </Card>
+
+        <FitnessIntelligenceCards userId={session.user.id} />
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WorkoutRecommendationCard />
+          <BadgesSection userId={session.user.id} />
+        </div>
       </div>
     </DashboardLayout>
   );

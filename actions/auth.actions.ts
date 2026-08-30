@@ -18,7 +18,9 @@ import { sendVerificationEmail } from "@/server/services/email.service";
 import {
   registerSchema,
 } from "@/server/validators/auth.schema";
+import { logActivity } from "@/server/services/analytics.service";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 const AUTH_RATE_LIMIT = { limit: 5, windowMs: 15 * 60 * 1000 };
 
@@ -60,6 +62,15 @@ export async function registerUser(
     const verification = await createVerificationToken(user.email);
     const { sent } = await sendVerificationEmail(user.email, user.name, verification.token);
 
+    logActivity({
+      action: "USER_REGISTERED",
+      category: "auth",
+      resourceType: "user",
+      resourceId: user.id,
+      description: `New user registered: ${user.email}`,
+      metadata: { role: user.role },
+    }).catch(() => {});
+
     return createSuccessResponse({
       message: sent
         ? "Account created. Please check your email to verify your account."
@@ -77,7 +88,7 @@ export async function registerUser(
       );
     }
 
-    console.error("registerUser error:", error);
+    logger.error({ err: error, action: "registerUser" }, "Failed to create account");
     return createErrorResponse("Failed to create account", "INTERNAL_ERROR");
   }
 }
@@ -130,7 +141,7 @@ export async function preCheckLogin(
       );
     }
 
-    console.error("preCheckLogin error:", error);
+    logger.error({ err: error, action: "preCheckLogin" }, "Failed to sign in");
     return createErrorResponse("Failed to sign in", "INTERNAL_ERROR");
   }
 }
@@ -138,9 +149,16 @@ export async function preCheckLogin(
 export async function logoutUser(): Promise<ApiResponse<{ message: string }>> {
   try {
     await signOut({ redirect: false });
+
+    logActivity({
+      action: "USER_LOGGED_OUT",
+      category: "auth",
+      description: "User signed out",
+    }).catch(() => {});
+
     return createSuccessResponse({ message: "Signed out successfully" });
   } catch (error) {
-    console.error("logoutUser error:", error);
+    logger.error({ err: error, action: "logoutUser" }, "Failed to sign out");
     return createErrorResponse("Failed to sign out", "INTERNAL_ERROR");
   }
 }
@@ -158,9 +176,15 @@ export async function verifyEmail(
       );
     }
 
+    logActivity({
+      action: "EMAIL_VERIFIED",
+      category: "auth",
+      description: `Email verified: ${email}`,
+    }).catch(() => {});
+
     return createSuccessResponse({ message: "Email verified successfully" });
   } catch (error) {
-    console.error("verifyEmail error:", error);
+    logger.error({ err: error, action: "verifyEmail" }, "Failed to verify email");
     return createErrorResponse("Failed to verify email", "INTERNAL_ERROR");
   }
 }

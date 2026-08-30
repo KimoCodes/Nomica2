@@ -10,6 +10,7 @@ import {
 } from "@/server/utils/response";
 import { createProgressLogSchema } from "@/server/validators/progress.schema";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function parseFormData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
@@ -38,7 +39,7 @@ export async function createProgressLogAction(
     revalidatePath("/client/progress");
     return createSuccessResponse({ id: log.id });
   } catch (error) {
-    console.error("createProgressLogAction error:", error);
+    logger.error({ err: error, action: "createProgressLogAction" }, "Failed to save progress log");
     return createErrorResponse("Failed to save progress log", "INTERNAL_ERROR");
   }
 }

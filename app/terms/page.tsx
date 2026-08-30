@@ -3,7 +3,7 @@ import { PublicLayout } from "@/components/shared/public-layout";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "NOMICA Terms of Service — the rules and guidelines for using our platform.",
+  description: "NomiTips Terms of Service — the rules and guidelines for using our platform.",
 };
 
 export default function TermsPage() {
@@ -24,7 +24,7 @@ export default function TermsPage() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                By accessing or using the NOMICA platform (&quot;Service&quot;), you agree
+                By accessing or using the NomiTips platform (&quot;Service&quot;), you agree
                 to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree
                 to these Terms, do not use the Service.
               </p>
@@ -35,7 +35,7 @@ export default function TermsPage() {
                 2. Description of Service
               </h2>
               <p>
-                NOMICA provides a digital fitness coaching platform that includes
+                NomiTips provides a digital fitness coaching platform that includes
                 workout programs, exercise video libraries, progress tracking tools,
                 nutrition resources, and communication with coaches. The Service is
                 delivered through our website and associated applications.
@@ -95,7 +95,7 @@ export default function TermsPage() {
               </h2>
               <p>
                 All content on the Service, including workout programs, videos,
-                images, text, and software, is the property of NOMICA or its
+                images, text, and software, is the property of NomiTips or its
                 content providers and is protected by copyright and trademark laws.
                 You may not reproduce, distribute, or create derivative works without
                 our express written permission.
@@ -120,7 +120,7 @@ export default function TermsPage() {
                 9. Limitation of Liability
               </h2>
               <p>
-                To the maximum extent permitted by law, NOMICA shall not be liable
+                To the maximum extent permitted by law, NomiTips shall not be liable
                 for any indirect, incidental, special, consequential, or punitive
                 damages, or any loss of profits or revenues, whether incurred
                 directly or indirectly.
@@ -146,10 +146,10 @@ export default function TermsPage() {
               <p>
                 For questions about these Terms, contact us at{" "}
                 <a
-                  href="mailto:support@nomica.app"
+                  href="mailto:support@nomitips.com"
                   className="text-primary hover:underline"
                 >
-                  support@nomica.app
+                  support@nomitips.com
                 </a>
                 .
               </p>

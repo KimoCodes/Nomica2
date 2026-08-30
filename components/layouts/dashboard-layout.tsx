@@ -104,7 +104,7 @@ export function DashboardLayout({
             <Dumbbell className="size-4 text-primary" />
           </div>
           <Link href="/" className="text-lg font-bold tracking-tight">
-            NOMICA
+            NomiTips
           </Link>
         </div>
 
@@ -171,7 +171,7 @@ export function DashboardLayout({
                     <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                       <Dumbbell className="size-3.5 text-primary" />
                     </div>
-                    NOMICA
+                    NomiTips
                   </DialogTitle>
                 </DialogHeader>
                 <nav className="flex flex-col gap-1 p-3">

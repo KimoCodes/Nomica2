@@ -44,7 +44,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
             <Dumbbell className="size-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold tracking-tight">NOMICA</span>
+          <span className="text-lg font-bold tracking-tight">NomiTips</span>
         </Link>
 
         {/* Desktop nav */}
@@ -109,7 +109,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
                   <Dumbbell className="size-4 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-bold tracking-tight">NOMICA</span>
+                <span className="text-lg font-bold tracking-tight">NomiTips</span>
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
@@ -175,7 +175,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                   <Dumbbell className="size-3.5 text-primary" />
                 </div>
-                <span className="text-sm font-semibold">NOMICA</span>
+                <span className="text-sm font-semibold">NomiTips</span>
               </Link>
               <p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">
                 Expert-led feminine fitness. Structured programs, progressive
@@ -265,10 +265,10 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="mailto:support@nomica.app"
+                    href="mailto:support@nomitips.com"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    support@nomica.app
+                    support@nomitips.com
                   </a>
                 </li>
                 <li>
@@ -301,7 +301,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
 
           <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} NOMICA. All rights reserved.
+              &copy; {new Date().getFullYear()} NomiTips. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <Link

@@ -20,7 +20,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Choose your NOMICA transformation path. All-Access membership or one-time program purchases — cancel anytime.",
+    "Choose your NomiTips transformation path. All-Access membership or one-time program purchases — cancel anytime.",
 };
 
 export default async function PricingPage() {

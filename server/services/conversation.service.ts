@@ -29,7 +29,7 @@ export async function getConversationForUser(
   });
 
   if (!conversation) {
-    return null;
+    throw new Error("NOT_FOUND");
   }
 
   if (conversation.clientId !== userId && conversation.coachId !== userId) {

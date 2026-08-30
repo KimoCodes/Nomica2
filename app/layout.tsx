@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { LoadingBarProvider } from "@/components/ui/loading-bar";
+import { Providers } from "@/components/providers";
+import { VisitTracker } from "@/components/analytics/visit-tracker";
 
 export const runtime = "nodejs";
 const geistSans = Geist({
@@ -17,11 +19,36 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "NOMICA",
-    template: "%s | NOMICA",
+    default: "NomiTips",
+    template: "%s | NomiTips",
   },
   description:
-    "NOMICA — Personalized fitness coaching with custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
+    "NomiTips — Personalized fitness coaching with custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
+  keywords: ["fitness coaching", "workout programs", "nutrition tracking", "personal trainer", "women fitness", "strength training"],
+  authors: [{ name: "NomiTips" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "NomiTips",
+    title: "NomiTips — Personalized Fitness Coaching",
+    description: "Custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NomiTips — Personalized Fitness Coaching",
+    description: "Custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -36,10 +63,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <LoadingBarProvider>
-          {children}
-        </LoadingBarProvider>
-        <Toaster />
+        <Providers>
+          <VisitTracker />
+          <LoadingBarProvider>
+            {children}
+          </LoadingBarProvider>
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

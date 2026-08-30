@@ -202,7 +202,7 @@ export default async function ClientSubscriptionPage({
                 <CreditCard className="mb-3 size-10 text-muted-foreground/30" />
                 <p className="text-sm font-medium">No active subscription</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Choose a plan below to get started with NOMICA.
+                  Choose a plan below to get started with NomiTips.
                 </p>
                 <a
                   href="#available-plans"

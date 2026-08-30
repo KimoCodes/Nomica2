@@ -19,6 +19,7 @@ import {
   onboardingStepSchema,
 } from "@/server/validators/onboarding.schema";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function parseFormData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
@@ -74,7 +75,7 @@ export async function getClientOnboardingProgress(): Promise<
     if (error instanceof Error && error.message === "FORBIDDEN") {
       return createErrorResponse("Access denied", "FORBIDDEN");
     }
-    console.error("getClientOnboardingProgress error:", error);
+    logger.error({ err: error, action: "getClientOnboardingProgress" }, "Failed to load onboarding progress");
     return createErrorResponse("Failed to load onboarding progress", "INTERNAL_ERROR");
   }
 }
@@ -122,7 +123,7 @@ export async function saveClientOnboardingStepAction(
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return createErrorResponse("You must be signed in", "UNAUTHORIZED");
     }
-    console.error("saveClientOnboardingStepAction error:", error);
+    logger.error({ err: error, action: "saveClientOnboardingStepAction" }, "Failed to save onboarding step");
     return createErrorResponse("Failed to save onboarding step", "INTERNAL_ERROR");
   }
 }
@@ -161,7 +162,7 @@ export async function submitCoachOnboarding(
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return createErrorResponse("You must be signed in", "UNAUTHORIZED");
     }
-    console.error("submitCoachOnboarding error:", error);
+    logger.error({ err: error, action: "submitCoachOnboarding" }, "Failed to complete onboarding");
     return createErrorResponse("Failed to complete onboarding", "INTERNAL_ERROR");
   }
 }

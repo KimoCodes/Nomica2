@@ -224,8 +224,8 @@ const BUNDLES = [
     sortOrder: 21,
   },
   {
-    slug: "complete-nomica-bundle",
-    name: "Complete NOMICA Bundle",
+    slug: "complete-nomitips-bundle",
+    name: "Complete NomiTips Bundle",
     tagline: "All 6 signature programs + all 5 focused challenges",
     priceCents: 11999,
     items: PROGRAMS.map((p) => p.slug),
@@ -239,19 +239,19 @@ async function main() {
   const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
 
-  // 1. NOMICA head-coach account that owns catalog programs
-  const nomicaCoach = await prisma.user.upsert({
-    where: { email: "coach@nomica.fit" },
+  // 1. NomiTips head-coach account that owns catalog programs
+  const nomitipsCoach = await prisma.user.upsert({
+    where: { email: "coach@nomitips.com" },
     update: {},
     create: {
-      email: "coach@nomica.fit",
-      name: "NOMICA Coaching",
+      email: "coach@nomitips.com",
+      name: "NomiTips Coaching",
       password: hashSync("ChangeMe123!", BCRYPT_ROUNDS),
       role: Role.COACH,
       emailVerified: new Date(),
       coachProfile: {
         create: {
-          bio: "The official NOMICA coaching team. Programs designed around the goals women ask for most.",
+          bio: "The official NomiTips coaching team. Programs designed around the goals women ask for most.",
           specialties: ["Glute training", "Body recomposition", "Beginner coaching"],
           yearsExperience: 8,
           certification: "NASM CPT",
@@ -263,9 +263,9 @@ async function main() {
     include: { coachProfile: true },
   });
   const coachProfileId =
-    nomicaCoach.coachProfile?.id ??
-    (await prisma.coachProfile.findUniqueOrThrow({ where: { userId: nomicaCoach.id } })).id;
-  console.log("✓ NOMICA head coach");
+    nomitipsCoach.coachProfile?.id ??
+    (await prisma.coachProfile.findUniqueOrThrow({ where: { userId: nomitipsCoach.id } })).id;
+  console.log("✓ NomiTips head coach");
 
   // 2. Programs + Products
   for (const def of PROGRAMS) {

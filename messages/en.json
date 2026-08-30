@@ -1,0 +1,74 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "refresh": "Refresh",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "workouts": "Workouts",
+    "nutrition": "Nutrition",
+    "progress": "Progress",
+    "messages": "Messages",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "readiness": "Readiness",
+    "consistency": "Consistency",
+    "personalRecords": "Personal Records",
+    "todayReadiness": "Today's Readiness",
+    "consistencyScore": "Consistency Score",
+    "workoutsCompleted": "Workouts Completed",
+    "currentStreak": "Current Streak",
+    "days": "days"
+  },
+  "nutrition": {
+    "searchFoods": "Search Local Foods",
+    "logMeal": "Log Meal",
+    "todayNutrition": "Today's Nutrition",
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "portion": "Portion (g)",
+    "meal": "Meal",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack"
+  },
+  "coach": {
+    "clientAlerts": "Client Alerts",
+    "totalClients": "Total Clients",
+    "atRisk": "At Risk",
+    "needsAttention": "Needs Attention",
+    "riskLevel": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high",
+      "critical": "critical"
+    }
+  },
+  "workout": {
+    "markComplete": "Mark workout complete",
+    "completedToday": "Completed today",
+    "addNotes": "Add notes",
+    "newPR": "New Personal Record!",
+    "prMessage": "Amazing work — you just hit a new PR!",
+    "continue": "Continue"
+  }
+}

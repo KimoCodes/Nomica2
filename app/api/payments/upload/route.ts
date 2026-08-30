@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { uploadMedia } from "@/lib/cloudinary";
+import logger from "@/lib/logger";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       mimeType: file.type,
     }, { status: 200 });
   } catch (error) {
-    console.error("Payment proof upload error:", error);
+    logger.error({ err: error, route: "payments/upload" }, "Payment proof upload error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

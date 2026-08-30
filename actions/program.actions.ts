@@ -30,7 +30,9 @@ import {
   updateProgramExerciseSchema,
   updateWeekSchema,
 } from "@/server/validators/program.schema";
+import { logActivity } from "@/server/services/analytics.service";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function parseFormData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
@@ -55,10 +57,20 @@ export async function createProgramAction(
     }
 
     const program = await createProgram(session.user.id, parsed.data);
+
+    logActivity({
+      userId: session.user.id,
+      action: "PROGRAM_CREATED",
+      category: "program",
+      resourceType: "program",
+      resourceId: program.id,
+      description: `Program created: ${parsed.data.title}`,
+    }).catch(() => {});
+
     revalidatePath("/coach/programs");
     return createSuccessResponse({ id: program.id });
   } catch (error) {
-    console.error("createProgramAction error:", error);
+    logger.error({ err: error, action: "createProgramAction" }, "Failed to create program");
     return createErrorResponse("Failed to create program", "INTERNAL_ERROR");
   }
 }
@@ -69,10 +81,20 @@ export async function duplicateProgramAction(
   try {
     const session = await requireRole([Role.COACH]);
     const program = await duplicateProgram(session.user.id, programId);
+
+    logActivity({
+      userId: session.user.id,
+      action: "PROGRAM_DUPLICATED",
+      category: "program",
+      resourceType: "program",
+      resourceId: program.id,
+      description: "Program duplicated",
+    }).catch(() => {});
+
     revalidatePath("/coach/programs");
     return createSuccessResponse({ id: program.id });
   } catch (error) {
-    console.error("duplicateProgramAction error:", error);
+    logger.error({ err: error, action: "duplicateProgramAction" }, "Failed to duplicate program");
     return createErrorResponse("Failed to duplicate program", "INTERNAL_ERROR");
   }
 }
@@ -83,6 +105,16 @@ export async function deleteProgramAction(
   try {
     const session = await requireRole([Role.COACH]);
     await deleteProgram(session.user.id, programId);
+
+    logActivity({
+      userId: session.user.id,
+      action: "PROGRAM_DELETED",
+      category: "program",
+      resourceType: "program",
+      resourceId: programId,
+      description: "Program deleted by coach",
+    }).catch(() => {});
+
     revalidatePath("/coach/programs");
     return createSuccessResponse({ id: programId });
   } catch (error) {
@@ -92,7 +124,7 @@ export async function deleteProgramAction(
         "PROGRAM_HAS_ACTIVE_ASSIGNMENTS",
       );
     }
-    console.error("deleteProgramAction error:", error);
+    logger.error({ err: error, action: "deleteProgramAction" }, "Failed to delete program");
     return createErrorResponse("Failed to delete program", "INTERNAL_ERROR");
   }
 }
@@ -120,7 +152,7 @@ export async function addWeekAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: week.id });
   } catch (error) {
-    console.error("addWeekAction error:", error);
+    logger.error({ err: error, action: "addWeekAction" }, "Failed to add week");
     return createErrorResponse("Failed to add week", "INTERNAL_ERROR");
   }
 }
@@ -149,7 +181,7 @@ export async function addDayAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: day.id });
   } catch (error) {
-    console.error("addDayAction error:", error);
+    logger.error({ err: error, action: "addDayAction" }, "Failed to add day");
     return createErrorResponse("Failed to add day", "INTERNAL_ERROR");
   }
 }
@@ -178,7 +210,7 @@ export async function updateWeekAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: week.id });
   } catch (error) {
-    console.error("updateWeekAction error:", error);
+    logger.error({ err: error, action: "updateWeekAction" }, "Failed to update week");
     return createErrorResponse("Failed to update week", "INTERNAL_ERROR");
   }
 }
@@ -193,7 +225,7 @@ export async function deleteWeekAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: weekId });
   } catch (error) {
-    console.error("deleteWeekAction error:", error);
+    logger.error({ err: error, action: "deleteWeekAction" }, "Failed to delete week");
     return createErrorResponse("Failed to delete week", "INTERNAL_ERROR");
   }
 }
@@ -222,7 +254,7 @@ export async function updateDayAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: day.id });
   } catch (error) {
-    console.error("updateDayAction error:", error);
+    logger.error({ err: error, action: "updateDayAction" }, "Failed to update day");
     return createErrorResponse("Failed to update day", "INTERNAL_ERROR");
   }
 }
@@ -237,7 +269,7 @@ export async function deleteDayAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: dayId });
   } catch (error) {
-    console.error("deleteDayAction error:", error);
+    logger.error({ err: error, action: "deleteDayAction" }, "Failed to delete day");
     return createErrorResponse("Failed to delete day", "INTERNAL_ERROR");
   }
 }
@@ -266,7 +298,7 @@ export async function addExerciseToDayAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: programExercise.id });
   } catch (error) {
-    console.error("addExerciseToDayAction error:", error);
+    logger.error({ err: error, action: "addExerciseToDayAction" }, "Failed to add exercise");
     return createErrorResponse("Failed to add exercise", "INTERNAL_ERROR");
   }
 }
@@ -295,7 +327,7 @@ export async function updateProgramExerciseAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: programExercise.id });
   } catch (error) {
-    console.error("updateProgramExerciseAction error:", error);
+    logger.error({ err: error, action: "updateProgramExerciseAction" }, "Failed to update exercise");
     return createErrorResponse("Failed to update exercise", "INTERNAL_ERROR");
   }
 }
@@ -310,7 +342,7 @@ export async function removeExerciseFromDayAction(
     revalidatePath(`/coach/programs/${programId}`);
     return createSuccessResponse({ id: programExerciseId });
   } catch (error) {
-    console.error("removeExerciseFromDayAction error:", error);
+    logger.error({ err: error, action: "removeExerciseFromDayAction" }, "Failed to remove exercise");
     return createErrorResponse("Failed to remove exercise", "INTERNAL_ERROR");
   }
 }

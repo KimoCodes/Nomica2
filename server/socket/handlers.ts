@@ -13,6 +13,7 @@ import {
 } from "@/server/validators/message.schema";
 import { SOCKET_EVENTS } from "@/types/socket";
 import type { SocketUser } from "@/server/socket/auth";
+import logger from "@/lib/logger";
 
 const userSocketMap = new Map<string, string>();
 
@@ -34,6 +35,8 @@ function unregisterUserSocket(userId: string, socketId: string) {
 
 export function registerSocketHandlers(io: Server, socket: Socket, user: SocketUser) {
   registerUserSocket(user.userId, socket.id, io);
+  socket.join(`user:${user.userId}`);
+  logger.info({ userId: user.userId, socketId: socket.id }, "socket connected");
 
   socket.on(SOCKET_EVENTS.CONVERSATION_JOIN, async (payload, ack) => {
     try {
@@ -60,7 +63,7 @@ export function registerSocketHandlers(io: Server, socket: Socket, user: SocketU
 
       ack?.({ success: true });
     } catch (error) {
-      console.error("[socket] conversation:join error:", error);
+      logger.error({ err: error, route: "socket/handlers" }, "conversation:join error");
       ack?.({ success: false, error: "Failed to join conversation" });
     }
   });
@@ -83,7 +86,11 @@ export function registerSocketHandlers(io: Server, socket: Socket, user: SocketU
       io.to(room).emit(SOCKET_EVENTS.MESSAGE_RECEIVE, message);
       ack?.({ success: true, data: message });
     } catch (error) {
-      console.error("[socket] message:send error:", error);
+      if (error instanceof Error && error.message === "NOT_FOUND") {
+        ack?.({ success: false, error: "Conversation not found" });
+        return;
+      }
+      logger.error({ err: error, route: "socket/handlers" }, "message:send error");
       ack?.({ success: false, error: "Failed to send message" });
     }
   });
@@ -114,7 +121,8 @@ export function registerSocketHandlers(io: Server, socket: Socket, user: SocketU
       });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
+    logger.info({ userId: user.userId, socketId: socket.id, reason }, "socket disconnected");
     unregisterUserSocket(user.userId, socket.id);
   });
 }

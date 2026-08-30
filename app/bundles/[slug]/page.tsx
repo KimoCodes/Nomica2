@@ -345,7 +345,7 @@ export default async function BundleDetailPage({ params }: Props) {
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Join women who&apos;ve transformed their bodies with
-              NOMICA programs.
+              NomiTips programs.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link

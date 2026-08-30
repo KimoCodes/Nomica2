@@ -20,7 +20,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Transformations",
   description:
-    "See real women's fitness transformations with NOMICA. Before & after results, success stories, and testimonials from our members.",
+    "See real women's fitness transformations with NomiTips. Before & after results, success stories, and testimonials from our members.",
 };
 
 export default async function TransformationsPage() {
@@ -53,8 +53,8 @@ export default async function TransformationsPage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl animate-slide-up stagger-2 text-lg text-muted-foreground">
-              Every transformation here started with a NOMICA program.
-              These are real members who transformed their bodies with NOMICA.
+              Every transformation here started with a NomiTips program.
+              These are real members who transformed their bodies with NomiTips.
             </p>
           </div>
         </section>
@@ -70,7 +70,7 @@ export default async function TransformationsPage() {
                 Featured Transformations
               </h2>
               <p className="mb-12 text-center text-lg text-muted-foreground">
-                These members achieved incredible results with NOMICA programs
+                These members achieved incredible results with NomiTips programs
               </p>
 
               <TransformationCarousel transformations={featured} />
@@ -162,7 +162,7 @@ export default async function TransformationsPage() {
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Join women who&apos;ve transformed their bodies
-              with NOMICA. Your transformation starts today.
+              with NomiTips. Your transformation starts today.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link

@@ -8,7 +8,7 @@ import { Heart, Dumbbell, FolderOpen, BookOpen, UtensilsCrossed } from "lucide-r
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Favorites | NOMICA",
+  title: "Favorites | NomiTips",
 };
 
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; href: (id: string) => string }> = {

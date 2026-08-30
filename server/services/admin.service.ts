@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, Difficulty } from "@prisma/client";
+import { Prisma, Difficulty, ProductKind } from "@prisma/client";
 import { createNotification } from "@/server/services/notification.service";
 
 /* -----------------------------
@@ -232,13 +232,64 @@ export async function updateProgramSellable(
     duration?: number | null;
   }
 ) {
-  return prisma.program.update({
+  const program = await prisma.program.update({
     where: { id },
     data: {
       ...data,
       difficulty: data.difficulty ?? undefined,
     },
   });
+
+  if (data.isSellable === true) {
+    const slug = program.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { programId: id },
+    });
+
+    const durationLabel = program.duration
+      ? `${program.duration} week${program.duration > 1 ? "s" : ""}`
+      : "Custom";
+
+    if (existingProduct) {
+      await prisma.product.update({
+        where: { id: existingProduct.id },
+        data: {
+          name: program.title,
+          tagline: program.description,
+          description: program.description,
+          priceCents: program.price ?? 0,
+          imageUrl: program.imageUrl,
+          features: program.features,
+          durationLabel,
+          durationWeeks: program.duration,
+          isActive: true,
+        },
+      });
+    } else {
+      await prisma.product.create({
+        data: {
+          slug,
+          kind: ProductKind.PROGRAM,
+          name: program.title,
+          tagline: program.description,
+          description: program.description,
+          priceCents: program.price ?? 0,
+          imageUrl: program.imageUrl,
+          features: program.features,
+          durationLabel,
+          durationWeeks: program.duration,
+          programId: id,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  return program;
 }
 
 export async function deleteProgram(id: string) {
@@ -403,7 +454,7 @@ export async function updateSiteSettings(data: {
   return prisma.siteSettings.create({
     data: {
       ...data,
-      siteName: data.siteName ?? "NOMICA",
+      siteName: data.siteName ?? "NomiTips",
     },
   });
 }

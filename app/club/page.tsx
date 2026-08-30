@@ -9,9 +9,9 @@ import { CheckCircle2, ArrowRight, Shield, Star } from "lucide-react";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "NOMICA All Access Membership",
+  title: "NomiTips All Access Membership",
   description:
-    "Get unlimited access to every NOMICA program, challenge, and workout for one low monthly price. Cancel anytime.",
+    "Get unlimited access to every NomiTips program, challenge, and workout for one low monthly price. Cancel anytime.",
 };
 
 const features = [
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: "What programs are included?",
-    a: "All of them. Every signature program, every challenge, every workout. The complete NOMICA catalog.",
+    a: "All of them. Every signature program, every challenge, every workout. The complete NomiTips catalog.",
   },
   {
     q: "How do the weekly live sessions work?",
@@ -238,7 +238,7 @@ export default function ClubPage() {
               30-Day Money-Back Guarantee
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Try NOMICA risk-free. If you&apos;re not satisfied within 30
+              Try NomiTips risk-free. If you&apos;re not satisfied within 30
               days, we&apos;ll refund your membership. No questions asked.
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function ClubPage() {
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Join women who are transforming their bodies and
-              building confidence with NOMICA.
+              building confidence with NomiTips.
             </p>
             <Link
               href="/register"

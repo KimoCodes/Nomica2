@@ -1,88 +1,71 @@
 import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { traceApiRoute } from "@/lib/sentry-tracing";
+import logger from "@/lib/logger";
 
-const patchBodySchema = z.object({
-  notificationId: z.string().optional(),
-  markAllAsRead: z.boolean().optional(),
-});
+type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+  read: boolean;
+  createdAt: string;
+};
 
-export async function GET() {
-  try {
-    const session = await requireAuth();
-    const userId = session.user.id;
+const notificationStore = new Map<string, Notification[]>();
 
-    const [notifications, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-      }),
-      prisma.notification.count({
-        where: { userId, read: false },
-      }),
-    ]);
-
-    return NextResponse.json({ notifications, unreadCount });
-  } catch (error) {
-    console.error("GET /api/notifications error:", error);
-
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
+function getNotifications(userId: string): Notification[] {
+  return notificationStore.get(userId) ?? [];
 }
 
-export async function PATCH(request: Request) {
-  try {
-    const session = await requireAuth();
-    const userId = session.user.id;
-    const body = await request.json();
-    const parsed = patchBodySchema.parse(body);
+export async function GET() {
+  return traceApiRoute("GET /api/notifications", async () => {
+    try {
+      const session = await requireAuth();
+      const notifications = getNotifications(session.user.id);
+      const unreadCount = notifications.filter((n) => !n.read).length;
 
-    if (parsed.markAllAsRead) {
-      await prisma.notification.updateMany({
-        where: { userId, read: false },
-        data: { read: true },
-      });
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ notifications, unreadCount });
+    } catch (error) {
+      logger.error({ err: error, route: "notifications" }, "GET /api/notifications error");
+
+      if (error instanceof Error && error.message === "UNAUTHORIZED") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      return NextResponse.json({ notifications: [], unreadCount: 0 });
     }
+  });
+}
 
-    if (parsed.notificationId) {
-      await prisma.notification.updateMany({
-        where: { id: parsed.notificationId, userId },
-        data: { read: true },
-      });
-      return NextResponse.json({ success: true });
+export async function POST(request: Request) {
+  return traceApiRoute("POST /api/notifications", async () => {
+    try {
+      const session = await requireAuth();
+      const body = await request.json();
+
+      const notification: Notification = {
+        id: crypto.randomUUID(),
+        title: body.title,
+        message: body.message,
+        type: body.type ?? "info",
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      const notifications = getNotifications(session.user.id);
+      notifications.unshift(notification);
+      notificationStore.set(session.user.id, notifications.slice(0, 50));
+
+      return NextResponse.json({ success: true, notification });
+    } catch (error) {
+      logger.error({ err: error, route: "notifications" }, "POST /api/notifications error");
+
+      if (error instanceof Error && error.message === "UNAUTHORIZED") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
-  } catch (error) {
-    console.error("PATCH /api/notifications error:", error);
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Invalid request body", details: error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
+  });
 }

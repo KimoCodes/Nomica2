@@ -16,6 +16,7 @@ import {
   createSuccessResponse,
 } from "@/server/utils/response";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 export async function grantFreeTrialAction(
   targetUserId: string,
@@ -114,7 +115,7 @@ export async function getClientFreeTrialAction(): Promise<
       daysRemaining,
     });
   } catch (error) {
-    console.error("getClientFreeTrialAction error:", error);
+    logger.error({ err: error, action: "getClientFreeTrialAction" }, "Failed to get free trial");
     return createErrorResponse(
       error instanceof Error ? error.message : "Failed to get free trial",
       "INTERNAL_ERROR",
@@ -143,7 +144,7 @@ export async function getAllFreeTrialsAction(): Promise<
     const trials = await getAllFreeTrials();
     return createSuccessResponse(trials);
   } catch (error) {
-    console.error("getAllFreeTrialsAction error:", error);
+    logger.error({ err: error, action: "getAllFreeTrialsAction" }, "Failed to get free trials");
     return createErrorResponse(
       error instanceof Error ? error.message : "Failed to get free trials",
       "INTERNAL_ERROR",
@@ -172,7 +173,7 @@ export async function getCoachFreeTrialsAction(): Promise<
     const trials = await getCoachFreeTrials(session.user.id);
     return createSuccessResponse(trials);
   } catch (error) {
-    console.error("getCoachFreeTrialsAction error:", error);
+    logger.error({ err: error, action: "getCoachFreeTrialsAction" }, "Failed to get free trials");
     return createErrorResponse(
       error instanceof Error ? error.message : "Failed to get free trials",
       "INTERNAL_ERROR",
@@ -189,7 +190,7 @@ export async function expireOverdueTrialsAction(): Promise<
     const expiredCount = await expireOverdueTrials();
     return createSuccessResponse({ expiredCount });
   } catch (error) {
-    console.error("expireOverdueTrialsAction error:", error);
+    logger.error({ err: error, action: "expireOverdueTrialsAction" }, "Failed to expire trials");
     return createErrorResponse(
       error instanceof Error ? error.message : "Failed to expire trials",
       "INTERNAL_ERROR",

@@ -24,7 +24,7 @@ export type PlanDefinition = {
 };
 
 /**
- * All-Access membership per NOMICA_Fitness_Catalog.pdf:
+ * All-Access membership per NomiTips_Fitness_Catalog.pdf:
  * $14.99/month or $149.99/year (two months free).
  * Membership unlocks the complete catalog; one-off program/bundle purchases
  * are handled separately as Products (see constants/… replaced by DB catalog).
@@ -32,7 +32,7 @@ export type PlanDefinition = {
 export const PLANS: PlanDefinition[] = [
   {
     id: "ALL_ACCESS_MONTHLY",
-    name: "NOMICA All Access",
+    name: "NomiTips All Access",
     description: "Complete catalog, new monthly workouts, calendars, and progress trackers.",
     priceCents: 1499,
     interval: "month",

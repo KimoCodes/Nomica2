@@ -14,6 +14,7 @@ import {
   createSuccessResponse,
 } from "@/server/utils/response";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 export async function approveCoachAction(
   coachProfileId: string,
@@ -25,7 +26,7 @@ export async function approveCoachAction(
     revalidatePath("/admin");
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("approveCoachAction error:", error);
+    logger.error({ err: error, action: "approveCoachAction" }, "Failed to approve coach");
     return createErrorResponse("Failed to approve coach", "INTERNAL_ERROR");
   }
 }
@@ -40,7 +41,7 @@ export async function revokeCoachAction(
     revalidatePath("/admin");
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("revokeCoachAction error:", error);
+    logger.error({ err: error, action: "revokeCoachAction" }, "Failed to revoke coach");
     return createErrorResponse("Failed to revoke coach", "INTERNAL_ERROR");
   }
 }
@@ -56,7 +57,7 @@ export async function updateUserRoleAction(
     revalidatePath("/admin");
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("updateUserRoleAction error:", error);
+    logger.error({ err: error, action: "updateUserRoleAction" }, "Failed to update user role");
     return createErrorResponse("Failed to update user role", "INTERNAL_ERROR");
   }
 }
@@ -71,7 +72,7 @@ export async function deleteUserAction(
     revalidatePath("/admin");
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("deleteUserAction error:", error);
+    logger.error({ err: error, action: "deleteUserAction" }, "Failed to delete user");
     return createErrorResponse(
       error instanceof Error ? error.message : "Failed to delete user",
       "INTERNAL_ERROR",

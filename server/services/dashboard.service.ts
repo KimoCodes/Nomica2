@@ -1,11 +1,16 @@
 import { Role, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requestCache } from "@/lib/request-cache";
 import {
   getClientProfileByUserId,
   requireCoachProfile,
   requireClientProfile,
 } from "@/server/services/coach.service";
 import { getSubscriptionForClient } from "@/server/services/subscription.service";
+import { calculateReadinessScore } from "@/server/services/fitness-engine/readiness";
+import { calculateConsistencyScore } from "@/server/services/fitness-engine/consistency";
+import { calculatePersonalRecords } from "@/server/services/fitness-engine/personal-records";
+import type { WorkoutHistoryEntry, HabitData, CheckInData } from "@/server/services/fitness-engine/types";
 
 function startOfToday() {
   const date = new Date();
@@ -25,6 +30,58 @@ function addDays(date: Date, days: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+async function fetchWorkoutHistory(clientProfileId: string): Promise<WorkoutHistoryEntry[]> {
+  const completions = await prisma.workoutCompletion.findMany({
+    where: { clientProfileId },
+    orderBy: { completedAt: "asc" },
+    include: {
+      programDay: {
+        include: {
+          exercises: {
+            include: { exercise: true },
+          },
+        },
+      },
+      setLogs: true,
+    },
+  });
+
+  return completions.map((c) => ({
+    completedAt: c.completedAt,
+    dayTitle: c.programDay.title ?? `Week ${c.programDay.weekId}, Day ${c.programDay.dayNumber}`,
+    exercises: c.programDay.exercises.map((pe) => ({
+      exerciseId: pe.exercise.id,
+      exerciseName: pe.exercise.name,
+      muscleGroup: pe.exercise.muscleGroup,
+      sets: c.setLogs
+        .filter((sl) => sl.programExerciseId === pe.id)
+        .map((sl) => ({
+          actualReps: sl.actualReps,
+          actualWeight: sl.actualWeight,
+          completed: sl.completed,
+          setNumber: sl.setNumber,
+        })),
+      completedAt: c.completedAt,
+    })),
+  }));
+}
+
+async function fetchHabitData(userId: string): Promise<HabitData[]> {
+  const habits = await prisma.habit.findMany({
+    where: { userId, isActive: true },
+    include: { logs: { orderBy: { date: "desc" }, take: 14 } },
+  });
+
+  return habits.flatMap((h) =>
+    h.logs.map((log) => ({
+      type: h.type,
+      value: log.value,
+      target: h.target,
+      date: log.date,
+    })),
+  );
 }
 
 export async function getAdminDashboardSummary() {
@@ -101,7 +158,8 @@ export async function getAdminDashboardSummary() {
 }
 
 export async function getCoachDashboardSummary(coachUserId: string) {
-  const coach = await requireCoachProfile(coachUserId);
+  return requestCache(`coach-dashboard:${coachUserId}`, async () => {
+    const coach = await requireCoachProfile(coachUserId);
 
   const [
     activeClients,
@@ -205,10 +263,12 @@ export async function getCoachDashboardSummary(coachUserId: string) {
       .map(([title, count]) => ({ title, count }))
       .sort((a, b) => b.count - a.count),
   };
+  }, 30_000);
 }
 
 export async function getClientDashboardSummary(clientUserId: string) {
-  const client = await requireClientProfile(clientUserId);
+  return requestCache(`client-dashboard:${clientUserId}`, async () => {
+    const client = await requireClientProfile(clientUserId);
   const weekStart = startOfWeek();
   const nextWeekStart = addDays(weekStart, 7);
 
@@ -263,9 +323,6 @@ export async function getClientDashboardSummary(clientUserId: string) {
   let streak = 0;
   if (totalCompletions > 0 && lastCompletion) {
     const today = startOfToday();
-    const checkDate = new Date(today);
-
-    // Check if there's a completion today or yesterday to start the streak
     const dayAfterLast = new Date(lastCompletion.completedAt);
     dayAfterLast.setHours(0, 0, 0, 0);
     const daysSinceLast = Math.floor(
@@ -273,27 +330,32 @@ export async function getClientDashboardSummary(clientUserId: string) {
     );
 
     if (daysSinceLast <= 1) {
-      // Check consecutive days going backward
-      while (true) {
-        const dayStart = new Date(checkDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(checkDate);
-        dayEnd.setHours(23, 59, 59, 999);
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const hasCompletion = await prisma.workoutCompletion.findFirst({
-          where: {
-            clientProfileId: client.id,
-            completedAt: { gte: dayStart, lte: dayEnd },
-          },
-          select: { id: true },
-        });
+      const recentCompletions = await prisma.workoutCompletion.findMany({
+        where: {
+          clientProfileId: client.id,
+          completedAt: { gte: thirtyDaysAgo },
+        },
+        orderBy: { completedAt: "desc" },
+        select: { completedAt: true },
+      });
 
-        if (hasCompletion) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
+      const completionDays = new Set(
+        recentCompletions.map((c) => {
+          const d = new Date(c.completedAt);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime();
+        }),
+      );
+
+      const checkDate = new Date(today);
+      checkDate.setHours(0, 0, 0, 0);
+
+      while (completionDays.has(checkDate.getTime())) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
       }
     }
   }
@@ -314,6 +376,42 @@ export async function getClientDashboardSummary(clientUserId: string) {
     streak,
     totalCompletions,
   };
+  }, 30_000);
+}
+
+export async function getClientFitnessIntelligence(clientUserId: string) {
+  return requestCache(`client-fitness:${clientUserId}`, async () => {
+    const client = await requireClientProfile(clientUserId);
+
+  const [workoutHistory, habits, latestCheckIn] = await Promise.all([
+    fetchWorkoutHistory(client.id),
+    fetchHabitData(client.userId),
+    prisma.checkIn.findFirst({
+      where: { clientProfileId: client.id },
+      orderBy: { weekStart: "desc" },
+    }),
+  ]);
+
+  const checkInData: CheckInData | null = latestCheckIn
+    ? {
+        energyLevel: latestCheckIn.energyLevel,
+        sleepQuality: latestCheckIn.sleepQuality,
+        workoutsCompleted: latestCheckIn.workoutsCompleted,
+        submittedAt: latestCheckIn.submittedAt,
+        weekStart: latestCheckIn.weekStart,
+      }
+    : null;
+
+  const readiness = calculateReadinessScore(workoutHistory, habits, checkInData);
+  const consistency = calculateConsistencyScore(workoutHistory, habits);
+  const personalRecords = calculatePersonalRecords(workoutHistory);
+
+  return {
+    readiness,
+    consistency,
+    personalRecords: personalRecords.slice(0, 10),
+  };
+  }, 30_000);
 }
 
 export async function getUserRoleCounts() {

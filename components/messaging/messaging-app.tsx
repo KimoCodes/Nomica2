@@ -73,6 +73,11 @@ export function MessagingApp({
       setConnected(false);
     }
 
+    function onConnectError(err: Error) {
+      setConnected(false);
+      console.error("[Socket] connection error:", err.message);
+    }
+
     function onMessageReceive(message: MessageReceivePayload) {
       const currentActiveId = activeIdRef.current;
 
@@ -151,6 +156,7 @@ export function MessagingApp({
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
     socket.on(SOCKET_EVENTS.MESSAGE_RECEIVE, onMessageReceive);
     socket.on(SOCKET_EVENTS.TYPING_START, onTypingStart);
     socket.on(SOCKET_EVENTS.TYPING_STOP, onTypingStop);
@@ -158,6 +164,7 @@ export function MessagingApp({
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
       socket.off(SOCKET_EVENTS.MESSAGE_RECEIVE, onMessageReceive);
       socket.off(SOCKET_EVENTS.TYPING_START, onTypingStart);
       socket.off(SOCKET_EVENTS.TYPING_STOP, onTypingStop);
@@ -182,14 +189,20 @@ export function MessagingApp({
       setMessages(result.data.messages);
 
       const socket = getSocketClient();
-      socket.emit(SOCKET_EVENTS.CONVERSATION_JOIN, { conversationId: activeId });
-
-      setConversations((current) =>
-        current.map((conversation) =>
-          conversation.id === activeId
-            ? { ...conversation, unreadCount: 0 }
-            : conversation,
-        ),
+      socket.emit(
+        SOCKET_EVENTS.CONVERSATION_JOIN,
+        { conversationId: activeId },
+        (response: { success: boolean; error?: string }) => {
+          if (!cancelled && response?.success) {
+            setConversations((current) =>
+              current.map((conversation) =>
+                conversation.id === activeId
+                  ? { ...conversation, unreadCount: 0 }
+                  : conversation,
+              ),
+            );
+          }
+        },
       );
     }
 
@@ -207,22 +220,24 @@ export function MessagingApp({
   function handleDraftChange(value: string) {
     setDraft(value);
 
-    if (!activeId) return;
+    const conversationId = activeIdRef.current;
+    if (!conversationId) return;
 
     const socket = getSocketClient();
-    socket.emit(SOCKET_EVENTS.TYPING_START, { conversationId: activeId });
+    socket.volatile.emit(SOCKET_EVENTS.TYPING_START, { conversationId });
 
     if (stopTypingTimeoutRef.current) {
       clearTimeout(stopTypingTimeoutRef.current);
     }
 
     stopTypingTimeoutRef.current = setTimeout(() => {
-      socket.emit(SOCKET_EVENTS.TYPING_STOP, { conversationId: activeId });
+      socket.emit(SOCKET_EVENTS.TYPING_STOP, { conversationId: activeIdRef.current });
     }, 1200);
   }
 
   async function sendMessage(content: string, imageUrl?: string | null) {
-    if (!activeId || isSending) return;
+    const conversationId = activeIdRef.current;
+    if (!conversationId || isSending) return;
 
     setIsSending(true);
     setError(null);
@@ -231,17 +246,39 @@ export function MessagingApp({
     socket.emit(
       SOCKET_EVENTS.MESSAGE_SEND,
       {
-        conversationId: activeId,
+        conversationId,
         content,
         imageUrl: imageUrl ?? null,
       },
-      (response: { success: boolean; error?: string }) => {
-        if (!response?.success) {
+      (response: { success: boolean; data?: MessageItem; error?: string }) => {
+        if (response?.success && response.data) {
+          setMessages((current) => {
+            if (current.some((item) => item.id === response.data!.id)) {
+              return current;
+            }
+            return [...current, response.data!];
+          });
+          setConversations((current) =>
+            current.map((conversation) =>
+              conversation.id === conversationId
+                ? {
+                    ...conversation,
+                    updatedAt: response.data!.createdAt,
+                    lastMessage: {
+                      content: response.data!.content || "Image",
+                      createdAt: response.data!.createdAt,
+                      senderId: response.data!.senderId,
+                    },
+                  }
+                : conversation,
+            ),
+          );
+        } else if (!response?.success) {
           setError(response?.error ?? "Failed to send message");
         }
         setIsSending(false);
         setDraft("");
-        socket.emit(SOCKET_EVENTS.TYPING_STOP, { conversationId: activeId });
+        socket.emit(SOCKET_EVENTS.TYPING_STOP, { conversationId: activeIdRef.current });
       },
     );
   }

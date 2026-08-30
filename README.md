@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NomiTips
 
-## Getting Started
+Premium fitness platform for coaches and clients with workout programs, progress tracking, messaging, and subscription management.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Database:** PostgreSQL (Neon Serverless)
+- **ORM:** Prisma
+- **Auth:** NextAuth v5
+- **Payments:** Stripe
+- **Email:** Resend
+- **Storage:** Cloudinary
+- **Realtime:** Socket.io
+- **UI:** Tailwind CSS, Radix UI, shadcn/ui
+- **Logging:** Pino
+- **Error Tracking:** Sentry
+
+## Local Development
 
 ```bash
+# 1. Clone and install
+git clone <repo-url>
+cd nomitips
+npm install
+
+# 2. Set up environment
+cp .env.example .env
+# Edit .env with your values (see Environment Variables below)
+
+# 3. Initialize database
+npx prisma migrate dev
+npm run db:seed
+
+# 4. Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Required
 
-## Learn More
+| Variable | Description | Where to get |
+|----------|-------------|--------------|
+| `DATABASE_URL` | PostgreSQL connection string | [Neon](https://neon.tech) |
+| `AUTH_SECRET` | NextAuth secret | `openssl rand -base64 32` |
+| `AUTH_URL` | Base URL (e.g., `http://localhost:3000`) | Your deployment URL |
+| `STRIPE_SECRET_KEY` | Stripe secret key | [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | [Stripe Webhooks](https://dashboard.stripe.com/webhooks) |
+| `STRIPE_PRICE_MONTHLY` | Monthly subscription price ID | [Stripe Products](https://dashboard.stripe.com/products) |
+| `STRIPE_PRICE_ANNUAL` | Annual subscription price ID | [Stripe Products](https://dashboard.stripe.com/products) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key | [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys) |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | [Cloudinary](https://console.cloudinary.com/app/settings/api-keys) |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | [Cloudinary](https://console.cloudinary.com/app/settings/api-keys) |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | [Cloudinary](https://console.cloudinary.com/app/settings/api-keys) |
 
-To learn more about Next.js, take a look at the following resources:
+### Optional
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RESEND_API_KEY` | Resend email API key | - |
+| `EMAIL_FROM` | Sender email address | `NomiTips <onboarding@resend.dev>` |
+| `SENTRY_DSN` | Sentry DSN for error tracking | - |
+| `HOSTNAME` | Server hostname | `localhost` |
+| `PORT` | Server port | `3000` |
+| `LOG_LEVEL` | Log level (`debug`, `info`, `warn`, `error`) | `info` (production) / `debug` (development) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Production Deployment
 
-## Deploy on Vercel
+```bash
+# 1. Run migrations
+npx prisma migrate deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# 2. Build
+npm run build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 3. Start
+npm start
+```
+
+### Docker
+
+```bash
+docker build -t nomitips .
+docker run -p 3000:3000 nomitips
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:migrate` | Run migrations (dev) |
+| `npm run db:push` | Push schema changes |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:seed` | Seed database |
+
+## Project Structure
+
+```
+├── actions/          # Server actions
+├── app/              # Next.js App Router
+│   ├── api/          # API routes
+│   └── (routes)      # Page routes
+├── components/       # React components
+├── lib/              # Utilities, auth, prisma, logger
+├── prisma/           # Schema, migrations, seed
+├── public/           # Static assets
+├── server/           # Server-side services
+│   ├── services/     # Business logic
+│   └── socket/       # Socket.io handlers
+└── types/            # TypeScript types
+```

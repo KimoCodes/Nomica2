@@ -15,6 +15,7 @@ import { getMessagesSchema } from "@/server/validators/message.schema";
 import type { ApiResponse } from "@/types";
 import type { ConversationSummary, MessageItem } from "@/types/socket";
 import { getClientProfileByUserId } from "@/server/services/coach.service";
+import logger from "@/lib/logger";
 
 export async function ensureClientConversationServer(): Promise<string | null> {
   const session = await requireAuth();
@@ -32,7 +33,7 @@ export async function getConversationsAction(): Promise<
     const conversations = await getConversationsForUser(session.user.id);
     return createSuccessResponse({ conversations });
   } catch (error) {
-    console.error("getConversationsAction error:", error);
+    logger.error({ err: error, action: "getConversationsAction" }, "Failed to load conversations");
     return createErrorResponse("Failed to load conversations", "INTERNAL_ERROR");
   }
 }
@@ -60,7 +61,10 @@ export async function getMessagesAction(
     if (error instanceof Error && error.message === "FORBIDDEN") {
       return createErrorResponse("Access denied", "FORBIDDEN");
     }
-    console.error("getMessagesAction error:", error);
+    if (error instanceof Error && error.message === "NOT_FOUND") {
+      return createErrorResponse("Conversation not found", "NOT_FOUND");
+    }
+    logger.error({ err: error, action: "getMessagesAction" }, "Failed to load messages");
     return createErrorResponse("Failed to load messages", "INTERNAL_ERROR");
   }
 }
@@ -87,7 +91,19 @@ export async function ensureClientConversationAction(): Promise<
     revalidatePath("/client/messages");
     return createSuccessResponse({ conversationId: conversation.id });
   } catch (error) {
-    console.error("ensureClientConversationAction error:", error);
+    logger.error({ err: error, action: "ensureClientConversationAction" }, "Failed to prepare conversation");
     return createErrorResponse("Failed to prepare conversation", "INTERNAL_ERROR");
+  }
+}
+
+export async function ensureCoachConversationsServer(): Promise<void> {
+  const session = await requireAuth();
+  const { getCoachClients } = await import(
+    "@/server/services/assignment.service"
+  );
+  const clients = await getCoachClients(session.user.id);
+  
+  for (const client of clients) {
+    await ensureConversation(client.user.id, session.user.id);
   }
 }

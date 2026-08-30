@@ -2,6 +2,7 @@ import type { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { authenticateSocket } from "@/server/socket/auth";
 import { registerSocketHandlers } from "@/server/socket/handlers";
+import { initializeLiveCoaching } from "@/server/services/live-coaching.service";
 
 let io: Server | null = null;
 
@@ -29,6 +30,8 @@ export function initializeSocketServer(httpServer: HttpServer) {
     const user = socket.data.user;
     registerSocketHandlers(io!, socket, user);
   });
+
+  initializeLiveCoaching(io);
 
   return io;
 }

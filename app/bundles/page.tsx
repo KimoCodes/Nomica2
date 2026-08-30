@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Bundles",
   description:
-    "Save big with NOMICA program bundles. Get multiple fitness programs at a discounted price — up to 30% off.",
+    "Save big with NomiTips program bundles. Get multiple fitness programs at a discounted price — up to 30% off.",
 };
 
 export default async function BundlesPage() {

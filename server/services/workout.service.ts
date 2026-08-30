@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { requireClientProfile } from "@/server/services/coach.service";
 import { createNotification } from "@/server/services/notification.service";
 import type { CompleteWorkoutInput } from "@/server/validators/program.schema";
+import { calculatePersonalRecords, isNewPersonalRecord } from "@/server/services/fitness-engine/personal-records";
+import type { WorkoutHistoryEntry } from "@/server/services/fitness-engine/types";
 
 type ProgramDayWithExercises = {
   id: string;
@@ -68,6 +70,40 @@ function formatDayTitle(day: {
   title: string | null;
 }) {
   return day.title ?? `Week ${day.weekNumber}, Day ${day.dayNumber}`;
+}
+
+async function fetchWorkoutHistory(clientProfileId: string): Promise<WorkoutHistoryEntry[]> {
+  const completions = await prisma.workoutCompletion.findMany({
+    where: { clientProfileId },
+    orderBy: { completedAt: "asc" },
+    include: {
+      programDay: {
+        include: {
+          exercises: { include: { exercise: true } },
+        },
+      },
+      setLogs: true,
+    },
+  });
+
+  return completions.map((c) => ({
+    completedAt: c.completedAt,
+    dayTitle: c.programDay.title ?? `Week ${c.programDay.weekId}, Day ${c.programDay.dayNumber}`,
+    exercises: c.programDay.exercises.map((pe) => ({
+      exerciseId: pe.exercise.id,
+      exerciseName: pe.exercise.name,
+      muscleGroup: pe.exercise.muscleGroup,
+      sets: c.setLogs
+        .filter((sl) => sl.programExerciseId === pe.id)
+        .map((sl) => ({
+          actualReps: sl.actualReps,
+          actualWeight: sl.actualWeight,
+          completed: sl.completed,
+          setNumber: sl.setNumber,
+        })),
+      completedAt: c.completedAt,
+    })),
+  }));
 }
 
 const activeProgramInclude = {
@@ -292,7 +328,45 @@ export async function completeWorkout(
     // Notification failure should not block completion
   }
 
-  return completion;
+  // Detect personal records
+  const personalRecords: { exerciseName: string; detail: string }[] = [];
+  try {
+    const history = await fetchWorkoutHistory(client.id);
+    const allPRs = calculatePersonalRecords(history);
+
+    if (input.setLogs && input.setLogs.length > 0) {
+      const byExercise = new Map<string, typeof input.setLogs>();
+      for (const log of input.setLogs) {
+        const existing = byExercise.get(log.programExerciseId) ?? [];
+        existing.push(log);
+        byExercise.set(log.programExerciseId, existing);
+      }
+
+      for (const [exerciseId, logs] of byExercise) {
+        const pr = allPRs.find((p) => p.exerciseId === exerciseId);
+        if (!pr) continue;
+
+        const currentSets = logs.map((l) => ({
+          actualReps: l.actualReps ?? null,
+          actualWeight: l.actualWeight ?? null,
+          completed: l.completed,
+          setNumber: l.setNumber,
+        }));
+
+        const isPR = isNewPersonalRecord(currentSets, pr);
+        if (isPR) {
+          personalRecords.push({
+            exerciseName: isPR.exerciseName,
+            detail: isPR.detail,
+          });
+        }
+      }
+    }
+  } catch {
+    // PR detection failure should not block completion
+  }
+
+  return { completion, personalRecords };
 }
 
 export async function getClientDashboardWorkoutSummary(clientUserId: string) {

@@ -3,6 +3,8 @@ import { requireAuth } from "@/lib/auth";
 import { Role, MediaType, MediaVisibility } from "@prisma/client";
 import { uploadMedia } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/server/utils/rate-limit";
+import logger from "@/lib/logger";
 
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -48,6 +50,15 @@ function getUploadFolder(
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth();
+
+    const ip = getClientIp(request.headers);
+    const { allowed, retryAfterMs } = checkRateLimit(`upload:${session.user.id}:${ip}`, 10, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many upload requests" },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) } },
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -131,7 +142,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ media }, { status: 201 });
   } catch (error) {
-    console.error("Media upload error:", error);
+    logger.error({ err: error, route: "media/upload" }, "Media upload error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

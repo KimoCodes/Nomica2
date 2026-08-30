@@ -9,6 +9,7 @@ import {
   requestPaymentProof,
 } from "@/server/services/payment-request.service";
 import { prisma } from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 type SubmitPaymentInput = {
   plan: SubscriptionPlan;
@@ -31,7 +32,7 @@ export async function submitPaymentRequestAction(input: SubmitPaymentInput) {
     await submitPaymentRequest(session.user.id, input);
     return { success: true as const };
   } catch (error) {
-    console.error("submitPaymentRequestAction error:", error);
+    logger.error({ err: error, action: "submitPaymentRequestAction" }, "Failed to submit payment request");
     return {
       success: false as const,
       error: {
@@ -50,7 +51,7 @@ export async function adminApprovePaymentAction(
     await approvePaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("adminApprovePaymentAction error:", error);
+    logger.error({ err: error, action: "adminApprovePaymentAction" }, "Failed to approve payment");
     return {
       success: false as const,
       error: {
@@ -69,7 +70,7 @@ export async function adminRejectPaymentAction(
     await rejectPaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("adminRejectPaymentAction error:", error);
+    logger.error({ err: error, action: "adminRejectPaymentAction" }, "Failed to reject payment");
     return {
       success: false as const,
       error: {
@@ -88,7 +89,7 @@ export async function adminRequestProofAction(
     await requestPaymentProof(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("adminRequestProofAction error:", error);
+    logger.error({ err: error, action: "adminRequestProofAction" }, "Failed to request proof");
     return {
       success: false as const,
       error: {
@@ -122,7 +123,7 @@ export async function coachApprovePaymentAction(
     await approvePaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("coachApprovePaymentAction error:", error);
+    logger.error({ err: error, action: "coachApprovePaymentAction" }, "Failed to approve payment");
     return {
       success: false as const,
       error: {
@@ -155,7 +156,7 @@ export async function coachRejectPaymentAction(
     await rejectPaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("coachRejectPaymentAction error:", error);
+    logger.error({ err: error, action: "coachRejectPaymentAction" }, "Failed to reject payment");
     return {
       success: false as const,
       error: {
@@ -188,7 +189,7 @@ export async function coachRequestProofAction(
     await requestPaymentProof(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    console.error("coachRequestProofAction error:", error);
+    logger.error({ err: error, action: "coachRequestProofAction" }, "Failed to request proof");
     return {
       success: false as const,
       error: {

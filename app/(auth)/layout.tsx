@@ -15,7 +15,7 @@ export default function AuthLayout({
               <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
                 <Dumbbell className="size-6 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-bold">NOMICA</span>
+              <span className="text-2xl font-bold">NomiTips</span>
             </div>
             <h2 className="text-4xl font-bold leading-tight">
               Personal coaching{" "}
@@ -48,7 +48,7 @@ export default function AuthLayout({
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary">
             <Dumbbell className="size-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">NOMICA</span>
+          <span className="text-xl font-bold">NomiTips</span>
         </div>
 
         {children}

@@ -1,4 +1,4 @@
-# NOMICA2 — Comprehensive Client-Side Audit Report
+# NomiTips — Comprehensive Client-Side Audit Report
 
 **Date:** 2026-08-06
 **Codebase:** Next.js 16.2.9 + React 19 + Prisma 7 + PostgreSQL + Stripe + Socket.io + Cloudinary

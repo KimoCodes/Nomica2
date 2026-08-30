@@ -18,6 +18,7 @@ import {
   updateExerciseSchema,
 } from "@/server/validators/program.schema";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function parseFormData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
@@ -33,7 +34,7 @@ export async function getExercises(): Promise<ApiResponse<{ exercises: Awaited<R
     const exercises = await getExercisesForCoach(session.user.id);
     return createSuccessResponse({ exercises });
   } catch (error) {
-    console.error("getExercises error:", error);
+    logger.error({ err: error, action: "getExercises" }, "Failed to load exercises");
     return createErrorResponse("Failed to load exercises", "INTERNAL_ERROR");
   }
 }
@@ -56,7 +57,7 @@ export async function createExerciseAction(
     revalidatePath("/coach/exercises");
     return createSuccessResponse({ id: exercise.id });
   } catch (error) {
-    console.error("createExerciseAction error:", error);
+    logger.error({ err: error, action: "createExerciseAction" }, "Failed to create exercise");
     return createErrorResponse("Failed to create exercise", "INTERNAL_ERROR");
   }
 }
@@ -87,7 +88,7 @@ export async function updateExerciseAction(
     if (error instanceof Error && error.message === "SYSTEM_EXERCISE_READONLY") {
       return createErrorResponse("System exercises cannot be edited", "FORBIDDEN");
     }
-    console.error("updateExerciseAction error:", error);
+    logger.error({ err: error, action: "updateExerciseAction" }, "Failed to update exercise");
     return createErrorResponse("Failed to update exercise", "INTERNAL_ERROR");
   }
 }
@@ -110,7 +111,7 @@ export async function deleteExerciseAction(
         "EXERCISE_IN_USE",
       );
     }
-    console.error("deleteExerciseAction error:", error);
+    logger.error({ err: error, action: "deleteExerciseAction" }, "Failed to delete exercise");
     return createErrorResponse("Failed to delete exercise", "INTERNAL_ERROR");
   }
 }

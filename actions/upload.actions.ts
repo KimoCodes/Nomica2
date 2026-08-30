@@ -7,6 +7,7 @@ import {
 } from "@/server/utils/response";
 import { uploadChatImage } from "@/server/services/upload.service";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 export async function uploadChatImageAction(
   formData: FormData,
@@ -38,7 +39,7 @@ export async function uploadChatImageAction(
     if (error instanceof Error && error.message === "FILE_TOO_LARGE") {
       return createErrorResponse("Image must be 5MB or smaller", "FILE_TOO_LARGE");
     }
-    console.error("uploadChatImageAction error:", error);
+    logger.error({ err: error, action: "uploadChatImageAction" }, "Failed to upload image");
     return createErrorResponse("Failed to upload image", "INTERNAL_ERROR");
   }
 }

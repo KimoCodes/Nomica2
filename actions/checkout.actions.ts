@@ -14,6 +14,7 @@ import {
 } from "@/server/utils/response";
 import { auth } from "@/lib/auth";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 export async function createProductCheckout(
   productId: string,
@@ -79,7 +80,7 @@ export async function createProductCheckout(
 
     return createSuccessResponse({ url: checkoutSession.url! });
   } catch (error) {
-    console.error("createProductCheckout error:", error);
+    logger.error({ err: error, action: "createProductCheckout" }, "Failed to create checkout");
     return createErrorResponse("Failed to create checkout", "INTERNAL_ERROR");
   }
 }
@@ -125,7 +126,7 @@ export async function createSubscriptionCheckout(
 
     return createSuccessResponse({ url: checkoutSession.url! });
   } catch (error) {
-    console.error("createSubscriptionCheckout error:", error);
+    logger.error({ err: error, action: "createSubscriptionCheckout" }, "Failed to create checkout");
     return createErrorResponse("Failed to create checkout", "INTERNAL_ERROR");
   }
 }

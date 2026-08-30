@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index, follow">
+    <meta
+      name="description"
+      content="NomiTips is preparing a premium fitness experience built for women who want structured programs, coaching support, and real results."
+    >
+    <title>NomiTips | Coming Soon</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="preload" href="assets/logo.png" as="image">
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <main class="coming-soon">
+      <div class="ambient" aria-hidden="true">
+        <span class="glow glow-large"></span>
+        <span class="glow glow-small"></span>
+      </div>
+      <div class="grid-pattern" aria-hidden="true"></div>
+
+      <section class="content" aria-labelledby="page-title">
+        <div class="logo-wrap fade-in">
+          <img src="assets/logo.png" alt="NomiTips" width="320" height="320">
+        </div>
+
+        <div class="heading-block slide-up delay-1">
+          <h1 id="page-title">Be the First to Know</h1>
+          <p>
+            We're crafting a premium fitness experience built for women who want
+            real results. Launch is coming soon.
+          </p>
+        </div>
+
+        <div class="badge-wrap slide-up delay-2">
+          <div class="badge">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <span>Early Access - Limited Spots</span>
+          </div>
+        </div>
+
+        <div class="signup-wrap slide-up delay-3">
+          <form id="signup-form" action="subscribe.php" method="post" novalidate>
+            <div class="form-row">
+              <label class="sr-only" for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                placeholder="Enter your email"
+                required
+                maxlength="254"
+              >
+              <input
+                class="company-field"
+                type="text"
+                name="company"
+                tabindex="-1"
+                autocomplete="off"
+                aria-hidden="true"
+              >
+              <button id="submit-button" type="submit">Subscribe</button>
+            </div>
+
+            <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+            <p class="bonus-copy">
+              Join early and receive an <strong>exclusive launch reward</strong>
+              when we go live. No spam, ever.
+            </p>
+          </form>
+
+          <div id="success-card" class="success-card" hidden>
+            <div class="success-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4.5 12.75 10.5 18.75 19.5 5.25" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </div>
+            <div>
+              <p class="success-title">You're on the list!</p>
+              <p class="success-copy">
+                We'll notify you the moment we launch. Check your inbox for your
+                confirmation email.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="features slide-up delay-4" aria-label="NomiTips platform focus">
+          <div class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3.75 13.5 14.25 2.25 12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </div>
+            <span>Programs</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.12a7.5 7.5 0 0 1 15 0A17.93 17.93 0 0 1 12 21.75c-2.68 0-5.22-.58-7.5-1.63Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </div>
+            <span>Coaching</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M15.36 5.21A8.25 8.25 0 1 1 6.04 7.05 8.29 8.29 0 0 0 9 9.6a8.98 8.98 0 0 1 3.36-6.87 8.21 8.21 0 0 0 3 2.48Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 18a3.75 3.75 0 0 0 .5-7.47 5.99 5.99 0 0 0-1.93 3.55 5.97 5.97 0 0 1-2.13-1A3.75 3.75 0 0 0 12 18Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </div>
+            <span>Nutrition</span>
+          </div>
+        </div>
+
+        <footer class="footer fade-in delay-5">
+          <span>NomiTips - est. 2026</span>
+        </footer>
+      </section>
+    </main>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>

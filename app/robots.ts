@@ -1,23 +1,14 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.AUTH_URL ?? "https://nomica.com";
-
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/client/",
-          "/coach/",
-          "/admin/",
-          "/settings/",
-          "/onboarding/",
-          "/api/",
-        ],
+        disallow: ["/api/", "/admin/"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${process.env.AUTH_URL ?? "https://nomitips.com"}/sitemap.xml`,
   };
 }

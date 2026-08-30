@@ -51,7 +51,7 @@ export const authConfig = {
         const { payload } = await jwtVerify(token!, key, {
           algorithms: ["HS256"],
         });
-        return payload as any;
+        return payload as unknown as { id: string; role: Role };
       } catch {
         return null;
       }

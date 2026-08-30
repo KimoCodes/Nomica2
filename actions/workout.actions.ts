@@ -9,7 +9,9 @@ import {
 } from "@/server/utils/response";
 import { auth } from "@/lib/auth";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 import { completeWorkoutSchema } from "@/server/validators/program.schema";
+import { emitPrAchieved } from "@/server/socket/emitters";
 
 export async function completeWorkout(input: {
   programDayId: string;
@@ -21,7 +23,7 @@ export async function completeWorkout(input: {
     actualWeight?: number;
     completed: boolean;
   }[];
-}): Promise<ApiResponse<{ message: string }>> {
+}): Promise<ApiResponse<{ message: string; personalRecords?: { exerciseName: string; detail: string }[] }>> {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -36,9 +38,16 @@ export async function completeWorkout(input: {
       );
     }
 
-    await completeWorkoutService(session.user.id, parsed.data);
+    const result = await completeWorkoutService(session.user.id, parsed.data);
 
-    return createSuccessResponse({ message: "Workout completed!" });
+    if (result.personalRecords.length > 0) {
+      emitPrAchieved(session.user.id, result.personalRecords);
+    }
+
+    return createSuccessResponse({
+      message: "Workout completed!",
+      personalRecords: result.personalRecords.length > 0 ? result.personalRecords : undefined,
+    });
   } catch (error) {
     if (error instanceof Error && error.message === "NO_ACTIVE_PROGRAM") {
       return createErrorResponse(
@@ -58,7 +67,7 @@ export async function completeWorkout(input: {
       return createErrorResponse("Invalid workout", "FORBIDDEN");
     }
 
-    console.error("completeWorkout error:", error);
+    logger.error({ err: error, action: "completeWorkout" }, "Failed to complete workout");
     return createErrorResponse("Failed to complete workout", "INTERNAL_ERROR");
   }
 }

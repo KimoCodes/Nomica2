@@ -23,5 +23,5 @@ export function getAppUrl(): string {
 }
 
 export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM ?? "NOMICA <onboarding@resend.dev>";
+  return process.env.EMAIL_FROM ?? "NomiTips <batsindakeynesbenoit10101@gmail.com>";
 }

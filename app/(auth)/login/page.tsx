@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/forms/login-form";
 export const metadata: Metadata = {
   title: "Sign in",
   description:
-    "Sign in to your NOMICA account to access your fitness programs, coaches, and progress tracking.",
+    "Sign in to your NomiTips account to access your fitness programs, coaches, and progress tracking.",
 };
 
 export default function LoginPage() {

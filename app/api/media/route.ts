@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { Role, MediaType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 const getQuerySchema = z.object({
   type: z.nativeEnum(MediaType).optional(),
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Media list error:", error);
+    logger.error({ err: error, route: "media" }, "Media list error");
 
     if (error instanceof ZodError) {
       return NextResponse.json(

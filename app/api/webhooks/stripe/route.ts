@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { constructWebhookEvent } from "@/lib/stripe";
 import type Stripe from "stripe";
+import logger from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   try {
     event = constructWebhookEvent(body, signature);
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
+    logger.error({ err, route: "webhooks/stripe" }, "Webhook signature verification failed");
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -46,12 +47,12 @@ export async function POST(req: NextRequest) {
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.info({ event: event.type, route: "webhooks/stripe" }, "Unhandled event type");
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error(`Webhook handler error for ${event.type}:`, error);
+    logger.error({ err: error, event: event.type, route: "webhooks/stripe" }, "Webhook handler error");
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 },
@@ -85,7 +86,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       },
     });
 
-    console.log(`[webhook] Purchase completed: ${metadata.productId} for user ${metadata.userId}`);
+    logger.info({ event: "purchase.completed", productId: metadata.productId, userId: metadata.userId, route: "webhooks/stripe" }, "Purchase completed");
   }
 
   if (metadata?.kind === "subscription") {
@@ -133,7 +134,7 @@ async function handleSubscriptionFromCheckout(session: Stripe.Checkout.Session) 
     },
   });
 
-  console.log(`[webhook] Subscription created: ${metadata.plan} for user ${metadata.userId}`);
+  logger.info({ event: "subscription.created", plan: metadata.plan, userId: metadata.userId, route: "webhooks/stripe" }, "Subscription created");
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
@@ -157,7 +158,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     },
   });
 
-  console.log(`[webhook] Subscription updated: ${stripeCustomerId} -> ${subscription.status}`);
+  logger.info({ event: "subscription.updated", stripeCustomerId, status: subscription.status, route: "webhooks/stripe" }, "Subscription updated");
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -170,7 +171,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     },
   });
 
-  console.log(`[webhook] Subscription canceled: ${stripeCustomerId}`);
+  logger.info({ event: "subscription.canceled", stripeCustomerId, route: "webhooks/stripe" }, "Subscription canceled");
 }
 
 async function handleInvoicePayment(invoice: Stripe.Invoice) {
@@ -201,7 +202,7 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     },
   });
 
-  console.log(`[webhook] Payment recorded: ${invoice.amount_paid} for subscription ${subscription.id}`);
+  logger.info({ event: "payment.recorded", amountPaid: invoice.amount_paid, subscriptionId: subscription.id, route: "webhooks/stripe" }, "Payment recorded");
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -214,5 +215,5 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     },
   });
 
-  console.log(`[webhook] Payment failed for customer: ${stripeCustomerId}`);
+  logger.info({ event: "payment.failed", stripeCustomerId, route: "webhooks/stripe" }, "Payment failed");
 }

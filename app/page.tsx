@@ -26,11 +26,11 @@ import {
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "NOMICA — Premium Feminine Transformation Fitness",
+  title: "NomiTips — Premium Feminine Transformation Fitness",
   description:
     "The only fitness platform built around progressive overload science, glute-focused programming, and the confidence you deserve.",
   openGraph: {
-    title: "NOMICA — Stop Scrolling. Start Sculpting.",
+    title: "NomiTips — Stop Scrolling. Start Sculpting.",
     description:
       "Personalized fitness coaching with progressive overload science, video demos, and real coach support.",
   },
@@ -143,7 +143,7 @@ const faqs = [
   {
     question: "How is this different from YouTube workouts?",
     answer:
-      "YouTube gives you random workouts. NOMICA gives you a SYSTEM \u2014 progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be.",
+      "YouTube gives you random workouts. NomiTips gives you a SYSTEM \u2014 progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be.",
   },
 ];
 
@@ -234,9 +234,9 @@ export default async function HomePage() {
                         <Play className="size-8 text-primary ml-1" />
                       </div>
                       <div>
-                        <p className="font-semibold">NOMICA Method Preview</p>
+                        <p className="font-semibold">NomiTips Method Preview</p>
                         <p className="text-sm text-muted-foreground">
-                          See the NOMICA method in action
+                          See the NomiTips method in action
                         </p>
                       </div>
                     </div>
@@ -285,7 +285,7 @@ export default async function HomePage() {
 
             <div className="mt-12 text-center">
               <p className="text-lg font-semibold text-primary">
-                \u2191 This is why NOMICA exists.
+                \u2191 This is why NomiTips exists.
               </p>
               <p className="mt-2 text-muted-foreground">
                 You&apos;ve tried the random YouTube workouts. You&apos;ve
@@ -306,7 +306,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl">
             <div className="mb-16 text-center">
               <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
-                The NOMICA Method
+                The NomiTips Method
               </p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
                 3 Steps to Start Your Transformation
@@ -549,7 +549,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl">
             <div className="mb-16 text-center">
               <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
-                Why NOMICA Works
+                Why NomiTips Works
               </p>
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
                 When Everything Else Didn&apos;t
@@ -592,7 +592,7 @@ export default async function HomePage() {
                   5-Day Glute Guide
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  5 days. 5 workouts. Zero commitment. Experience the NOMICA
+                  5 days. 5 workouts. Zero commitment. Experience the NomiTips
                   method before you invest a single dollar.
                 </p>
 

@@ -11,6 +11,7 @@ import {
 } from "@/server/services/subscription.service";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
+import logger from "@/lib/logger";
 
 export async function changePlanAction(newPlan: SubscriptionPlan) {
   try {
@@ -18,7 +19,7 @@ export async function changePlanAction(newPlan: SubscriptionPlan) {
     await changePlan(session.user.id, newPlan);
     return { success: true };
   } catch (error) {
-    console.error("Failed to change plan:", error);
+    logger.error({ err: error, action: "changePlanAction" }, "Failed to change plan");
     return {
       success: false,
       error: {
@@ -35,7 +36,7 @@ export async function cancelSubscriptionAction() {
     await cancelSubscription(session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("Failed to cancel subscription:", error);
+    logger.error({ err: error, action: "cancelSubscriptionAction" }, "Failed to cancel subscription");
     return {
       success: false,
       error: {
@@ -54,7 +55,7 @@ export async function reactivateSubscriptionAction() {
     await reactivateSubscription(session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("Failed to reactivate subscription:", error);
+    logger.error({ err: error, action: "reactivateSubscriptionAction" }, "Failed to reactivate subscription");
     return {
       success: false,
       error: {
@@ -109,7 +110,7 @@ export async function adminChangePlanAction(
 
     return { success: true };
   } catch (error) {
-    console.error("adminChangePlanAction error:", error);
+    logger.error({ err: error, action: "adminChangePlanAction" }, "Failed to change plan");
     return {
       success: false,
       error: {
@@ -146,7 +147,7 @@ export async function adminCancelSubscriptionAction(subscriptionId: string) {
 
     return { success: true };
   } catch (error) {
-    console.error("adminCancelSubscriptionAction error:", error);
+    logger.error({ err: error, action: "adminCancelSubscriptionAction" }, "Failed to cancel subscription");
     return {
       success: false,
       error: {
@@ -168,7 +169,7 @@ export async function adminApproveSubscriptionAction(
     await approveSubscription(targetUserId, plan, session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("adminApproveSubscriptionAction error:", error);
+    logger.error({ err: error, action: "adminApproveSubscriptionAction" }, "Failed to approve subscription");
     return {
       success: false,
       error: {
@@ -185,7 +186,7 @@ export async function adminRevokeSubscriptionAction(targetUserId: string) {
     await revokeSubscription(targetUserId, session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("adminRevokeSubscriptionAction error:", error);
+    logger.error({ err: error, action: "adminRevokeSubscriptionAction" }, "Failed to revoke subscription");
     return {
       success: false,
       error: {
@@ -220,7 +221,7 @@ export async function coachApproveSubscriptionAction(
     await approveSubscription(targetUserId, plan, session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("coachApproveSubscriptionAction error:", error);
+    logger.error({ err: error, action: "coachApproveSubscriptionAction" }, "Failed to approve subscription");
     return {
       success: false,
       error: {
@@ -252,7 +253,7 @@ export async function coachRevokeSubscriptionAction(targetUserId: string) {
     await revokeSubscription(targetUserId, session.user.id);
     return { success: true };
   } catch (error) {
-    console.error("coachRevokeSubscriptionAction error:", error);
+    logger.error({ err: error, action: "coachRevokeSubscriptionAction" }, "Failed to revoke subscription");
     return {
       success: false,
       error: {

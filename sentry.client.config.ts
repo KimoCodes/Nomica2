@@ -1,0 +1,24 @@
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN,
+
+  enabled:
+    process.env.NODE_ENV === "production" &&
+    !!process.env.SENTRY_DSN,
+
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 1.0,
+
+  integrations: [
+    Sentry.replayIntegration(),
+  ],
+
+  beforeSend(event) {
+    if (event.exception?.values?.[0]?.type === "ChunkLoadError") {
+      return null;
+    }
+    return event;
+  },
+});

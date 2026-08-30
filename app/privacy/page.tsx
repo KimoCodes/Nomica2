@@ -3,7 +3,7 @@ import { PublicLayout } from "@/components/shared/public-layout";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "NOMICA Privacy Policy — how we collect, use, and protect your data.",
+  description: "NomiTips Privacy Policy — how we collect, use, and protect your data.",
 };
 
 export default function PrivacyPage() {
@@ -146,10 +146,10 @@ export default function PrivacyPage() {
               <p>
                 For privacy-related inquiries, contact us at{" "}
                 <a
-                  href="mailto:privacy@nomica.app"
+                  href="mailto:privacy@nomitips.com"
                   className="text-primary hover:underline"
                 >
-                  privacy@nomica.app
+                  privacy@nomitips.com
                 </a>
                 .
               </p>

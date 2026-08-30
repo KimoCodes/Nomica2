@@ -191,10 +191,13 @@ model User {
   purchases             Purchase[]
   reviews               Review[]
   habits                Habit[]
+  aiConversations       AiConversation[]
   goals                 Goal[]
   favorites             Favorite[]
   freeTrials            FreeTrial[] @relation("FreeTrialRecipient")
   grantedFreeTrials     FreeTrial[] @relation("FreeTrialGrantor")
+  pageVisits            PageVisit[]
+  activityLogs          ActivityLog[]
 
   @@index([email])
   @@index([role])
@@ -225,6 +228,7 @@ model CoachProfile {
   updatedAt          DateTime @updatedAt
 
   programs Program[]
+  bookings CoachBooking[]
 
   @@index([userId])
   @@index([approved])
@@ -252,6 +256,9 @@ model ClientProfile {
   checkIns           CheckIn[]
   workoutCompletions WorkoutCompletion[]
   transformations    TransformationSubmission[]
+  mealLogs           MealLog[]
+  videoFeedback      VideoFeedback[]
+  bookings           CoachBooking[]
 
   @@index([userId])
   @@index([coachId])
@@ -485,6 +492,7 @@ model WorkoutCompletion {
   @@index([clientProfileId])
   @@index([programDayId])
   @@index([clientProgramId])
+  @@index([completedAt])
 }
 
 model WorkoutSetLog {
@@ -940,4 +948,154 @@ model FreeTrial {
   @@index([grantedById])
   @@index([status])
   @@index([endDate])
+}
+
+model EarlyAccessSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ─── Analytics ───────────────────────────────────────────────────────
+
+enum DeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  UNKNOWN
+}
+
+model PageVisit {
+  id            String     @id @default(cuid())
+  path          String
+  userId        String?
+  user          User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId     String?
+  ipAddress     String?
+  userAgent     String?
+  referrer      String?
+  deviceType    DeviceType @default(UNKNOWN)
+  browser       String?
+  os            String?
+  country       String?
+  durationMs    Int?
+  createdAt     DateTime   @default(now())
+
+  @@index([path, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
+model ActivityLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action        String
+  category      String?
+  resourceType  String?
+  resourceId    String?
+  description   String?
+  metadata      Json?
+  success       Boolean  @default(true)
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([category, createdAt])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+}
+
+model MealLog {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  loggedAt        DateTime      @default(now())
+  mealType        MealType      @default(OTHER)
+  notes           String?
+  createdAt       DateTime      @default(now())
+
+  items MealLogItem[]
+
+  @@index([clientProfileId])
+  @@index([loggedAt])
+}
+
+model MealLogItem {
+  id          String   @id @default(cuid())
+  mealLogId   String
+  mealLog     MealLog  @relation(fields: [mealLogId], references: [id], onDelete: Cascade)
+  foodId      String
+  foodName    String
+  portionGrams Int
+  calories    Int
+  protein     Float
+  carbs       Float
+  fat         Float
+  createdAt   DateTime @default(now())
+
+  @@index([mealLogId])
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+  OTHER
+}
+
+model AiConversation {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userMessage     String
+  assistantMessage String
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model VideoFeedback {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  videoUrl        String
+  exerciseName    String
+  notes           String?
+  status          String        @default("pending")
+  coachNotes      String?
+  formScore       Int?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clientProfileId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CoachBooking {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coachProfileId  String
+  coachProfile    CoachProfile  @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  scheduledAt     DateTime
+  durationMinutes Int           @default(60)
+  status          String        @default("pending")
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clientProfileId])
+  @@index([coachProfileId])
+  @@index([scheduledAt])
 }

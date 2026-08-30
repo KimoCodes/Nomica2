@@ -5,6 +5,7 @@ import { Role, ProgressLogType, MediaVisibility } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { uploadMedia } from "@/lib/cloudinary";
 import { createNotification } from "@/server/services/notification.service";
+import logger from "@/lib/logger";
 
 const postBodySchema = z.object({
   type: z.nativeEnum(ProgressLogType).default("PROGRESS_PHOTO"),
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Progress list error:", error);
+    logger.error({ err: error, route: "client/[id]/progress" }, "Progress list error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -236,7 +237,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ log: fullLog }, { status: 201 });
   } catch (error) {
-    console.error("Progress upload error:", error);
+    logger.error({ err: error, route: "client/[id]/progress" }, "Progress upload error");
 
     if (error instanceof ZodError) {
       return NextResponse.json(

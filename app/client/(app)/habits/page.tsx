@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { CLIENT_NAV } from "@/constants/navigation";
 
 export const metadata: Metadata = {
-  title: "Habits | NOMICA",
+  title: "Habits | NomiTips",
 };
 
 export default async function HabitsPage() {

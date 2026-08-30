@@ -15,6 +15,10 @@ export const CLIENT_NAV = [
   { label: "Dashboard", href: "/client", icon: "dashboard" },
   { label: "Workouts", href: "/client/workouts", icon: "workouts" },
   { label: "Exercises", href: "/client/exercise-library", icon: "exercises" },
+  { label: "AI Coach", href: "/client/ai-coach", icon: "messages" },
+  { label: "Video Feedback", href: "/client/video-feedback", icon: "media" },
+  { label: "Find a Coach", href: "/client/coaches", icon: "clients" },
+  { label: "Live Session", href: "/client/live-session", icon: "messages" },
   { label: "Media", href: "/client/media", icon: "media" },
   { label: "Nutrition", href: "/client/nutrition", icon: "nutrition" },
   { label: "Timers", href: "/client/timers", icon: "timers" },
@@ -31,6 +35,7 @@ export const CLIENT_NAV = [
 
 export const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
+  { label: "Analytics", href: "/admin/analytics", icon: "progress" },
   { label: "Users", href: "/admin/users", icon: "clients" },
   { label: "Coaches", href: "/admin/coaches", icon: "clients" },
   { label: "Payments", href: "/admin/payments", icon: "subscription" },

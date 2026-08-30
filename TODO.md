@@ -1,7 +1,7 @@
 # Milestone 9 — Production Deployment Readiness
 
 **Start:** Today 11:00 AM
-**Goal:** Make NOMICA2 deployable to production with real infrastructure
+**Goal:** Make NomiTips deployable to production with real infrastructure
 
 ---
 
@@ -12,6 +12,8 @@ Completed M1–M8 + Subscription Access Flow:
 - UI polished, security headers, SEO (robots/sitemap), a11y (skip links, role="alert", aria-labels)
 - Loading skeletons, error boundaries, Zod validation on API routes
 - Subscription access flow: FeatureGate checks status, payments always accessible
+
+**M9 Status: ✅ COMPLETED**
 
 ---
 
@@ -136,12 +138,12 @@ Completed M1–M8 + Subscription Access Flow:
 
 ## Acceptance Criteria
 
-- [ ] `npx prisma migrate deploy` succeeds on a fresh DB
-- [ ] Server fails to start if required env vars are missing (clear error message)
-- [ ] No `console.log`/`console.error` in production server code (except error boundary + seed)
-- [ ] Errors are reported to Sentry (if DSN configured)
-- [ ] README has complete setup and deploy instructions
-- [ ] `docker build` succeeds
-- [ ] `GET /api/health` returns 200
-- [ ] `npm run build` completes without errors
-- [ ] TypeScript clean, ESLint pre-existing only
+- [x] `npx prisma migrate deploy` succeeds on a fresh DB
+- [x] Server fails to start if required env vars are missing (clear error message)
+- [x] No `console.log`/`console.error` in production server code (except error boundary + seed)
+- [x] Errors are reported to Sentry (if DSN configured)
+- [x] README has complete setup and deploy instructions
+- [x] `docker build` succeeds
+- [x] `GET /api/health` returns 200
+- [x] `npm run build` completes without errors
+- [x] TypeScript clean, ESLint pre-existing only

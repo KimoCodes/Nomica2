@@ -23,6 +23,7 @@ import {
   CalendarCheck,
   TrendingUp,
 } from "lucide-react";
+import { CoachAlertsPanel } from "@/components/coach-alerts-panel";
 
 export default async function CoachDashboardPage() {
   const session = await requireRole([Role.COACH]);
@@ -306,6 +307,8 @@ export default async function CoachDashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        <CoachAlertsPanel />
       </div>
     </DashboardLayout>
   );

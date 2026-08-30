@@ -3,7 +3,7 @@ import { PublicLayout } from "@/components/shared/public-layout";
 
 export const metadata: Metadata = {
   title: "Refund Policy",
-  description: "NOMICA Refund Policy — 30-day money-back guarantee on all purchases.",
+  description: "NomiTips Refund Policy — 30-day money-back guarantee on all purchases.",
 };
 
 export default function RefundPolicyPage() {
@@ -45,10 +45,10 @@ export default function RefundPolicyPage() {
                 <li>
                   <strong>Email:</strong> Send a request to{" "}
                   <a
-                    href="mailto:support@nomica.app"
+                    href="mailto:support@nomitips.com"
                     className="text-primary hover:underline"
                   >
-                    support@nomica.app
+                    support@nomitips.com
                   </a>{" "}
                   with your account email and reason for the refund
                 </li>
@@ -116,10 +116,10 @@ export default function RefundPolicyPage() {
               <p>
                 For refund-related questions, contact us at{" "}
                 <a
-                  href="mailto:support@nomica.app"
+                  href="mailto:support@nomitips.com"
                   className="text-primary hover:underline"
                 >
-                  support@nomica.app
+                  support@nomitips.com
                 </a>
                 .
               </p>

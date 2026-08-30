@@ -25,26 +25,26 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
   const csrfRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  const authErrorParam = searchParams.get("error");
+  const registeredParam = searchParams.get("registered");
+  const planParam = searchParams.get("plan");
+
+  const [error, setError] = useState<string | null>(
+    authErrorParam === "CredentialsSignin" ? "Invalid email or password" : null
+  );
+  const [success, setSuccess] = useState<string | null>(
+    registeredParam === "true" ? "Account created successfully! Sign in to continue." : null
+  );
   const [isPending, setIsPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
-    const authError = searchParams.get("error");
-    if (authError === "CredentialsSignin") {
-      setError("Invalid email or password");
-    }
-
-    const registered = searchParams.get("registered");
     const plan = searchParams.get("plan");
-    if (registered === "true") {
-      setSuccess("Account created successfully! Sign in to continue.");
-      if (plan) {
-        sessionStorage.setItem("selectedPlan", plan);
-      }
+    if (registeredParam === "true" && plan) {
+      sessionStorage.setItem("selectedPlan", plan);
     }
-  }, [searchParams]);
+  }, [searchParams, registeredParam]);
 
   useEffect(() => {
     fetch("/api/auth/csrf")

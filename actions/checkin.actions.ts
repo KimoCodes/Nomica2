@@ -11,6 +11,7 @@ import {
   createSuccessResponse,
 } from "@/server/utils/response";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function startOfWeek() {
   const date = new Date();
@@ -87,7 +88,7 @@ export async function submitCheckInAction(formData: FormData): Promise<ApiRespon
 
     return createSuccessResponse({ id: checkIn.id });
   } catch (error) {
-    console.error("submitCheckInAction error:", error);
+    logger.error({ err: error, action: "submitCheckInAction" }, "Failed to submit check-in");
     return createErrorResponse("Failed to submit check-in", "INTERNAL_ERROR");
   }
 }
@@ -147,7 +148,7 @@ export async function respondToCheckInAction(
     revalidatePath("/coach/check-ins");
     return createSuccessResponse({ id: response.id });
   } catch (error) {
-    console.error("respondToCheckInAction error:", error);
+    logger.error({ err: error, action: "respondToCheckInAction" }, "Failed to send response");
     return createErrorResponse("Failed to send response", "INTERNAL_ERROR");
   }
 }

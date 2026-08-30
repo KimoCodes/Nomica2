@@ -30,7 +30,7 @@ export async function generateMetadata({
   if (!product) return { title: "Program Not Found" };
 
   return {
-    title: `${product.name} | NOMICA`,
+    title: `${product.name} | NomiTips`,
     description: product.tagline ?? undefined,
   };
 }

@@ -56,7 +56,7 @@ export function SubscriptionGuard({
       <h3 className="text-lg font-semibold">Subscription Required</h3>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
         You need an active subscription to access this feature. Subscribe to
-        NOMICA All Access to unlock workouts, progress tracking, nutrition plans,
+        NomiTips All Access to unlock workouts, progress tracking, nutrition plans,
         messaging, and more.
       </p>
 

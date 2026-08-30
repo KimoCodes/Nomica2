@@ -1,154 +1,158 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import {
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  getUnreadNotificationCount,
-} from "@/actions/notifications.actions";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Check, Trash2 } from "lucide-react";
 
-type NotificationData = {
+type Notification = {
   id: string;
-  type: string;
   title: string;
-  body: string;
-  link: string | null;
+  message: string;
+  type: "info" | "success" | "warning" | "error";
   read: boolean;
-  createdAt: Date;
-};
-
-const NOTIFICATION_ICONS: Record<string, string> = {
-  NEW_MESSAGE: "💬",
-  WORKOUT_ASSIGNED: "🏋️",
-  SUBSCRIPTION_EXPIRING: "⚠️",
-  SUBSCRIPTION_APPROVED: "✅",
-  SUBSCRIPTION_REVOKED: "❌",
-  CHECK_IN_DUE: "📋",
-  COACH_ASSIGNED: "👩‍🏫",
-  PAYMENT_SUBMITTED: "💰",
-  PAYMENT_APPROVED: "✅",
-  PAYMENT_REJECTED: "❌",
-  PAYMENT_PROOF_REQUESTED: "📎",
+  createdAt: string;
 };
 
 export function NotificationBell() {
-  const router = useRouter();
-  const [count, setCount] = useState(0);
-  const [notifications, setNotifications] = useState<NotificationData[]>([]);
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    getUnreadNotificationCount().then(setCount);
+    let cancelled = false;
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        const data = await res.json();
+        if (!cancelled) {
+          setNotifications(data.notifications ?? []);
+          setUnreadCount(data.unreadCount ?? 0);
+        }
+      } catch {
+        // Failed to load
+      }
+    };
+    fetchNotifications();
+    return () => { cancelled = true; };
   }, []);
 
-  function fetchNotifications() {
-    getNotifications(20).then((data) => {
-      setNotifications(data as NotificationData[]);
-      setOpen(true);
-    });
-  }
-
-  function handleMarkRead(id: string) {
-    startTransition(async () => {
-      await markNotificationRead(id);
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/notifications/${id}/read`, { method: "POST" });
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
-      setCount((prev) => Math.max(0, prev - 1));
-    });
-  }
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // Failed
+    }
+  }, []);
 
-  function handleMarkAllRead() {
-    startTransition(async () => {
-      await markAllNotificationsRead();
+  const markAllRead = useCallback(async () => {
+    try {
+      await fetch("/api/notifications/read-all", { method: "POST" });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setCount(0);
-    });
-  }
+      setUnreadCount(0);
+    } catch {
+      // Failed
+    }
+  }, []);
+
+  const deleteNotification = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setUnreadCount((prev) => {
+        const notification = notifications.find((n) => n.id === id);
+        return notification && !notification.read ? Math.max(0, prev - 1) : prev;
+      });
+    } catch {
+      // Failed
+    }
+  }, [notifications]);
+
+  const typeColors: Record<string, string> = {
+    info: "bg-blue-100 text-blue-800",
+    success: "bg-green-100 text-green-800",
+    warning: "bg-yellow-100 text-yellow-800",
+    error: "bg-red-100 text-red-800",
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) fetchNotifications(); }}>
-      <DialogTrigger
-        render={
-          <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-            <Bell className="size-5" />
-            {count > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {count > 9 ? "9+" : count}
-              </span>
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative"
+      >
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </Badge>
+        )}
+      </Button>
+
+      {isOpen && (
+        <Card className="absolute right-0 top-full z-50 mt-2 w-80 shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm">Notifications</CardTitle>
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={markAllRead}>
+                <Check className="mr-1 h-3 w-3" />
+                Mark all read
+              </Button>
             )}
-            <span className="sr-only">Notifications</span>
-          </Button>
-        }
-      />
-      <DialogContent className="sm:max-w-md p-0">
-        <DialogHeader className="flex flex-row items-center justify-between border-b border-border/50 px-4 py-3">
-          <DialogTitle className="text-base">Notifications</DialogTitle>
-          {count > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMarkAllRead}
-              disabled={isPending}
-              className="text-xs text-muted-foreground"
-            >
-              <CheckCheck className="mr-1 size-3.5" />
-              Mark all read
-            </Button>
-          )}
-        </DialogHeader>
-        <div className="max-h-[400px] overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Bell className="size-8 text-muted-foreground/50" />
-              <p className="mt-2 text-sm text-muted-foreground">No notifications yet</p>
-            </div>
-          ) : (
-            notifications.map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  "flex items-start gap-3 border-b border-border/30 px-4 py-3 transition-colors hover:bg-muted/50",
-                  !n.read && "bg-primary/5"
-                )}
-              >
-                <span className="mt-0.5 text-lg">{NOTIFICATION_ICONS[n.type] ?? "🔔"}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm", !n.read && "font-medium")}>{n.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.body}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground/70">
-                    {new Date(n.createdAt).toLocaleDateString()}
-                  </p>
+          </CardHeader>
+          <CardContent className="max-h-80 space-y-2 overflow-y-auto p-0">
+            {notifications.length === 0 ? (
+              <p className="p-4 text-center text-sm text-muted-foreground">
+                No notifications
+              </p>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`flex items-start gap-2 p-3 ${
+                    !notification.read ? "bg-muted/50" : ""
+                  }`}
+                >
+                  <Badge className={typeColors[notification.type]}>
+                    {notification.type[0]?.toUpperCase()}
+                  </Badge>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {notification.message}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    {!notification.read && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteNotification(notification.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-                {!n.read && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 shrink-0"
-                    onClick={() => handleMarkRead(n.id)}
-                    disabled={isPending}
-                  >
-                    <Check className="size-3.5" />
-                  </Button>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

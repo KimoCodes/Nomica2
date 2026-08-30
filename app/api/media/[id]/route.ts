@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { Role, MediaVisibility } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { deleteMedia } from "@/lib/cloudinary";
+import logger from "@/lib/logger";
 
 const patchBodySchema = z.object({
   title: z.string().optional(),
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ media });
   } catch (error) {
-    console.error("Media fetch error:", error);
+    logger.error({ err: error, route: "media/[id]" }, "Media fetch error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -107,7 +108,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ media: updated });
   } catch (error) {
-    console.error("Media update error:", error);
+    logger.error({ err: error, route: "media/[id]" }, "Media update error");
 
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -151,7 +152,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Media delete error:", error);
+    logger.error({ err: error, route: "media/[id]" }, "Media delete error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

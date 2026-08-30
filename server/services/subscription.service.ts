@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requestCache, invalidateRequestCache } from "@/lib/request-cache";
 import { getStripe, getStripePriceIds } from "@/lib/stripe";
 import { createNotification } from "@/server/services/notification.service";
+import {
+  sendSubscriptionConfirmationEmail,
+  sendSubscriptionCancelledEmail,
+} from "@/server/services/email.service";
 
 export async function getSubscriptionForClient(userId: string) {
   return requestCache(`sub:${userId}`, () =>
@@ -236,6 +240,17 @@ export async function approveSubscription(
     // Notification failure should not block approval
   }
 
+  // Send email confirmation
+  try {
+    await sendSubscriptionConfirmationEmail(
+      subscription.user.email,
+      subscription.user.name ?? "there",
+      plan,
+    );
+  } catch {
+    // Email failure should not block approval
+  }
+
   // Invalidate cache
   invalidateRequestCache(`sub:${targetUserId}`);
 
@@ -283,6 +298,16 @@ export async function revokeSubscription(
     });
   } catch {
     // Notification failure should not block revocation
+  }
+
+  // Send email notification
+  try {
+    await sendSubscriptionCancelledEmail(
+      updated.user.email,
+      updated.user.name ?? "there",
+    );
+  } catch {
+    // Email failure should not block revocation
   }
 
   // Invalidate cache

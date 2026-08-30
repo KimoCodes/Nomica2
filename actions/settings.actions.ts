@@ -18,7 +18,9 @@ import {
   createSuccessResponse,
 } from "@/server/utils/response";
 
+import { logActivity } from "@/server/services/analytics.service";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 /* ------------------------------------------------
    USER PROFILE
@@ -43,7 +45,7 @@ export async function updateProfileAction(
     revalidatePath("/settings");
     return createSuccessResponse({ message: "Profile updated" });
   } catch (error) {
-    console.error("updateProfileAction error:", error);
+    logger.error({ err: error, action: "updateProfileAction" }, "Failed to update profile");
     return createErrorResponse("Failed to update profile", "INTERNAL_ERROR");
   }
 }
@@ -86,7 +88,7 @@ export async function changePasswordAction(
 
     return createSuccessResponse({ message: "Password changed" });
   } catch (error) {
-    console.error("changePasswordAction error:", error);
+    logger.error({ err: error, action: "changePasswordAction" }, "Failed to change password");
     return createErrorResponse("Failed to change password", "INTERNAL_ERROR");
   }
 }
@@ -107,15 +109,27 @@ export async function updateProgramSellableAction(
   },
 ): Promise<ApiResponse<{ id: string }>> {
   try {
-    await requireRole([Role.ADMIN]);
+    const session = await requireRole([Role.ADMIN]);
 
     const result = await updateProgramSellable(programId, data);
 
+    logActivity({
+      userId: session.user.id,
+      action: "PROGRAM_UPDATED",
+      category: "admin",
+      resourceType: "program",
+      resourceId: programId,
+      description: `Program sellable status updated: ${data.isSellable ? "listed" : "unlisted"}`,
+      metadata: { isSellable: data.isSellable, price: data.price },
+    }).catch(() => {});
+
     revalidatePath("/admin/programs");
+    revalidatePath("/");
+    revalidatePath("/programs");
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("updateProgramSellableAction error:", error);
+    logger.error({ err: error, action: "updateProgramSellableAction" }, "Failed to update program");
     return createErrorResponse("Failed to update program", "INTERNAL_ERROR");
   }
 }
@@ -128,15 +142,24 @@ export async function deleteProgramAction(
   programId: string,
 ): Promise<ApiResponse<{ id: string }>> {
   try {
-    await requireRole([Role.ADMIN]);
+    const session = await requireRole([Role.ADMIN]);
 
     const result = await deleteProgram(programId);
+
+    logActivity({
+      userId: session.user.id,
+      action: "PROGRAM_DELETED",
+      category: "admin",
+      resourceType: "program",
+      resourceId: programId,
+      description: "Program deleted by admin",
+    }).catch(() => {});
 
     revalidatePath("/admin/programs");
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("deleteProgramAction error:", error);
+    logger.error({ err: error, action: "deleteProgramAction" }, "Failed to delete program");
     return createErrorResponse("Failed to delete program", "INTERNAL_ERROR");
   }
 }
@@ -165,7 +188,7 @@ export async function updateLandingContentAction(
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("updateLandingContentAction error:", error);
+    logger.error({ err: error, action: "updateLandingContentAction" }, "Failed to update content");
     return createErrorResponse("Failed to update content", "INTERNAL_ERROR");
   }
 }
@@ -202,7 +225,7 @@ export async function updateSiteSettingsAction(
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {
-    console.error("updateSiteSettingsAction error:", error);
+    logger.error({ err: error, action: "updateSiteSettingsAction" }, "Failed to update settings");
     return createErrorResponse("Failed to update settings", "INTERNAL_ERROR");
   }
 }

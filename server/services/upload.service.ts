@@ -24,7 +24,7 @@ export async function uploadChatImage(file: File) {
   const dataUri = `data:${file.type};base64,${base64}`;
 
   const result = await cloudinary.uploader.upload(dataUri, {
-    folder: "nomica/messages",
+    folder: "nomitips/messages",
     resource_type: "image",
   });
 

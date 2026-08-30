@@ -10,6 +10,7 @@ import {
   getClientTransformations,
 } from "@/server/services/transformation.service";
 import { createNotification } from "@/server/services/notification.service";
+import logger from "@/lib/logger";
 
 const MAX_FILE_SIZE = 1.5 * 1024 * 1024 * 1024; // 1.5GB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ transformations });
   } catch (error) {
-    console.error("Transformation list error:", error);
+    logger.error({ err: error, route: "client/[id]/transformation" }, "Transformation list error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ submission }, { status: 201 });
   } catch (error) {
-    console.error("Transformation submission error:", error);
+    logger.error({ err: error, route: "client/[id]/transformation" }, "Transformation submission error");
 
     if (error instanceof ZodError) {
       return NextResponse.json(

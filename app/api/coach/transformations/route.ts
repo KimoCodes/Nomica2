@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -25,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ submissions });
   } catch (error) {
-    console.error("Coach transformations list error:", error);
+    logger.error({ err: error, route: "coach/transformations" }, "Coach transformations list error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

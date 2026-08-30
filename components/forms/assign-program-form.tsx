@@ -29,11 +29,13 @@ export function AssignProgramForm({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [selectedProgramId, setSelectedProgramId] = useState<string>("");
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
     setError(null);
     formData.set("clientProfileId", clientProfileId);
+    formData.set("programId", selectedProgramId);
 
     const result = await trackLoading(() => assignProgramAction(formData));
 
@@ -67,10 +69,9 @@ export function AssignProgramForm({
       )}
       <div className="space-y-2">
         <Label htmlFor={`program-${clientProfileId}`}>Program</Label>
-        <input type="hidden" name="programId" />
+        <input type="hidden" name="programId" value={selectedProgramId} />
         <Select onValueChange={(value: string | null) => {
-          const hiddenInput = document.querySelector('input[name="programId"]') as HTMLInputElement;
-          if (hiddenInput && value) hiddenInput.value = value;
+          if (value) setSelectedProgramId(value);
         }}>
           <SelectTrigger id={`program-${clientProfileId}`}>
             <SelectValue placeholder="Select program" />

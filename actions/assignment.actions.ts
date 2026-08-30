@@ -17,6 +17,7 @@ import {
   deactivateAssignmentSchema,
 } from "@/server/validators/program.schema";
 import type { ApiResponse } from "@/types";
+import logger from "@/lib/logger";
 
 function parseFormData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
@@ -49,7 +50,7 @@ export async function assignProgramAction(
     if (error instanceof Error && error.message === "FORBIDDEN") {
       return createErrorResponse("You cannot assign to this client", "FORBIDDEN");
     }
-    console.error("assignProgramAction error:", error);
+    logger.error({ err: error, action: "assignProgramAction" }, "Failed to assign program");
     return createErrorResponse("Failed to assign program", "INTERNAL_ERROR");
   }
 }
@@ -66,7 +67,7 @@ export async function acceptClientAction(
     if (error instanceof Error && error.message === "CLIENT_HAS_COACH") {
       return createErrorResponse("Client already has a coach", "CLIENT_HAS_COACH");
     }
-    console.error("acceptClientAction error:", error);
+    logger.error({ err: error, action: "acceptClientAction" }, "Failed to accept client");
     return createErrorResponse("Failed to accept client", "INTERNAL_ERROR");
   }
 }
@@ -97,7 +98,7 @@ export async function deactivateAssignmentAction(
     if (error instanceof Error && error.message === "FORBIDDEN") {
       return createErrorResponse("You cannot update this assignment", "FORBIDDEN");
     }
-    console.error("deactivateAssignmentAction error:", error);
+    logger.error({ err: error, action: "deactivateAssignmentAction" }, "Failed to deactivate assignment");
     return createErrorResponse("Failed to deactivate assignment", "INTERNAL_ERROR");
   }
 }

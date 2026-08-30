@@ -1,4 +1,4 @@
-# NOMICA — World-Class Digital Storefront Blueprint
+# NomiTips — World-Class Digital Storefront Blueprint
 
 > Premium Feminine Transformation Fitness Brand
 > Contact: noella.bahatsi@tstech.com
@@ -12,7 +12,7 @@
 3. [Page-by-Page Build — Wireframes & Copy](#3-page-by-page-build)
 4. [Product Catalog Architecture](#4-product-catalog-architecture)
 5. [Premium Bundling & Upsell System](#5-premium-bundling--upsell-system)
-6. [NOMICA Sculpt Club Membership](#6-nomica-sculpt-club-membership)
+6. [NomiTips Sculpt Club Membership](#6-nomitips-sculpt-club-membership)
 7. [Transformation & Social Proof System](#7-transformation--social-proof-system)
 8. [Lead Magnet + Quiz Onboarding Flow](#8-lead-magnet--quiz-onboarding-flow)
 9. [Objection Handling + FAQ + Footer](#9-objection-handling--faq--footer)
@@ -49,7 +49,7 @@
 ### Color System. Blackelephant@1234567890
 
 ```
-Primary:        oklch(0.54 0.18 155)  — NOMICA Green (energy, growth, vitality)
+Primary:        oklch(0.54 0.18 155)  — NomiTips Green (energy, growth, vitality)
 Secondary:      oklch(0.85 0.02 330)  — Soft Rose (feminine warmth)
 Accent:         oklch(0.75 0.15 45)   — Golden Hour (premium, aspiration)
 Background:     oklch(0.99 0.005 100) — Warm White
@@ -401,7 +401,7 @@ Take the 2-Minute Coach Match Quiz
 │  │  work"       │  │              │  │              │     │
 │  └──────────────┘  └──────────────┘  └──────────────┘     │
 │                                                             │
-│         ↑ This is why NOMICA exists.                       │
+│         ↑ This is why NomiTips exists.                       │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -414,7 +414,7 @@ You've watched other women transform while you're stuck in the same loop.
 
 It's not your fault. You just never had a SYSTEM.
 
-NOMICA is that system.
+NomiTips is that system.
 ```
 
 ---
@@ -424,7 +424,7 @@ NOMICA is that system.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│              THE NOMICA METHOD                              │
+│              THE NomiTips METHOD                              │
 │              3 Steps to Your Dream Body                     │
 │                                                             │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌────────────┐ │
@@ -546,7 +546,7 @@ Each transformation card includes:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│              WHY NOMICA WORKS                               │
+│              WHY NomiTips WORKS                               │
 │              (When Everything Else Didn't)                  │
 │                                                             │
 │  ┌──────────────────┐  ┌──────────────────┐               │
@@ -591,7 +591,7 @@ Each transformation card includes:
 │  │   [VIDEO PREVIEW — 5 exercise clips playing]        │   │
 │  │                                                     │   │
 │  │   5 days. 5 workouts. Zero commitment.              │   │
-│  │   Experience the NOMICA method before you invest.   │   │
+│  │   Experience the NomiTips method before you invest.   │   │
 │  │                                                     │   │
 │  │   ┌─────────────────────────────┐                  │   │
 │  │   │  Enter your email           │                  │   │
@@ -853,7 +853,7 @@ Each product page follows this structure:
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │                                                     │   │
 │  │  INTRODUCING                                        │   │
-│  │  THE NOMICA SCULPT CLUB                             │   │
+│  │  THE NomiTips SCULPT CLUB                             │   │
 │  │                                                     │   │
 │  │  $39/month — Cancel anytime                         │   │
 │  │                                                     │   │
@@ -991,7 +991,7 @@ const PRODUCTS = [
   },
   {
     id: "workout-tracker",
-    name: "NOMICA Workout Tracker",
+    name: "NomiTips Workout Tracker",
     tagline: "Track every rep, see every gain",
     price: 1200,
     originalPrice: 1700,
@@ -1087,7 +1087,7 @@ const BUNDLES = [
   {
     id: "ultimate-bundle",
     name: "Ultimate Transformation Bundle",
-    tagline: "Everything NOMICA. One price.",
+    tagline: "Everything NomiTips. One price.",
     price: 11700,
     originalPrice: 16700,
     savings: 5000,
@@ -1111,7 +1111,7 @@ const BUNDLES = [
 │  │  │                 │   ULTIMATE TRANSFORMATION      │   │
 │  │  │  [STACKED CARD  │   BUNDLE                       │   │
 │  │  │   LAYOUT —      │                                │   │
-│  │  │   3 PRODUCT     │   Everything NOMICA.           │   │
+│  │  │   3 PRODUCT     │   Everything NomiTips.           │   │
 │  │  │   IMAGES        │   One price.                   │   │
 │  │  │   OVERLAPPING]  │                                │   │
 │  │  │                 │   ✓ 12-Week Glute Sculpt       │   │
@@ -1132,7 +1132,7 @@ const BUNDLES = [
 
 ---
 
-## 6. NOMICA Sculpt Club Membership
+## 6. NomiTips Sculpt Club Membership
 
 ### Membership Tiers
 
@@ -1173,7 +1173,7 @@ const MEMBERSHIP_TIERS = [
 
 **Hero:**
 ```
-THE NOMICA SCULPT CLUB
+THE NomiTips SCULPT CLUB
 
 Not just workouts. A transformation engine.
 
@@ -1298,7 +1298,7 @@ FREE: 5-DAY GLUTE GUIDE
 
 5 days. 5 workouts. Zero commitment.
 
-Experience the NOMICA method before you invest a single dollar.
+Experience the NomiTips method before you invest a single dollar.
 Video demos for every exercise. Beginner-friendly. Gym or home.
 
 Enter your email → get instant access.
@@ -1315,7 +1315,7 @@ Enter your email → get instant access.
 │  │  FREE: 5-DAY GLUTE GUIDE                           │   │
 │  │                                                     │   │
 │  │  5 days. 5 workouts. Zero commitment.              │   │
-│  │  Experience the NOMICA method before you invest.    │   │
+│  │  Experience the NomiTips method before you invest.    │   │
 │  │                                                     │   │
 │  │  ┌─────────────────────────────┐                  │   │
 │  │  │  your@email.com             │                  │   │
@@ -1389,7 +1389,7 @@ Enter your email → get instant access.
 | **"Do I need a gym membership?"** | Some programs require a gym, others are home-based. Our quiz matches you to programs that fit YOUR setup — gym, home, or hybrid. |
 | **"What if I don't see results?"** | The system is built on progressive overload science — it's designed to produce results. Plus, with coach support, we'll troubleshoot anything that isn't working. |
 | **"Can I cancel my membership anytime?"** | Yes. No contracts. No guilt. Cancel from your dashboard with one click. Your access continues until the end of your billing period. |
-| **"How is this different from YouTube workouts?"** | YouTube gives you random workouts. NOMICA gives you a SYSTEM — progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be. |
+| **"How is this different from YouTube workouts?"** | YouTube gives you random workouts. NomiTips gives you a SYSTEM — progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be. |
 | **"Will I get bulky?"** | No. Building significant muscle mass requires years of dedicated training and specific nutrition. What you'll get is a sculpted, toned, strong physique. |
 | **"Is my payment secure?"** | Yes. We use Stripe for payment processing — the same system used by Amazon, Shopify, and millions of businesses worldwide. |
 
@@ -1398,7 +1398,7 @@ Enter your email → get instant access.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│  NOMICA                                      [Logo]        │
+│  NomiTips                                      [Logo]        │
 │  Premium feminine transformation fitness.                  │
 │                                                             │
 │  PROGRAMS           COMPANY           SUPPORT              │
@@ -1414,7 +1414,7 @@ Enter your email → get instant access.
 │  ─────────────────────────────────────────────────────     │
 │                                                             │
 │  Contact: noella.bahatsi@tstech.com                        │
-│  © 2024 NOMICA. All rights reserved.                       │
+│  © 2024 NomiTips. All rights reserved.                       │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -1560,5 +1560,5 @@ components/
 
 ---
 
-*Blueprint prepared for NOMICA — Premium Feminine Transformation Fitness*
+*Blueprint prepared for NomiTips — Premium Feminine Transformation Fitness*
 *Contact: noella.bahatsi@tstech.com*

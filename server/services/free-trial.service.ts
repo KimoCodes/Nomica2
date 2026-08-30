@@ -2,6 +2,7 @@ import { FreeTrialStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { invalidateRequestCache } from "@/lib/request-cache";
 import { createNotification } from "@/server/services/notification.service";
+import { sendFreeTrialGrantedEmail } from "@/server/services/email.service";
 
 const MAX_TRIAL_DAYS = 90;
 
@@ -93,6 +94,17 @@ export async function grantFreeTrial({
     });
   } catch {
     // Notification failure should not block trial grant
+  }
+
+  // Send email notification
+  try {
+    await sendFreeTrialGrantedEmail(
+      trial.user.email,
+      trial.user.name ?? "there",
+      durationDays,
+    );
+  } catch {
+    // Email failure should not block trial grant
   }
 
   invalidateRequestCache(`sub:${targetUserId}`);

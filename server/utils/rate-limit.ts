@@ -5,11 +5,24 @@ type RateLimitEntry = {
 
 const store = new Map<string, RateLimitEntry>();
 
+const CLEANUP_INTERVAL_MS = 60_000;
+let lastCleanup = Date.now();
+
+function cleanup() {
+  const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+  for (const [key, entry] of store) {
+    if (now > entry.resetAt) store.delete(key);
+  }
+}
+
 export function checkRateLimit(
   key: string,
   limit: number,
   windowMs: number,
 ): { allowed: boolean; retryAfterMs: number } {
+  cleanup();
   const now = Date.now();
   const entry = store.get(key);
 

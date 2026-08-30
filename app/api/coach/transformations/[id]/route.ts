@@ -7,6 +7,7 @@ import {
   rejectTransformation,
 } from "@/server/services/transformation.service";
 import { createNotification } from "@/server/services/notification.service";
+import logger from "@/lib/logger";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -78,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ submission: updated });
   } catch (error) {
-    console.error("Transformation review error:", error);
+    logger.error({ err: error, route: "coach/transformations/[id]" }, "Transformation review error");
 
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

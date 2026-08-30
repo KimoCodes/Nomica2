@@ -1,12 +1,14 @@
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { COACH_NAV } from "@/constants/navigation";
+import { ensureCoachConversationsServer } from "@/actions/message.actions";
 import { getConversationsForUser } from "@/server/services/conversation.service";
 import { MessagingApp } from "@/components/messaging/messaging-app";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 
 export default async function CoachMessagesPage() {
   const session = await requireRole([Role.COACH]);
+  await ensureCoachConversationsServer();
   const conversations = await getConversationsForUser(session.user.id);
 
   return (

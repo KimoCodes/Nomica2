@@ -4,6 +4,9 @@ export const SOCKET_EVENTS = {
   CONVERSATION_JOIN: "conversation:join",
   TYPING_START: "typing:start",
   TYPING_STOP: "typing:stop",
+  USER_JOIN: "user:join",
+  PR_ACHIEVED: "pr:achieved",
+  COACH_ALERT: "coach:alert",
 } as const;
 
 export type SocketEvent = (typeof SOCKET_EVENTS)[keyof typeof SOCKET_EVENTS];
@@ -70,4 +73,20 @@ export type MessageItem = {
     name: string;
     avatar: string | null;
   };
+};
+
+export type PrAchievedPayload = {
+  userId: string;
+  records: { exerciseName: string; detail: string }[];
+};
+
+export type CoachAlertPayload = {
+  coachId: string;
+  alerts: {
+    clientId: string;
+    clientName: string;
+    riskLevel: "low" | "medium" | "high" | "critical";
+    riskScore: number;
+    suggestedActions: string[];
+  }[];
 };

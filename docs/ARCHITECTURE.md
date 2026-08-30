@@ -1,4 +1,4 @@
-# NOMICA Platform — Architecture Decisions
+# NomiTips Platform — Architecture Decisions
 
 _Last updated: 2026-08-04 (M0 consolidation)._
 
@@ -15,7 +15,7 @@ _Last updated: 2026-08-04 (M0 consolidation)._
   - Focused Series (challenges): Cardio Burn (21 d, $12.99), Core & Abs (21 d, $12.99),
     Glute Growth (21 d, $12.99), Quad Sculpt (21 d, $12.99), StairMaster (30 d, $14.99).
     Focus categories: SWEAT (Cardio Burn), SCULPT (Core/Glutes/Quads), CLIMB (StairMaster).
-  - Bundles: Lower-Body $54.99, Sculpt & Sweat $59.99, Complete NOMICA $119.99.
+  - Bundles: Lower-Body $54.99, Sculpt & Sweat $59.99, Complete NomiTips $119.99.
   - All-Access membership: **$14.99/mo, $149.99/yr** (two months free).
 - Where `NOMICA_BLUEPRINT.md` or `constants/*` conflict with the PDF (e.g. Sculpt Club
   $39/$79, STARTER/PREMIUM/ELITE plans), **the PDF wins**. Blueprint remains useful for

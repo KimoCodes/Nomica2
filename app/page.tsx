@@ -161,8 +161,18 @@ export default async function HomePage() {
             ═══════════════════════════════════════════ */}
         <section className="relative overflow-hidden px-4 pt-16 pb-24 md:pt-24 md:pb-32">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-            <div className="absolute left-1/2 top-0 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+              poster="/media/hero/hero-woman-squat.jpg"
+            >
+              <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           </div>
 
           <div className="mx-auto max-w-6xl">
@@ -227,15 +237,25 @@ export default async function HomePage() {
 
               <div className="relative animate-slide-up stagger-2">
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 blur-3xl" />
-                <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card shadow-premium-lg">
-                  <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-4 text-center">
-                      <div className="flex size-16 items-center justify-center rounded-full bg-primary/20">
-                        <Play className="size-8 text-primary ml-1" />
+                <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-card shadow-premium-lg">
+                  <div className="aspect-[4/3] relative overflow-hidden">
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 h-full w-full object-cover"
+                      poster="/media/hero/hero-woman-squat.jpg"
+                    >
+                      <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/25 text-center">
+                      <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
+                        <Play className="size-8 text-white ml-1" />
                       </div>
                       <div>
-                        <p className="font-semibold">NomiTips Method Preview</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-semibold text-white drop-shadow-lg">NomiTips Method Preview</p>
+                        <p className="text-sm text-white/80 drop-shadow-lg">
                           See the NomiTips method in action
                         </p>
                       </div>
@@ -331,6 +351,68 @@ export default async function HomePage() {
                   {index < steps.length - 1 && (
                     <div className="absolute right-0 top-8 hidden h-0.5 w-16 bg-border md:block" />
                   )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 3.5: WORKOUT VIDEO SHOWCASE
+            ═══════════════════════════════════════════ */}
+        <section className="relative overflow-hidden border-t border-border/50 px-4 py-24 md:py-32">
+          <div className="absolute inset-0 -z-10 bg-black" />
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-12 text-center">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
+                See It In Action
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                Real Workouts. Real Results.
+              </h2>
+              <p className="mt-4 text-lg text-neutral-400">
+                Every program includes video-guided workouts with form cues and progressive overload tracking.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { src: "/media/workout-glutes-quads-hamstrings.mp4", poster: "/media/hero/hero-woman-squat.jpg", title: "Glute & Quad Burner", tag: "Lower Body" },
+                { src: "/media/workout-glutes-burner.mp4", poster: "/media/hero/hero-woman-deadlift.jpg", title: "Progressive Glute Isolation", tag: "Glutes" },
+                { src: "/media/workout-glutes-quads-inner-thighs.mp4", poster: "/media/hero/hero-gym-workout.jpg", title: "Full Leg Sculpt", tag: "Legs" },
+                { src: "/media/workout-stretch-glutes.mp4", poster: "/media/hero/hero-woman-weights.jpg", title: "Active Recovery & Mobility", tag: "Recovery" },
+                { src: "/media/workout-combo-lower-body.mp4", poster: "/media/hero/hero-fitness-class.jpg", title: "Compound Power Combo", tag: "Full Body" },
+                { src: "/media/workout-leg-elevation.mp4", poster: "/media/hero/hero-gym-equipment.jpg", title: "Elevated Leg Series", tag: "Advanced" },
+              ].map((video, i) => (
+                <div
+                  key={i}
+                  className={`animate-slide-up stagger-${(i % 6) + 1} group relative overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10`}
+                >
+                  <div className="aspect-[4/5] relative">
+                    <video
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      poster={video.poster}
+                    >
+                      <source src={video.src} type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <span className="rounded-full bg-primary/90 px-2.5 py-1 text-xs font-semibold text-primary-foreground backdrop-blur-sm">
+                        {video.tag}
+                      </span>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <div className="flex size-14 items-center justify-center rounded-full bg-primary/30 backdrop-blur-md">
+                        <Play className="size-6 text-white ml-0.5" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="font-semibold text-white drop-shadow-lg">{video.title}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

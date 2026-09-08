@@ -223,22 +223,33 @@ export function ExerciseLibraryClient({
                 className={`animate-slide-up stagger-${(index % 6) + 1} group overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-premium`}
               >
                 {exercise.videoUrl ? (
-                  <div className="relative aspect-video bg-muted">
-                    <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex size-12 items-center justify-center rounded-full bg-primary/20 transition-transform group-hover:scale-110">
-                          <Play className="size-5 text-primary ml-0.5" />
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          Watch demo
-                        </span>
+                  <div className="relative aspect-video bg-muted overflow-hidden">
+                    <img
+                      src="/media/hero/hero-gym-workout.jpg"
+                      alt={`${exercise.name} demo`}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                      <div className="flex size-12 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform group-hover:scale-110">
+                        <Play className="size-5 text-white ml-0.5" />
                       </div>
+                      <span className="text-xs font-medium text-white drop-shadow-lg">
+                        Watch demo
+                      </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="relative aspect-video bg-muted">
-                    <div className="flex size-full items-center justify-center">
-                      <Dumbbell className="size-10 text-muted-foreground/20" />
+                  <div className="relative aspect-video bg-muted overflow-hidden">
+                    <img
+                      src="/media/hero/hero-woman-weights.jpg"
+                      alt="Exercise demo"
+                      className="h-full w-full object-cover opacity-50"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Dumbbell className="size-10 text-white/40" />
                     </div>
                   </div>
                 )}

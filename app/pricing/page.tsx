@@ -28,18 +28,38 @@ export default async function PricingPage() {
 
   return (
     <PublicLayout>
-      <main className="flex-1 mx-auto max-w-6xl px-4 py-12">
-        <div className="mb-16 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-            Pricing
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="relative overflow-hidden px-4 pt-16 pb-12 md:pt-24 md:pb-16">
+          <div className="absolute inset-0 -z-10">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+              poster="/media/hero/hero-fitness-class.jpg"
+            >
+              <source src="/media/workout-stretch-glutes.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/65" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/60" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            One Membership. All Programs.
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            All Access or individual programs — your choice.
-          </p>
-        </div>
+
+          <div className="mx-auto max-w-6xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+              Pricing
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
+              One Membership. All Programs.
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground">
+              All Access or individual programs — your choice.
+            </p>
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-6xl px-4 py-12">
 
         {/* Subscription Plans */}
         <div className="grid gap-8 md:grid-cols-2">
@@ -191,6 +211,7 @@ export default async function PricingPage() {
             View All Bundles
             <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
+        </div>
         </div>
       </main>
     </PublicLayout>

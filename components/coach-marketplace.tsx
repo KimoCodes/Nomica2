@@ -99,15 +99,18 @@ export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachM
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full">
                     {coach.avatar ? (
                       <img
                         src={coach.avatar}
                         alt={coach.name}
-                        className="h-14 w-14 rounded-full object-cover"
+                        className="h-full w-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
-                      <span className="text-xl font-bold">{coach.name[0]}</span>
+                      <div className="flex h-full w-full items-center justify-center bg-primary/10 text-xl font-bold text-primary">
+                        {coach.name[0]}
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -79,13 +79,29 @@ export function TransformationCarousel({
             href={`/transformations/${t.id}`}
             className="group flex min-w-[320px] max-w-[360px] snap-center flex-col rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg md:min-w-[400px]"
           >
-            {/* Before/After Placeholder */}
+            {/* Before/After */}
             <div className="mb-4 grid grid-cols-2 gap-2">
-              <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">
-                Before
+              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
+                <img
+                  src="/media/hero/hero-woman-weights.jpg"
+                  alt={`${t.name} before transformation`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+                  Before
+                </span>
               </div>
-              <div className="flex aspect-[3/4] items-center justify-center rounded-xl bg-primary/10 text-sm text-primary">
-                After
+              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-primary/10">
+                <img
+                  src="/media/hero/hero-woman-squat.jpg"
+                  alt={`${t.name} after transformation`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2 py-0.5 text-xs font-medium text-primary-foreground backdrop-blur-sm">
+                  After
+                </span>
               </div>
             </div>
 

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 type PublicLayoutProps = {
   children: ReactNode;
@@ -41,10 +42,14 @@ export function PublicLayout({ children }: PublicLayoutProps) {
 
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/50 bg-card/50 px-4 backdrop-blur-sm md:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-            <Dumbbell className="size-4 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">NomiTips</span>
+          <Image
+            src="/logo2.png"
+            alt="NomiTips"
+            width={120}
+            height={36}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop nav */}
@@ -106,10 +111,13 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 className="flex items-center gap-2.5"
                 onClick={() => setMobileOpen(false)}
               >
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-                  <Dumbbell className="size-4 text-primary-foreground" />
-                </div>
-                <span className="text-lg font-bold tracking-tight">NomiTips</span>
+                <Image
+                  src="/logo2.png"
+                  alt="NomiTips"
+                  width={120}
+                  height={36}
+                  className="h-8 w-auto"
+                />
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
@@ -172,10 +180,13 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
               <Link href="/" className="flex items-center gap-2.5">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
-                  <Dumbbell className="size-3.5 text-primary" />
-                </div>
-                <span className="text-sm font-semibold">NomiTips</span>
+                <Image
+                  src="/logo2.png"
+                  alt="NomiTips"
+                  width={100}
+                  height={30}
+                  className="h-6 w-auto"
+                />
               </Link>
               <p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">
                 Expert-led feminine fitness. Structured programs, progressive

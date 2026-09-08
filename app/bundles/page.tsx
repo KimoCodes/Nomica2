@@ -30,7 +30,18 @@ export default async function BundlesPage() {
         {/* Hero */}
         <section className="relative overflow-hidden px-4 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+              poster="/media/hero/hero-gym-equipment.jpg"
+            >
+              <source src="/media/workout-stretch-glutes.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/65" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/60" />
           </div>
 
           <div className="mx-auto max-w-6xl text-center">

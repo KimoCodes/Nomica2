@@ -89,14 +89,24 @@ export default async function ProductPage({
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
             {/* Left: Media Preview */}
             <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-br from-primary/10 to-secondary/10">
-                <div className="flex size-full flex-col items-center justify-center gap-4 text-center">
-                  <div className="flex size-16 items-center justify-center rounded-full bg-primary/20">
-                    <Play className="size-8 text-primary ml-1" />
+              <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border/50">
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                  poster="/media/hero/hero-gym-workout.jpg"
+                >
+                  <source src="/media/workout-glutes-quads-inner-thighs.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
+                  <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
+                    <Play className="size-8 text-white ml-1" />
                   </div>
                   <div>
-                    <p className="font-semibold">Preview Workouts</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-semibold text-white drop-shadow-lg">Preview Workouts</p>
+                    <p className="text-sm text-white/80 drop-shadow-lg">
                       {totalWorkouts || "Sample"} exercises
                     </p>
                   </div>

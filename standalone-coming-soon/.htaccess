@@ -1,7 +1,0 @@
-DirectoryIndex index.html
-Options +ExecCGI -Indexes
-AddHandler cgi-script .py
-
-<FilesMatch "^(\.env|README\.md)$">
-  Require all denied
-</FilesMatch>

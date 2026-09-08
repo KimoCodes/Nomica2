@@ -10,6 +10,7 @@ import { getSubscriptionForClient } from "@/server/services/subscription.service
 import { calculateReadinessScore } from "@/server/services/fitness-engine/readiness";
 import { calculateConsistencyScore } from "@/server/services/fitness-engine/consistency";
 import { calculatePersonalRecords } from "@/server/services/fitness-engine/personal-records";
+import { generateRecoveryInsights } from "@/server/services/fitness-engine/recovery";
 import type { WorkoutHistoryEntry, HabitData, CheckInData } from "@/server/services/fitness-engine/types";
 
 function startOfToday() {
@@ -411,6 +412,77 @@ export async function getClientFitnessIntelligence(clientUserId: string) {
     consistency,
     personalRecords: personalRecords.slice(0, 10),
   };
+  }, 30_000);
+}
+
+export async function getClientRecoveryData(clientUserId: string) {
+  return requestCache(`client-recovery:${clientUserId}`, async () => {
+    const client = await requireClientProfile(clientUserId);
+
+    const [workoutHistory, habits, latestCheckIn] = await Promise.all([
+      fetchWorkoutHistory(client.id),
+      fetchHabitData(client.userId),
+      prisma.checkIn.findFirst({
+        where: { clientProfileId: client.id },
+        orderBy: { weekStart: "desc" },
+      }),
+    ]);
+
+    const checkInData: CheckInData | null = latestCheckIn
+      ? {
+          energyLevel: latestCheckIn.energyLevel,
+          sleepQuality: latestCheckIn.sleepQuality,
+          workoutsCompleted: latestCheckIn.workoutsCompleted,
+          submittedAt: latestCheckIn.submittedAt,
+          weekStart: latestCheckIn.weekStart,
+        }
+      : null;
+
+    const readiness = calculateReadinessScore(workoutHistory, habits, checkInData);
+    const insights = generateRecoveryInsights(workoutHistory, habits, checkInData);
+
+    const now = new Date();
+    const twoWeeksAgo = new Date(now);
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const recentWorkouts = workoutHistory
+      .filter((w) => w.completedAt >= twoWeeksAgo)
+      .map((w) => ({
+        date: w.completedAt,
+        title: w.dayTitle,
+        exerciseCount: w.exercises.length,
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    const recentCheckIns = await prisma.checkIn.findMany({
+      where: { clientProfileId: client.id, submittedAt: { not: null } },
+      orderBy: { weekStart: "desc" },
+      take: 8,
+      select: {
+        weekStart: true,
+        sleepQuality: true,
+        energyLevel: true,
+        workoutsCompleted: true,
+      },
+    });
+
+    return {
+      readiness,
+      insights,
+      recentWorkouts,
+      recentCheckIns: recentCheckIns.map((ci) => ({
+        weekStart: ci.weekStart,
+        sleepQuality: ci.sleepQuality ?? 0,
+        energyLevel: ci.energyLevel ?? 0,
+        workoutsCompleted: ci.workoutsCompleted ?? 0,
+      })),
+      daysSinceLastWorkout: workoutHistory.length > 0
+        ? Math.floor(
+            (Date.now() - workoutHistory[workoutHistory.length - 1].completedAt.getTime()) /
+            (1000 * 60 * 60 * 24)
+          )
+        : 0,
+    };
   }, 30_000);
 }
 

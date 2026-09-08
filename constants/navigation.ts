@@ -25,6 +25,7 @@ export const CLIENT_NAV = [
   { label: "Habits", href: "/client/habits", icon: "habits" },
   { label: "Goals", href: "/client/goals", icon: "goals" },
   { label: "Favorites", href: "/client/favorites", icon: "favorites" },
+  { label: "Recovery", href: "/client/recovery", icon: "progress" },
   { label: "Progress", href: "/client/progress", icon: "progress" },
   { label: "Messages", href: "/client/messages", icon: "messages" },
   { label: "Check-ins", href: "/client/check-ins", icon: "check-ins" },

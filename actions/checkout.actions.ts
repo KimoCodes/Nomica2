@@ -68,8 +68,8 @@ export async function createProductCheckout(
           quantity: 1,
         },
       ],
-      successUrl: `${origin}/client/subscription?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${origin}/programs/${product.slug}`,
+      successUrl: `${origin}/checkout/success?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${origin}/checkout/cancel`,
       customerId,
       metadata: {
         userId: session.user.id,
@@ -97,9 +97,9 @@ export async function createSubscriptionCheckout(
     const priceIds = getStripePriceIds();
     const priceId = plan === "monthly" ? priceIds.monthly : priceIds.annual;
 
-    if (!priceId || priceId.startsWith("price_placeholder")) {
+    if (!priceId || !priceId.startsWith("price_")) {
       return createErrorResponse(
-        "Stripe is not configured yet. Please set up your Stripe Price IDs in .env.",
+        "Stripe Price IDs are not configured. Please set STRIPE_PRICE_MONTHLY and STRIPE_PRICE_ANNUAL to actual Stripe Price IDs (e.g. price_1ABC...).",
         "STRIPE_NOT_CONFIGURED",
       );
     }
@@ -115,12 +115,13 @@ export async function createSubscriptionCheckout(
     const checkoutSession = await createCheckoutSession({
       mode: "subscription",
       lineItems: [{ price: priceId, quantity: 1 }],
-      successUrl: `${origin}/client/subscription?subscription=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${origin}/pricing`,
+      successUrl: `${origin}/checkout/success?subscription=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${origin}/checkout/cancel`,
       customerId,
       metadata: {
         userId: session.user.id,
         plan,
+        kind: "subscription",
       },
     });
 

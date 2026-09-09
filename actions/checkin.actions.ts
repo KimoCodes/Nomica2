@@ -5,7 +5,10 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireClientProfile } from "@/server/services/coach.service";
-import { createNotification } from "@/server/services/notification.service";
+import {
+  notifyCheckInSubmitted,
+  notifyCheckInResponded,
+} from "@/server/services/notification.service";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -66,21 +69,14 @@ export async function submitCheckInAction(formData: FormData): Promise<ApiRespon
 
     revalidatePath("/client/check-ins");
 
-    // Notify coach of new check-in
     try {
       const clientWithCoach = await prisma.clientProfile.findUnique({
         where: { id: client.id },
-        include: { user: { select: { id: true } } },
+        include: { user: { select: { id: true, name: true } } },
       });
 
       if (clientWithCoach?.coachId) {
-        await createNotification({
-          userId: clientWithCoach.coachId,
-          type: "CHECK_IN_DUE",
-          title: "New check-in submitted",
-          body: `${session.user.name ?? "Your client"} submitted their weekly check-in`,
-          link: "/coach/check-ins",
-        });
+        await notifyCheckInSubmitted(clientWithCoach.coachId, session.user.name || "Your client");
       }
     } catch {
       // Notification failure should not block submission
@@ -121,7 +117,6 @@ export async function respondToCheckInAction(
       },
     });
 
-    // Notify client of coach response
     try {
       const checkInWithClient = await prisma.checkIn.findUnique({
         where: { id: checkInId },
@@ -133,13 +128,10 @@ export async function respondToCheckInAction(
       });
 
       if (checkInWithClient) {
-        await createNotification({
-          userId: checkInWithClient.clientProfile.user.id,
-          type: "CHECK_IN_DUE",
-          title: "Coach responded to your check-in",
-          body: `Your coach left feedback on your weekly check-in`,
-          link: "/check-ins",
-        });
+        await notifyCheckInResponded(
+          checkInWithClient.clientProfile.user.id,
+          session.user.name || "Your coach",
+        );
       }
     } catch {
       // Notification failure should not block response

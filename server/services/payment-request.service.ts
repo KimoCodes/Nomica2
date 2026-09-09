@@ -1,6 +1,11 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createNotification } from "@/server/services/notification.service";
+import {
+  notifyPaymentSubmitted,
+  notifyPaymentApproved,
+  notifyPaymentRejected,
+  notifyPaymentProofRequested,
+} from "@/server/services/notification.service";
 import { approveSubscription } from "@/server/services/subscription.service";
 
 type SubmitPaymentInput = {
@@ -76,13 +81,7 @@ export async function submitPaymentRequest(
   // Notify coach if assigned
   if (client.coachId) {
     try {
-      await createNotification({
-        userId: client.coachId,
-        type: "PAYMENT_SUBMITTED",
-        title: "New payment request",
-        body: `${paymentRequest.clientUser.name ?? "A client"} submitted a payment request for ${input.plan.replace(/_/g, " ")}.`,
-        link: "/coach/payments",
-      });
+      await notifyPaymentSubmitted(client.coachId, input.amount, input.plan.replace(/_/g, " "));
     } catch {
       // Notification failure should not block submission
     }
@@ -96,13 +95,7 @@ export async function submitPaymentRequest(
 
   for (const admin of admins) {
     try {
-      await createNotification({
-        userId: admin.id,
-        type: "PAYMENT_SUBMITTED",
-        title: "New payment request",
-        body: `${paymentRequest.clientUser.name ?? "A client"} submitted a payment request for ${input.plan.replace(/_/g, " ")}.`,
-        link: "/admin/payments",
-      });
+      await notifyPaymentSubmitted(admin.id, input.amount, input.plan.replace(/_/g, " "));
     } catch {
       // Notification failure should not block submission
     }
@@ -247,13 +240,11 @@ export async function approvePaymentRequest(
 
   // Notify client
   try {
-    await createNotification({
-      userId: paymentRequest.clientUserId,
-      type: "PAYMENT_APPROVED",
-      title: "Payment approved",
-      body: `Your payment for ${paymentRequest.plan.replace(/_/g, " ")} has been approved. Your subscription is now active!`,
-      link: "/client/subscription",
-    });
+    await notifyPaymentApproved(
+      paymentRequest.clientUserId,
+      paymentRequest.amount,
+      paymentRequest.plan.replace(/_/g, " "),
+    );
   } catch {
     // Notification failure should not block approval
   }
@@ -310,13 +301,10 @@ export async function rejectPaymentRequest(
 
   // Notify client
   try {
-    await createNotification({
-      userId: paymentRequest.clientUserId,
-      type: "PAYMENT_REJECTED",
-      title: "Payment rejected",
-      body: `Your payment request was rejected. Reason: ${reviewNote}. Please submit a new payment with correct proof.`,
-      link: "/client/subscription",
-    });
+    await notifyPaymentRejected(
+      paymentRequest.clientUserId,
+      `Reason: ${reviewNote}. Please submit a new payment with correct proof.`,
+    );
   } catch {
     // Notification failure should not block rejection
   }
@@ -369,13 +357,10 @@ export async function requestPaymentProof(
 
   // Notify client
   try {
-    await createNotification({
-      userId: paymentRequest.clientUserId,
-      type: "PAYMENT_PROOF_REQUESTED",
-      title: "Updated payment proof needed",
-      body: `Your payment proof needs updating. Reason: ${reviewNote}. Please submit a new payment proof.`,
-      link: "/client/subscription",
-    });
+    await notifyPaymentProofRequested(
+      paymentRequest.clientUserId,
+      `Reason: ${reviewNote}. Please submit a new payment proof.`,
+    );
   } catch {
     // Notification failure should not block
   }

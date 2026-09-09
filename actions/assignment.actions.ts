@@ -3,6 +3,7 @@
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -16,6 +17,11 @@ import {
   assignProgramSchema,
   deactivateAssignmentSchema,
 } from "@/server/validators/program.schema";
+import {
+  notifyProgramAssigned,
+  notifyCoachAssigned,
+  notifyNewClientAssigned,
+} from "@/server/services/notification.service";
 import type { ApiResponse } from "@/types";
 import logger from "@/lib/logger";
 
@@ -42,6 +48,21 @@ export async function assignProgramAction(
     }
 
     const assignment = await assignProgramToClient(session.user.id, parsed.data);
+
+    const [program, coach] = await Promise.all([
+      prisma.program.findUnique({ where: { id: parsed.data.programId }, select: { title: true } }),
+      prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true } }),
+    ]);
+
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { id: parsed.data.clientProfileId },
+      select: { userId: true },
+    });
+
+    if (clientProfile?.userId && program?.title && coach?.name) {
+      notifyProgramAssigned(clientProfile.userId, program.title, coach.name).catch(() => {});
+    }
+
     revalidatePath("/coach/clients");
     revalidatePath("/client");
     revalidatePath("/client/workouts");
@@ -61,6 +82,24 @@ export async function acceptClientAction(
   try {
     const session = await requireRole([Role.COACH]);
     const client = await linkClientToCoach(session.user.id, clientProfileId);
+
+    const coach = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true },
+    });
+
+    const clientUser = await prisma.user.findUnique({
+      where: { id: client.userId },
+      select: { name: true },
+    });
+
+    if (coach?.name) {
+      notifyNewClientAssigned(session.user.id, clientUser?.name || "Client").catch(() => {});
+    }
+    if (client?.userId && coach?.name) {
+      notifyCoachAssigned(client.userId, coach.name).catch(() => {});
+    }
+
     revalidatePath("/coach/clients");
     return createSuccessResponse({ id: client.id });
   } catch (error) {

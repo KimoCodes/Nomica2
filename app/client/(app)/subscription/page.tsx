@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, CheckCircle2, Clock, AlertTriangle, Gift } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, AlertTriangle, Gift, ExternalLink } from "lucide-react";
 
 export default async function ClientSubscriptionPage({
   searchParams,
@@ -44,8 +44,9 @@ export default async function ClientSubscriptionPage({
   checkAndNotifyExpiringSubscriptions().catch(() => {});
 
   const planDef = subscription ? PLANS.find((p) => p.id === subscription.plan) : null;
-  const upgradePlan = subscription ? canUpgrade(subscription.plan) : null;
-  const downgradePlan = subscription ? canDowngrade(subscription.plan) : null;
+  const hasRealStripeSub = !!subscription?.stripeSubscriptionId && !subscription.stripeCustomerId.startsWith("manual_");
+  const upgradePlan = subscription && hasRealStripeSub ? canUpgrade(subscription.plan) : null;
+  const downgradePlan = subscription && hasRealStripeSub ? canDowngrade(subscription.plan) : null;
 
   const now = new Date();
   const trialDaysRemaining = freeTrial
@@ -184,6 +185,21 @@ export default async function ClientSubscriptionPage({
           </Card>
         )}
 
+        {subscription && !hasRealStripeSub && (
+          <Card className="border-primary/20 bg-primary/5 animate-slide-up stagger-4">
+            <CardContent className="flex items-center gap-3 p-4">
+              <CreditCard className="size-5 text-primary" />
+              <div>
+                <p className="font-medium">Coach/Admin Approved Subscription</p>
+                <p className="text-sm text-muted-foreground">
+                  Your subscription was granted by your coach or an administrator.
+                  To change your plan, please contact them directly.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="animate-slide-up stagger-4">
           <CardHeader>
             <CardTitle className="text-base">Your Plan</CardTitle>
@@ -196,6 +212,7 @@ export default async function ClientSubscriptionPage({
                 downgradePlan={downgradePlan}
                 isCanceled={subscription!.cancelAtPeriodEnd}
                 subscriptionId={subscription!.id}
+                hasStripeId={!!subscription?.stripeCustomerId && !subscription.stripeCustomerId.startsWith("manual_")}
               />
             ) : (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">

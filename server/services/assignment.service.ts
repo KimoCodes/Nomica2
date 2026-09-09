@@ -11,7 +11,22 @@ export async function getCoachClients(coachUserId: string) {
   return prisma.clientProfile.findMany({
     where: { coachId: coachUserId },
     include: {
-      user: { select: { id: true, name: true, email: true, avatar: true } },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          subscription: {
+            select: {
+              status: true,
+              plan: true,
+              currentPeriodEnd: true,
+              cancelAtPeriodEnd: true,
+            },
+          },
+        },
+      },
       programs: {
         include: {
           program: { select: { id: true, title: true } },

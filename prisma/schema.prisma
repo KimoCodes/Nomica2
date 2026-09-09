@@ -153,6 +153,42 @@ enum NotificationType {
   FREE_TRIAL_EXPIRING
   FREE_TRIAL_EXPIRED
   FREE_TRIAL_CANCELLED
+  SESSION_BOOKED
+  SESSION_CONFIRMED
+  SESSION_CANCELLED
+  SESSION_RESCHEDULED
+  SESSION_REMINDER
+  SESSION_COMPLETED
+  EXERCISE_PLAN_ASSIGNED
+  NUTRITION_PLAN_ASSIGNED
+  PLAN_UPDATED
+  PLAN_PROGRESS_UPDATE
+}
+
+enum SessionStatus {
+  PENDING
+  CONFIRMED
+  RESCHEDULE_REQUESTED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
+  MISSED
+}
+
+enum SessionType {
+  CONSULTATION
+  TRAINING
+  ASSESSMENT
+  FOLLOW_UP
+  CUSTOM
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
 }
 
 enum FreeTrialStatus {
@@ -229,6 +265,8 @@ model CoachProfile {
 
   programs Program[]
   bookings CoachBooking[]
+  exercisePlans PersonalizedExercisePlan[]
+  nutritionPlans PersonalizedNutritionPlan[]
 
   @@index([userId])
   @@index([approved])
@@ -259,6 +297,9 @@ model ClientProfile {
   mealLogs           MealLog[]
   videoFeedback      VideoFeedback[]
   bookings           CoachBooking[]
+  exercisePlans      PersonalizedExercisePlan[]
+  nutritionPlans     PersonalizedNutritionPlan[]
+  planProgress       PlanProgress[]
 
   @@index([userId])
   @@index([coachId])
@@ -428,6 +469,7 @@ model Exercise {
   updatedAt    DateTime    @updatedAt
 
   programExercises ProgramExercise[]
+  personalizedItems PersonalizedExerciseItem[]
 
   @@index([muscleGroup])
   @@index([coachId])
@@ -701,6 +743,19 @@ model Payment {
   updatedAt       DateTime     @updatedAt
 
   @@index([subscriptionId])
+}
+
+model BillingEvent {
+  id          String    @id @default(cuid())
+  stripeEventId String  @unique
+  type        String
+  payload     Json?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([stripeEventId])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model PaymentRequest {
@@ -1083,19 +1138,179 @@ model VideoFeedback {
 }
 
 model CoachBooking {
+  id                String         @id @default(cuid())
+  clientProfileId   String
+  clientProfile     ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coachProfileId    String
+  coachProfile      CoachProfile   @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  scheduledAt       DateTime
+  durationMinutes   Int            @default(60)
+  status            SessionStatus  @default(PENDING)
+  sessionType       SessionType    @default(CONSULTATION)
+  notes             String?
+  cancellationReason String?
+  rescheduleOfId    String?
+  rescheduleOf      CoachBooking?  @relation("RescheduledFrom", fields: [rescheduleOfId], references: [id], onDelete: SetNull)
+  rescheduledBookings CoachBooking[] @relation("RescheduledFrom")
+  rescheduleReason  String?
+  meetingUrl        String?
+  location          String?
+  createdBy         String?
+  coachNotes        String?
+  clientConfirmed   Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  exercisePlans     PersonalizedExercisePlan[]
+  nutritionPlans    PersonalizedNutritionPlan[]
+
+  @@index([clientProfileId])
+  @@index([coachProfileId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([clientProfileId, status])
+  @@index([coachProfileId, status])
+}
+
+// ─── Personalized Plans ───────────────────────────────────────────────────────
+
+model PersonalizedExercisePlan {
   id              String        @id @default(cuid())
   clientProfileId String
   clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   coachProfileId  String
   coachProfile    CoachProfile  @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
-  scheduledAt     DateTime
-  durationMinutes Int           @default(60)
-  status          String        @default("pending")
-  notes           String?
+  bookingId       String?
+  booking         CoachBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  name            String
+  description     String?       @db.Text
+  goal            String?
+  status          PlanStatus    @default(DRAFT)
+  startDate       DateTime?
+  endDate         DateTime?
+
+  weeklySchedule  Json?
+  coachNotes      String?       @db.Text
+  clientNotes     String?       @db.Text
+
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  exercises       PersonalizedExerciseItem[]
+  progress        PlanProgress[]
+
   @@index([clientProfileId])
   @@index([coachProfileId])
-  @@index([scheduledAt])
+  @@index([status])
+  @@index([clientProfileId, status])
+}
+
+model PersonalizedExerciseItem {
+  id                    String                   @id @default(cuid())
+  personalizedPlanId    String
+  personalizedPlan      PersonalizedExercisePlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
+  exerciseId            String?
+  exercise              Exercise?                @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
+  name                  String
+  muscleGroup           MuscleGroup?
+  dayOfWeek             Int?
+  order                 Int
+  sets                  Int?
+  reps                  Int?
+  durationMinutes       Int?
+  restSeconds           Int?
+  intensity             String?
+  instructions          String?                  @db.Text
+  notes                 String?
+
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@unique([personalizedPlanId, dayOfWeek, order])
+  @@index([personalizedPlanId])
+  @@index([exerciseId])
+}
+
+model PersonalizedNutritionPlan {
+  id              String        @id @default(cuid())
+  clientProfileId String
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coachProfileId  String
+  coachProfile    CoachProfile  @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  bookingId       String?
+  booking         CoachBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  name            String
+  description     String?       @db.Text
+  goal            String?
+  status          PlanStatus    @default(DRAFT)
+  startDate       DateTime?
+  endDate         DateTime?
+
+  dailyCalories   Int?
+  dailyProtein    Float?
+  dailyCarbs      Float?
+  dailyFat        Float?
+  dailyWaterMl    Int?
+
+  coachNotes      String?       @db.Text
+  clientNotes     String?       @db.Text
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  meals           PersonalizedMeal[]
+  progress        PlanProgress[]
+
+  @@index([clientProfileId])
+  @@index([coachProfileId])
+  @@index([status])
+  @@index([clientProfileId, status])
+}
+
+model PersonalizedMeal {
+  id                   String                  @id @default(cuid())
+  personalizedPlanId   String
+  personalizedPlan     PersonalizedNutritionPlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
+  name                 String
+  mealType             MealType
+  timeOfDay            String?
+  order                Int
+  foods                Json?
+  instructions         String?                 @db.Text
+  notes                String?
+
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  @@unique([personalizedPlanId, mealType, order])
+  @@index([personalizedPlanId])
+}
+
+model PlanProgress {
+  id                      String    @id @default(cuid())
+  exercisePlanId          String?
+  exercisePlan            PersonalizedExercisePlan? @relation(fields: [exercisePlanId], references: [id], onDelete: Cascade)
+  nutritionPlanId         String?
+  nutritionPlan           PersonalizedNutritionPlan? @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+  clientProfileId         String
+  clientProfile           ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+
+  date                    DateTime  @default(now())
+  completed               Boolean   @default(false)
+  completionPercentage    Float?
+  setsCompleted           Int?
+  repsCompleted           Int?
+  durationMinutes         Int?
+  adherenceScore          Float?
+  notes                   String?   @db.Text
+  coachFeedback           String?   @db.Text
+
+  createdAt               DateTime  @default(now())
+
+  @@index([exercisePlanId])
+  @@index([nutritionPlanId])
+  @@index([clientProfileId])
+  @@index([date])
 }

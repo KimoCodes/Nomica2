@@ -1,6 +1,9 @@
 export const COACH_NAV = [
   { label: "Dashboard", href: "/coach", icon: "dashboard" },
   { label: "Clients", href: "/coach/clients", icon: "clients" },
+  { label: "Sessions", href: "/coach/sessions", icon: "check-ins" },
+  { label: "Plans", href: "/coach/plans", icon: "programs" },
+  { label: "Live Session", href: "/coach/live-session", icon: "messages" },
   { label: "Payments", href: "/coach/payments", icon: "subscription" },
   { label: "Subscriptions", href: "/coach/subscriptions", icon: "subscription" },
   { label: "Programs", href: "/coach/programs", icon: "programs" },
@@ -14,6 +17,8 @@ export const COACH_NAV = [
 export const CLIENT_NAV = [
   { label: "Dashboard", href: "/client", icon: "dashboard" },
   { label: "Workouts", href: "/client/workouts", icon: "workouts" },
+  { label: "My Plan", href: "/client/my-plan", icon: "programs" },
+  { label: "Sessions", href: "/client/sessions", icon: "check-ins" },
   { label: "Exercises", href: "/client/exercise-library", icon: "exercises" },
   { label: "AI Coach", href: "/client/ai-coach", icon: "messages" },
   { label: "Video Feedback", href: "/client/video-feedback", icon: "media" },
@@ -30,7 +35,7 @@ export const CLIENT_NAV = [
   { label: "Messages", href: "/client/messages", icon: "messages" },
   { label: "Check-ins", href: "/client/check-ins", icon: "check-ins" },
   { label: "Subscription", href: "/client/subscription", icon: "subscription" },
-  { label: "Payments", href: "/client/payments", icon: "subscription" },
+  { label: "Billing", href: "/client/payments", icon: "subscription" },
   { label: "Settings", href: "/settings", icon: "settings" },
 ] as const;
 
@@ -39,7 +44,8 @@ export const ADMIN_NAV = [
   { label: "Analytics", href: "/admin/analytics", icon: "progress" },
   { label: "Users", href: "/admin/users", icon: "clients" },
   { label: "Coaches", href: "/admin/coaches", icon: "clients" },
-  { label: "Payments", href: "/admin/payments", icon: "subscription" },
-  { label: "Subscriptions", href: "/admin/subscriptions", icon: "programs" },
+  { label: "Products", href: "/admin/products", icon: "programs" },
   { label: "Programs", href: "/admin/programs", icon: "programs" },
+  { label: "Payments", href: "/admin/payments", icon: "subscription" },
+  { label: "Subscriptions", href: "/admin/subscriptions", icon: "subscription" },
 ] as const;

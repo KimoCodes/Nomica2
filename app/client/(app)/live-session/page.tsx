@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { LiveSession } from "@/components/live-session";
@@ -10,8 +10,10 @@ import { Video, Phone, PhoneOff } from "lucide-react";
 
 export default function LiveSessionPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [status, setStatus] = useState<"none" | "waiting" | "active" | "ended">("none");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkActiveSession();
@@ -19,11 +21,16 @@ export default function LiveSessionPage() {
 
   const checkActiveSession = async () => {
     try {
-      const res = await fetch("/api/client/live-session");
-      const data = await res.json();
-      if (data.sessionId) {
-        setSessionId(data.sessionId);
-        setStatus(data.status);
+      const [sessionRes, authRes] = await Promise.all([
+        fetch("/api/client/live-session"),
+        fetch("/api/auth/session"),
+      ]);
+      const sessionData = await sessionRes.json();
+      const authData = await authRes.json();
+      if (authData.user?.id) setUserId(authData.user.id);
+      if (sessionData.sessionId) {
+        setSessionId(sessionData.sessionId);
+        setStatus(sessionData.status);
       }
     } catch {
       // No active session
@@ -33,6 +40,7 @@ export default function LiveSessionPage() {
   };
 
   const startSession = async () => {
+    setError(null);
     try {
       const res = await fetch("/api/client/live-session", {
         method: "POST",
@@ -43,16 +51,18 @@ export default function LiveSessionPage() {
       if (data.sessionId) {
         setSessionId(data.sessionId);
         setStatus("waiting");
+      } else if (data.error) {
+        setError(data.error);
       }
     } catch {
-      // Failed to start session
+      setError("Failed to start session. Please try again.");
     }
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = useCallback(() => {
     setStatus("ended");
     setSessionId(null);
-  };
+  }, []);
 
   return (
     <DashboardLayout
@@ -68,7 +78,7 @@ export default function LiveSessionPage() {
       ) : sessionId ? (
         <LiveSession
           sessionId={sessionId}
-          userId="current"
+          userId={userId}
           isCoach={false}
           onEndSession={handleEndSession}
         />
@@ -85,6 +95,11 @@ export default function LiveSessionPage() {
               Start a live coaching session with your coach. You can chat in real-time,
               share your screen, and get instant feedback on your form.
             </p>
+            {error && (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                {error}
+              </div>
+            )}
             <div className="flex gap-2">
               <Button onClick={startSession}>
                 <Phone className="mr-2 h-4 w-4" />

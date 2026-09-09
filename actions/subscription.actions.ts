@@ -10,7 +10,9 @@ import {
   revokeSubscription,
 } from "@/server/services/subscription.service";
 import { prisma } from "@/lib/prisma";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, createCustomerPortalSession } from "@/lib/stripe";
+import { getAppUrl } from "@/lib/resend";
+import { headers } from "next/headers";
 import logger from "@/lib/logger";
 
 export async function changePlanAction(newPlan: SubscriptionPlan) {
@@ -95,7 +97,7 @@ export async function adminChangePlanAction(
         ? process.env.STRIPE_PRICE_MONTHLY
         : process.env.STRIPE_PRICE_ANNUAL;
 
-      if (priceId && stripeSub.items.data[0]) {
+      if (priceId && priceId.startsWith("price_") && stripeSub.items.data[0]) {
         await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
           items: [{ id: stripeSub.items.data[0].id, price: priceId }],
           proration_behavior: "create_prorations",
@@ -260,6 +262,44 @@ export async function coachRevokeSubscriptionAction(targetUserId: string) {
         message:
           error instanceof Error ? error.message : "Failed to revoke subscription",
       },
+    };
+  }
+}
+
+/**
+ * Create a Stripe Customer Portal session for self-service billing management.
+ * Allows customers to update payment methods, view invoices, and manage subscriptions.
+ */
+export async function createCustomerPortalAction(): Promise<{ success: boolean; url?: string; error?: { message: string } }> {
+  try {
+    const session = await requireAuth();
+
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: session.user.id },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!subscription?.stripeCustomerId || subscription.stripeCustomerId.startsWith("manual_")) {
+      return {
+        success: false,
+        error: { message: "No Stripe subscription found. Please contact support to manage your billing." },
+      };
+    }
+
+    const headerList = await headers();
+    const origin = headerList.get("origin") ?? getAppUrl();
+
+    const portalSession = await createCustomerPortalSession({
+      customerId: subscription.stripeCustomerId,
+      returnUrl: `${origin}/client/subscription`,
+    });
+
+    return { success: true, url: portalSession.url };
+  } catch (error) {
+    logger.error({ err: error, action: "createCustomerPortalAction" }, "Failed to create portal session");
+    return {
+      success: false,
+      error: { message: "Failed to open billing portal. Please try again." },
     };
   }
 }

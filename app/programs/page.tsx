@@ -28,8 +28,25 @@ const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   BUNDLE: Target,
 };
 
-export default async function ProgramsPage() {
-  const products = await getProducts();
+type SearchParams = Promise<{
+  kind?: string;
+}>;
+
+export default async function ProgramsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const kindFilter = params.kind as "PROGRAM" | "CHALLENGE" | "BUNDLE" | undefined;
+  const products = await getProducts(kindFilter ? { kind: kindFilter } : undefined);
+
+  const tabs = [
+    { label: "All", href: "/programs", active: !kindFilter },
+    { label: "Programs", href: "/programs?kind=PROGRAM", active: kindFilter === "PROGRAM" },
+    { label: "Challenges", href: "/programs?kind=CHALLENGE", active: kindFilter === "CHALLENGE" },
+    { label: "Bundles", href: "/programs?kind=BUNDLE", active: kindFilter === "BUNDLE" },
+  ];
 
   return (
     <PublicLayout>
@@ -68,11 +85,33 @@ export default async function ProgramsPage() {
           </div>
         </section>
 
-        {/* Stats Bar */}
-        <section className="border-y border-border/50 bg-muted/30 px-4 py-8">
-          <div className="mx-auto max-w-6xl text-center">
-            <p className="text-2xl font-bold text-primary">{products.length}</p>
-            <p className="text-sm text-muted-foreground">Programs Available</p>
+        {/* Stats Bar + Tabs */}
+        <section className="border-y border-border/50 bg-muted/30 px-4 py-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
+              <div className="flex gap-2">
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={cn(
+                      "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                      tab.active
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center sm:text-right">
+                <p className="text-2xl font-bold text-primary">{products.length}</p>
+                <p className="text-sm text-muted-foreground">
+                  {kindFilter ? kindFilter.charAt(0) + kindFilter.slice(1).toLowerCase() + "s" : "Programs"} Available
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 

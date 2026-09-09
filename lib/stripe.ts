@@ -97,3 +97,22 @@ export async function getOrCreateStripeCustomer(
 
   return customer.id;
 }
+
+/**
+ * Create a Stripe Customer Portal session for self-service billing management.
+ * Allows customers to update payment methods, view invoices, and manage subscriptions.
+ */
+export async function createCustomerPortalSession({
+  customerId,
+  returnUrl,
+}: {
+  customerId: string;
+  returnUrl: string;
+}): Promise<Stripe.BillingPortal.Session> {
+  const stripe = getStripe();
+
+  return stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+}

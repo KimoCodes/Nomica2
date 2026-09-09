@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { CheckoutButton } from "@/components/checkout-button";
 import {
-  ArrowRight,
   CheckCircle2,
   ChevronRight,
   Dumbbell,
@@ -114,16 +114,14 @@ export default async function BundleDetailPage({ params }: Props) {
                     </p>
                   )}
 
-                  <Link
-                    href={`/register?bundle=${bundle.slug}`}
-                    className={cn(
-                      buttonVariants({ size: "lg" }),
-                      "mt-6 w-full group shadow-premium",
-                    )}
-                  >
-                    Get the Bundle
-                    <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
+                  <div className="mt-6">
+                    <CheckoutButton
+                      type="product"
+                      productId={bundle.id}
+                      size="lg"
+                      className="w-full"
+                    />
+                  </div>
 
                   <p className="mt-3 text-center text-xs text-muted-foreground">
                     <Shield className="mr-1 inline-block size-3" />
@@ -264,17 +262,13 @@ export default async function BundleDetailPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="mt-8 text-center">
-              <Link
-                href={`/register?bundle=${bundle.slug}`}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "group shadow-premium",
-                )}
-              >
-                Get the Bundle
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+            <div className="mt-8">
+              <CheckoutButton
+                type="product"
+                productId={bundle.id}
+                size="lg"
+                className="mx-auto max-w-md"
+              />
             </div>
           </div>
         </section>
@@ -348,16 +342,12 @@ export default async function BundleDetailPage({ params }: Props) {
               NomiTips programs.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href={`/register?bundle=${bundle.slug}`}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "group shadow-premium",
-                )}
-              >
-                Get the {bundle.name}
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              <CheckoutButton
+                type="product"
+                productId={bundle.id}
+                size="lg"
+                className="shadow-premium"
+              />
               <Link
                 href="/quiz"
                 className={cn(

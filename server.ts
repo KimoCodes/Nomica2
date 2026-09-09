@@ -12,13 +12,11 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  const httpServer = createServer();
-
-  initializeSocketServer(httpServer);
-
-  httpServer.on("request", (req, res) => {
+  const httpServer = createServer((req, res) => {
     handle(req, res);
   });
+
+  initializeSocketServer(httpServer);
 
   httpServer.listen(port, () => {
     console.log(`[NomiTips] Server ready on http://${hostname}:${port} [${env.server.NODE_ENV}]`);

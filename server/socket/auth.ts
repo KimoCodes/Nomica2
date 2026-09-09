@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import type { Socket } from "socket.io";
 import type { Role } from "@prisma/client";
+import logger from "@/lib/logger";
 
 export type SocketUser = {
   userId: string;
@@ -26,6 +27,7 @@ export async function authenticateSocket(
   const tokenValue = getCookie(cookieHeader, cookieName);
 
   if (!tokenValue) {
+    logger.debug({ cookieName, hasCookies: !!cookieHeader }, "No session token found");
     throw new Error("UNAUTHORIZED");
   }
 
@@ -48,7 +50,8 @@ export async function authenticateSocket(
       role: role as Role,
       name: (payload.name as string) ?? "User",
     };
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, "JWT verification failed");
     throw new Error("UNAUTHORIZED");
   }
 }

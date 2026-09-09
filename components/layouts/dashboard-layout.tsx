@@ -68,6 +68,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   favorites: Heart,
   nutrition: Footprints,
   timers: Footprints,
+  sessions: CalendarCheck,
+  plans: FolderOpen,
 };
 
 export function DashboardLayout({

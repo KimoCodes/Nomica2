@@ -1,219 +1,177 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import type { Metadata } from "next";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { PLANS, formatPlanPrice, formatPrice } from "@/constants/subscriptions";
+import { CheckoutButton } from "@/components/checkout-button";
+import { PublicLayout } from "@/components/shared/public-layout";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { PublicLayout } from "@/components/shared/public-layout";
-import { PLANS, formatPlanPrice } from "@/constants/subscriptions";
-import { getBundleProducts } from "@/server/services/product.service";
-import { formatPrice } from "@/constants/subscriptions";
-import { CheckoutButton } from "@/components/checkout-button";
-import { CheckCircle2, ArrowRight, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircle2,
+  ArrowRight,
+  Zap,
+  Shield,
+  CreditCard,
+  X,
+} from "lucide-react";
 
-export const runtime = "nodejs";
-
-export const metadata: Metadata = {
-  title: "Pricing",
-  description:
-    "Choose your NomiTips transformation path. All-Access membership or one-time program purchases — cancel anytime.",
-};
-
-export default async function PricingPage() {
-  const bundles = await getBundleProducts();
+export default function PricingPage() {
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <PublicLayout>
-      <main className="flex-1">
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         {/* Hero */}
-        <section className="relative overflow-hidden px-4 pt-16 pb-12 md:pt-24 md:pb-16">
-          <div className="absolute inset-0 -z-10">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-              poster="/media/hero/hero-fitness-class.jpg"
-            >
-              <source src="/media/workout-stretch-glutes.mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/65" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/60" />
-          </div>
+        <div className="text-center mb-12">
+          <Badge variant="secondary" className="mb-4">
+            <Zap className="mr-1 size-3" />
+            All Access Membership
+          </Badge>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Start your transformation
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Unlock every program, workout, nutrition plan, and coaching tool.
+            Choose the plan that works for you.
+          </p>
+        </div>
 
-          <div className="mx-auto max-w-6xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-              Pricing
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-              One Membership. All Programs.
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              All Access or individual programs — your choice.
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-6xl px-4 py-12">
-
-        {/* Subscription Plans */}
-        <div className="grid gap-8 md:grid-cols-2">
-          {PLANS.map((plan, index) => (
+        {/* Pricing Cards */}
+        <div className="grid gap-6 sm:grid-cols-2 max-w-3xl mx-auto mb-16">
+          {PLANS.map((plan) => (
             <Card
               key={plan.id}
-              className={cn(
-                `animate-slide-up stagger-${index + 1} relative flex flex-col transition-all duration-300`,
+              className={`relative transition-all duration-200 hover:-translate-y-1 ${
                 plan.highlighted
-                  ? "border-primary shadow-premium-lg scale-[1.02]"
-                  : "hover:shadow-premium hover:-translate-y-1",
-              )}
+                  ? "border-primary shadow-lg shadow-primary/10"
+                  : "border-border"
+              }`}
             >
-              {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-primary px-4 py-1 text-xs font-semibold text-primary-foreground">
-                    {plan.badge}
-                  </span>
-                </div>
+              {plan.highlighted && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  {plan.badge}
+                </Badge>
               )}
-
-              <CardHeader className="pb-4 pt-8">
-                <h3 className="text-lg font-semibold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {plan.description}
-                </p>
-                <div className="pt-4">
-                  <span className="text-4xl font-bold tracking-tight">
-                    {formatPlanPrice(plan)}
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <p className="text-sm text-muted-foreground">{plan.description}</p>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">
+                    {formatPrice(plan.priceCents)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    / {plan.interval}
                   </span>
                 </div>
-              </CardHeader>
 
-              <CardContent className="flex-1 pb-4">
-                <ul className="space-y-3">
+                <ul className="mb-6 space-y-3 text-left">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3">
-                      <CheckCircle2 className="size-4 shrink-0 text-primary" />
-                      <span className="text-sm">{feature}</span>
+                    <li key={feature} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="size-4 shrink-0 text-success" />
+                      {feature}
                     </li>
                   ))}
                 </ul>
-              </CardContent>
 
-              <CardFooter className="pb-8">
                 <CheckoutButton
                   type="subscription"
                   plan={plan.id === "ALL_ACCESS_MONTHLY" ? "monthly" : "annual"}
                   variant={plan.highlighted ? "default" : "outline"}
+                  size="lg"
+                  onError={setError}
                 />
-              </CardFooter>
+              </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Bundles Section */}
-        <div className="mt-24 mb-16 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/5 px-4 py-1.5 text-sm font-medium text-secondary">
-            <Package className="size-3.5" />
-            Save with Bundles
+        {error && (
+          <div className="mb-8 rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center text-sm text-destructive max-w-3xl mx-auto">
+            {error}
           </div>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Prefer One-Time Purchases?
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            One-time purchase. Lifetime access. No subscriptions.
-          </p>
+        )}
+
+        {/* Trust Signals */}
+        <div className="grid gap-8 sm:grid-cols-3 max-w-3xl mx-auto mb-16">
+          <div className="text-center">
+            <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Shield className="size-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium">Secure payments</p>
+            <p className="text-xs text-muted-foreground">
+              Powered by Stripe. Your payment info is never stored on our servers.
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <CreditCard className="size-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium">Cancel anytime</p>
+            <p className="text-xs text-muted-foreground">
+              No contracts, no hidden fees. Cancel your subscription anytime.
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Zap className="size-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium">Instant access</p>
+            <p className="text-xs text-muted-foreground">
+              Start training immediately after subscribing.
+            </p>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {bundles.map((bundle, index) => {
-            const savings = bundle.compareAtCents
-              ? bundle.compareAtCents - bundle.priceCents
-              : 0;
-            const savingsPercent = bundle.compareAtCents
-              ? Math.round(
-                  ((bundle.compareAtCents - bundle.priceCents) /
-                    bundle.compareAtCents) *
-                    100,
-                )
-              : 0;
-
-            return (
-              <div
-                key={bundle.id}
-                className={cn(
-                  `animate-slide-up stagger-${index + 1} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`,
-                  index === 0
-                    ? "border-primary shadow-premium scale-[1.02]"
-                    : "border-border/50",
-                )}
-              >
-                <h3 className="text-xl font-bold">{bundle.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {bundle.tagline}
-                </p>
-
-                <div className="mt-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">
-                      {formatPrice(bundle.priceCents)}
-                    </span>
-                    {bundle.compareAtCents && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatPrice(bundle.compareAtCents)}
-                      </span>
-                    )}
-                  </div>
-                  {savings > 0 && (
-                    <p className="mt-1 text-sm font-medium text-success">
-                      Save {formatPrice(savings)} ({savingsPercent}% off)
-                    </p>
-                  )}
-                </div>
-
-                <ul className="mt-4 flex-1 space-y-2">
-                  {(bundle.bundleItems ?? [])
-                    .slice(0, 3)
-                    .map((bi) => (
-                      <li
-                        key={bi.id}
-                        className="flex items-center gap-2 text-sm text-muted-foreground"
-                      >
-                        <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
-                        {bi.item.name}
-                      </li>
-                    ))}
-                </ul>
-
-                <CheckoutButton
-                  type="product"
-                  productId={bundle.id}
-                  variant="outline"
-                  size="default"
-                />
+        {/* FAQ */}
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-8">Frequently asked questions</h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: "Can I switch between monthly and annual?",
+                a: "Yes. You can upgrade or downgrade anytime from your account settings. Plan changes take effect with prorated billing.",
+              },
+              {
+                q: "What happens when I cancel?",
+                a: "Your access continues until the end of your current billing period. After that, your subscription expires and you lose access to premium features.",
+              },
+              {
+                q: "Is there a free trial?",
+                a: "Your coach or admin can grant you a free trial. Ask your coach about trial availability.",
+              },
+              {
+                q: "What payment methods do you accept?",
+                a: "All major credit and debit cards through Stripe. Your payment details are securely handled by Stripe and never touch our servers.",
+              },
+            ].map((faq) => (
+              <div key={faq.q} className="rounded-lg border p-4">
+                <p className="font-medium text-sm">{faq.q}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{faq.a}</p>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <Link
-            href="/bundles"
-            className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "group",
-            )}
-          >
-            View All Bundles
-            <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+        {/* CTA */}
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground mb-4">Already have an account?</p>
+          <Link href="/login">
+            <Button variant="outline">
+              Log in
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
           </Link>
         </div>
-        </div>
-      </main>
+      </div>
     </PublicLayout>
   );
 }

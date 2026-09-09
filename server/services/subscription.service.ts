@@ -2,11 +2,14 @@ import { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestCache, invalidateRequestCache } from "@/lib/request-cache";
 import { getStripe, getStripePriceIds } from "@/lib/stripe";
-import { createNotification } from "@/server/services/notification.service";
 import {
-  sendSubscriptionConfirmationEmail,
-  sendSubscriptionCancelledEmail,
-} from "@/server/services/email.service";
+  notifySubscriptionApproved,
+  notifySubscriptionRevoked,
+  notifySubscriptionExpiring,
+  notifyPlanChanged,
+  notifySubscriptionReactivated,
+  notifyCancellationScheduled,
+} from "@/server/services/notification.service";
 
 export async function getSubscriptionForClient(userId: string) {
   return requestCache(`sub:${userId}`, () =>
@@ -58,8 +61,8 @@ export async function changePlan(userId: string, newPlan: SubscriptionPlan) {
   const priceIds = getStripePriceIds();
   const newPriceId = newPlan === "ALL_ACCESS_MONTHLY" ? priceIds.monthly : priceIds.annual;
 
-  if (!newPriceId || newPriceId.startsWith("price_placeholder")) {
-    throw new Error("Stripe is not configured yet. Please set up Price IDs in .env.");
+  if (!newPriceId || !newPriceId.startsWith("price_")) {
+    throw new Error("Stripe Price IDs are not configured. Please set STRIPE_PRICE_MONTHLY and STRIPE_PRICE_ANNUAL to actual Stripe Price IDs (e.g. price_1ABC...).");
   }
 
   const stripe = getStripe();
@@ -75,13 +78,21 @@ export async function changePlan(userId: string, newPlan: SubscriptionPlan) {
     proration_behavior: "create_prorations",
   });
 
-  return prisma.subscription.update({
+  const result = await prisma.subscription.update({
     where: { userId },
     data: {
       plan: newPlan,
       stripePriceId: newPriceId,
     },
   });
+
+  invalidateRequestCache(`sub:${userId}`);
+
+  try {
+    await notifyPlanChanged(userId, newPlan);
+  } catch {}
+
+  return result;
 }
 
 export async function cancelSubscription(userId: string) {
@@ -104,12 +115,21 @@ export async function cancelSubscription(userId: string) {
     });
   }
 
-  return prisma.subscription.update({
+  const result = await prisma.subscription.update({
     where: { userId },
     data: {
       cancelAtPeriodEnd: true,
     },
   });
+
+  invalidateRequestCache(`sub:${userId}`);
+
+  try {
+    const endDate = subscription.currentPeriodEnd ?? new Date();
+    await notifyCancellationScheduled(userId, endDate);
+  } catch {}
+
+  return result;
 }
 
 export async function reactivateSubscription(userId: string) {
@@ -128,12 +148,20 @@ export async function reactivateSubscription(userId: string) {
     });
   }
 
-  return prisma.subscription.update({
+  const result = await prisma.subscription.update({
     where: { userId },
     data: {
       cancelAtPeriodEnd: false,
     },
   });
+
+  invalidateRequestCache(`sub:${userId}`);
+
+  try {
+    await notifySubscriptionReactivated(userId);
+  } catch {}
+
+  return result;
 }
 
 export async function checkAndNotifyExpiringSubscriptions() {
@@ -165,15 +193,7 @@ export async function checkAndNotifyExpiringSubscriptions() {
         (sub.currentPeriodEnd!.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
       );
 
-      await prisma.notification.create({
-        data: {
-          userId: sub.user.id,
-          type: "SUBSCRIPTION_EXPIRING",
-          title: "Subscription expiring soon",
-          body: `Your ${sub.plan.toLowerCase()} subscription expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Renew to keep access.`,
-          link: "/client/subscription",
-        },
-      });
+      await notifySubscriptionExpiring(sub.user.id, daysLeft);
     }
   }
 
@@ -229,26 +249,9 @@ export async function approveSubscription(
 
   // Notify the user
   try {
-    await createNotification({
-      userId: targetUserId,
-      type: "SUBSCRIPTION_APPROVED",
-      title: "Subscription approved",
-      body: `Your ${plan.replace(/_/g, " ").toLowerCase()} subscription has been approved and is now active.`,
-      link: "/client/subscription",
-    });
+    await notifySubscriptionApproved(targetUserId, plan.replace(/_/g, " "));
   } catch {
     // Notification failure should not block approval
-  }
-
-  // Send email confirmation
-  try {
-    await sendSubscriptionConfirmationEmail(
-      subscription.user.email,
-      subscription.user.name ?? "there",
-      plan,
-    );
-  } catch {
-    // Email failure should not block approval
   }
 
   // Invalidate cache
@@ -289,25 +292,9 @@ export async function revokeSubscription(
 
   // Notify the user
   try {
-    await createNotification({
-      userId: targetUserId,
-      type: "SUBSCRIPTION_REVOKED",
-      title: "Subscription revoked",
-      body: "Your subscription has been revoked by an administrator. Please contact support if you believe this is an error.",
-      link: "/client/subscription",
-    });
+    await notifySubscriptionRevoked(targetUserId);
   } catch {
     // Notification failure should not block revocation
-  }
-
-  // Send email notification
-  try {
-    await sendSubscriptionCancelledEmail(
-      updated.user.email,
-      updated.user.name ?? "there",
-    );
-  } catch {
-    // Email failure should not block revocation
   }
 
   // Invalidate cache

@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { PLANS, formatPlanPrice } from "@/constants/subscriptions";
+import { CheckoutButton } from "@/components/checkout-button";
 import { CheckCircle2, ArrowRight, Shield, Star } from "lucide-react";
 
 export const runtime = "nodejs";
@@ -89,16 +90,12 @@ export default function ClubPage() {
             </p>
 
             <div className="mt-8 animate-slide-up stagger-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href="/register"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "group shadow-premium",
-                )}
-              >
-                Join All Access
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              <CheckoutButton
+                type="subscription"
+                plan="annual"
+                size="lg"
+                className="shadow-premium"
+              />
               <Link
                 href="#features"
                 className={cn(
@@ -182,16 +179,15 @@ export default function ClubPage() {
                   ))}
                 </ul>
 
-                <Link
-                  href={`/register?plan=${monthly.id}`}
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" }),
-                    "mt-8 w-full group",
-                  )}
-                >
-                  Get Monthly
-                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                <div className="mt-6">
+                  <CheckoutButton
+                    type="subscription"
+                    plan="monthly"
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               {/* Annual (Highlighted) */}
@@ -224,16 +220,14 @@ export default function ClubPage() {
                   ))}
                 </ul>
 
-                <Link
-                  href={`/register?plan=${annual.id}`}
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "mt-8 w-full group shadow-premium",
-                  )}
-                >
-                  Get Annual
-                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                <div className="mt-6">
+                  <CheckoutButton
+                    type="subscription"
+                    plan="annual"
+                    size="lg"
+                    className="w-full shadow-premium"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -290,16 +284,14 @@ export default function ClubPage() {
               Join women who are transforming their bodies and
               building confidence with NomiTips.
             </p>
-            <Link
-              href="/register"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "mt-8 group shadow-premium",
-              )}
-            >
-              Get Started Today
-              <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            <div className="mt-8">
+              <CheckoutButton
+                type="subscription"
+                plan="annual"
+                size="lg"
+                className="shadow-premium"
+              />
+            </div>
           </div>
         </section>
       </main>

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Lock, CreditCard, AlertTriangle, Gift, Clock } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,6 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { ACTIVE_STATUSES } from "@/constants/subscriptions";
 
 const EXEMPT_PATHS = ["/client/subscription", "/client/payments", "/settings"];
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+  return match ? match[2] : null;
+}
 
 type FreeTrialInfo = {
   id: string;
@@ -35,8 +41,18 @@ export function SubscriptionGuard({
   freeTrial?: FreeTrialInfo;
 }) {
   const pathname = usePathname();
+  const [hasGrace, setHasGrace] = useState(false);
+
+  useEffect(() => {
+    setHasGrace(getCookie("checkout_grace") === "1");
+  }, []);
 
   if (EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
+    return <>{children}</>;
+  }
+
+  // Grace period after checkout — allow access while webhook processes
+  if (hasGrace && !subscription.status) {
     return <>{children}</>;
   }
 

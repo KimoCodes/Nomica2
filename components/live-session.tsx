@@ -38,7 +38,8 @@ export function LiveSession({ sessionId, userId, isCoach, onEndSession }: LiveSe
       try {
         const { io } = await import("socket.io-client");
         const socket = io("/live-coaching", {
-          auth: { userId },
+          path: "/api/socket/io",
+          withCredentials: true,
         });
 
         socket.on("connect", () => {
@@ -56,7 +57,10 @@ export function LiveSession({ sessionId, userId, isCoach, onEndSession }: LiveSe
         });
 
         socket.on("new-message", (data: { message: LiveMessage }) => {
-          setMessages((prev) => [...prev, data.message]);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === data.message.id)) return prev;
+            return [...prev, data.message];
+          });
         });
 
         socket.on("session-ended", () => {

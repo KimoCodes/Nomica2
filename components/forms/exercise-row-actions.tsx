@@ -1,9 +1,9 @@
 "use client";
 
 import type { Difficulty, MuscleGroup } from "@prisma/client";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, Trash2Icon, Upload, X, Video, Image } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   deleteExerciseAction,
   updateExerciseAction,
@@ -62,10 +62,85 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 100 * 1024 * 1024) {
+      setError("Video must be under 100MB");
+      return;
+    }
+
+    setVideoFile(file);
+    setUploadedUrl(null);
+    setError(null);
+
+    const url = URL.createObjectURL(file);
+    setVideoPreview(url);
+  };
+
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    setUploadedUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadVideo = async (): Promise<string | null> => {
+    if (!videoFile) return null;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", videoFile);
+
+      const res = await fetch("/api/exercises/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      setUploadedUrl(data.url);
+      return data.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload video");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   async function handleUpdate(formData: FormData) {
     setIsSaving(true);
     setError(null);
+
+    let videoUrl = formData.get("videoUrl") as string;
+
+    if (videoFile && !uploadedUrl) {
+      const url = await uploadVideo();
+      if (url) {
+        videoUrl = url;
+      } else {
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    if (uploadedUrl) {
+      videoUrl = uploadedUrl;
+    }
+
+    formData.set("videoUrl", videoUrl || "");
 
     const result = await trackLoading(() => updateExerciseAction(exercise.id, formData));
 
@@ -77,6 +152,9 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
 
     setIsSaving(false);
     setOpen(false);
+    setVideoFile(null);
+    setVideoPreview(null);
+    setUploadedUrl(null);
     router.refresh();
   }
 
@@ -112,6 +190,9 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
           size="sm"
           onClick={() => {
             setError(null);
+            setVideoFile(null);
+            setVideoPreview(null);
+            setUploadedUrl(null);
             setOpen(true);
           }}
         >
@@ -189,16 +270,127 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor={`videoUrl-${exercise.id}`}>
-                  Video URL (optional)
-                </Label>
+                <Label>Demo Video / Image (optional)</Label>
+                <input type="hidden" name="videoUrl" value={uploadedUrl || exercise.videoUrl || ""} />
+
+                {videoPreview ? (
+                  <div className="relative rounded-lg border border-dashed border-muted-foreground/25 p-4">
+                    {videoFile?.type.startsWith("video/") ? (
+                      <video
+                        src={videoPreview}
+                        className="mx-auto max-h-48 rounded-md"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={videoPreview}
+                        alt="Preview"
+                        className="mx-auto max-h-48 rounded-md object-contain"
+                      />
+                    )}
+                    <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        {videoFile?.type.startsWith("video/") ? (
+                          <Video className="h-4 w-4" />
+                        ) : (
+                          <Image className="h-4 w-4" />
+                        )}
+                        {videoFile?.name}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeVideo}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {uploading && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+                ) : exercise.videoUrl ? (
+                  <div className="relative rounded-lg border border-dashed border-muted-foreground/25 p-4">
+                    {exercise.videoUrl.match(/\.(mp4|mov|webm)/i) ? (
+                      <video
+                        src={exercise.videoUrl}
+                        className="mx-auto max-h-48 rounded-md"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={exercise.videoUrl}
+                        alt="Current"
+                        className="mx-auto max-h-48 rounded-md object-contain"
+                      />
+                    )}
+                    <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Current media</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setUploadedUrl("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="flex cursor-pointer flex-col items-center rounded-lg border border-dashed border-muted-foreground/25 p-6 transition-colors hover:bg-muted/50"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Click to upload a video or image
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      MP4, MOV, WebM, JPG, PNG up to 100MB
+                    </p>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">or</span>
+                  </div>
+                </div>
+
                 <Input
                   id={`videoUrl-${exercise.id}`}
-                  name="videoUrl"
+                  name="videoUrlInput"
                   type="url"
                   defaultValue={exercise.videoUrl ?? ""}
-                  placeholder="https://..."
+                  placeholder="https://youtube.com/watch?v=..."
+                  disabled={!!videoFile}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setUploadedUrl(e.target.value);
+                    } else {
+                      setUploadedUrl(null);
+                    }
+                  }}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Paste a YouTube, Vimeo, or other video URL
+                </p>
               </div>
 
               <div className="space-y-2 sm:col-span-2">

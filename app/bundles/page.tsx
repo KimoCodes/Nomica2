@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getBundleProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { CheckoutButton } from "@/components/checkout-button";
 import {
   ArrowRight,
   CheckCircle2,
@@ -202,17 +203,13 @@ export default async function BundlesPage() {
                     </div>
 
                     <div className="mt-6">
-                      <span
-                        className={cn(
-                          buttonVariants({
-                            variant: index === 0 ? "default" : "outline",
-                          }),
-                          "w-full group/btn",
-                        )}
-                      >
-                        Get the Bundle
-                        <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
-                      </span>
+                      <CheckoutButton
+                        type="product"
+                        productId={bundle.id}
+                        variant={index === 0 ? "default" : "outline"}
+                        size="default"
+                        className="w-full"
+                      />
                     </div>
                   </Link>
                 );

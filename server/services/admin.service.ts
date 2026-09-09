@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, Difficulty, ProductKind } from "@prisma/client";
-import { createNotification } from "@/server/services/notification.service";
+import { notifyCoachApproved } from "@/server/services/notification.service";
 
 /* -----------------------------
    TYPES
@@ -148,13 +148,7 @@ export async function approveCoach(coachProfileId: string) {
   });
 
   try {
-    await createNotification({
-      userId: profile.user.id,
-      type: "COACH_ASSIGNED",
-      title: "Coach account approved",
-      body: "Your coach account has been approved. You can now access all coach features.",
-      link: "/coach",
-    });
+    await notifyCoachApproved(profile.user.id);
   } catch {
     // Notification failure should not block approval
   }

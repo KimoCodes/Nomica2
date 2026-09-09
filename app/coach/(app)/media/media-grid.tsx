@@ -90,11 +90,21 @@ export function MediaGrid({ media }: MediaGridProps) {
               className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-premium`}
             >
               <div className="relative aspect-video bg-muted">
-                {item.thumbnailUrl ? (
+                {item.thumbnailUrl && !item.thumbnailUrl.match(/\.(mp4|mov|webm)/i) ? (
                   <img
                     src={item.thumbnailUrl}
                     alt={item.title}
                     className="size-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : isVideo ? (
+                  <video
+                    src={item.url}
+                    className="size-full object-cover"
+                    preload="metadata"
+                    muted
                   />
                 ) : (
                   <div className="flex size-full items-center justify-center">

@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { LeadMagnetForm } from "@/components/shared/lead-magnet-form";
 import { TestimonialCard } from "@/components/social-proof";
-import { getProducts, getPublishedReviews } from "@/server/services/product.service";
+import { getProducts, getPublishedReviews, getBundleProducts } from "@/server/services/product.service";
 import { getApprovedTransformations } from "@/server/services/transformation.service";
-import { formatPrice } from "@/constants/subscriptions";
+import { formatPrice, PLANS, formatPlanPrice } from "@/constants/subscriptions";
 import {
   Dumbbell,
   ArrowRight,
@@ -21,6 +21,8 @@ import {
   Sparkles,
   Users,
   Flame,
+  Package,
+  Shield,
 } from "lucide-react";
 
 export const runtime = "nodejs";
@@ -149,9 +151,15 @@ const faqs = [
 
 
 export default async function HomePage() {
-  const products = await getProducts({ kind: "PROGRAM", take: 3 });
-  const reviews = await getPublishedReviews(4);
-  const transformations = await getApprovedTransformations(4);
+  const [products, reviews, transformations, bundles] = await Promise.all([
+    getProducts({ kind: "PROGRAM", take: 3 }),
+    getPublishedReviews(4),
+    getApprovedTransformations(4),
+    getBundleProducts(),
+  ]);
+
+  const monthlyPlan = PLANS.find((p) => p.id === "ALL_ACCESS_MONTHLY")!;
+  const annualPlan = PLANS.find((p) => p.id === "ALL_ACCESS_ANNUAL")!;
 
   return (
     <PublicLayout>
@@ -655,6 +663,307 @@ export default async function HomePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 6.5: BUNDLES
+            ═══════════════════════════════════════════ */}
+        {bundles.length > 0 && (
+          <section className="border-t border-border/50 px-4 py-24 md:py-32">
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-16 text-center">
+                <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
+                  <Package className="mr-1 inline-block size-4" />
+                  Bundle & Save
+                </p>
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  More Programs. Better Price.
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  Save up to 30% when you bundle programs together.
+                </p>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-3">
+                {bundles.slice(0, 3).map((bundle, index) => {
+                  const savings = bundle.compareAtCents
+                    ? bundle.compareAtCents - bundle.priceCents
+                    : 0;
+                  const savingsPercent = bundle.compareAtCents
+                    ? Math.round(
+                        ((bundle.compareAtCents - bundle.priceCents) /
+                          bundle.compareAtCents) *
+                          100,
+                      )
+                    : 0;
+
+                  return (
+                    <Link
+                      key={bundle.id}
+                      href={`/bundles/${bundle.slug}`}
+                      className={`animate-slide-up stagger-${index + 1} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                        index === 0
+                          ? "border-primary shadow-premium scale-[1.02]"
+                          : "border-border/50"
+                      }`}
+                    >
+                      {index === 0 && (
+                        <div className="absolute -top-3 left-6">
+                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                            BEST VALUE
+                          </span>
+                        </div>
+                      )}
+
+                      <h3 className="text-xl font-bold">{bundle.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {bundle.tagline}
+                      </p>
+
+                      <div className="mt-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-bold">
+                            {formatPrice(bundle.priceCents)}
+                          </span>
+                          {bundle.compareAtCents && (
+                            <span className="text-sm text-muted-foreground line-through">
+                              {formatPrice(bundle.compareAtCents)}
+                            </span>
+                          )}
+                        </div>
+                        {savings > 0 && (
+                          <p className="mt-1 text-sm font-medium text-success">
+                            Save {formatPrice(savings)} ({savingsPercent}% off)
+                          </p>
+                        )}
+                      </div>
+
+                      <ul className="mt-4 flex-1 space-y-2">
+                        {(bundle.bundleItems ?? [])
+                          .slice(0, 3)
+                          .map((bi) => (
+                            <li
+                              key={bi.id}
+                              className="flex items-center gap-2 text-sm text-muted-foreground"
+                            >
+                              <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
+                              {bi.item.name}
+                            </li>
+                          ))}
+                      </ul>
+
+                      <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
+                        View Bundle
+                        <ArrowRight className="size-4" />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 text-center">
+                <Link
+                  href="/bundles"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "group",
+                  )}
+                >
+                  View All Bundles
+                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ═══════════════════════════════════════════
+            SECTION 6.6: SCULPT CLUB / ALL ACCESS
+            ═══════════════════════════════════════════ */}
+        <section className="border-t border-border/50 bg-muted/30 px-4 py-24 md:py-32">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-12 lg:grid-cols-2">
+              <div>
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                  <Sparkles className="size-3.5" />
+                  All Access Membership
+                </div>
+                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  Join the Sculpt Club
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  Every program. Every challenge. Every workout. One membership.
+                  Cancel anytime.
+                </p>
+
+                <ul className="mt-8 space-y-4">
+                  {[
+                    "Every signature program & challenge",
+                    "New monthly workouts",
+                    "Workout calendars & progress trackers",
+                    "Coach feedback & support",
+                    "Cancel anytime",
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-center gap-3">
+                      <CheckCircle2 className="size-5 text-primary" />
+                      <span className="font-medium">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8">
+                  <Link
+                    href="/club"
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "group shadow-premium",
+                    )}
+                  >
+                    Join All Access
+                    <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid gap-6">
+                <div className="rounded-2xl border border-border/50 bg-card p-6">
+                  <h3 className="text-lg font-semibold">{monthlyPlan.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {monthlyPlan.description}
+                  </p>
+                  <p className="mt-4 text-3xl font-bold">
+                    {formatPlanPrice(monthlyPlan)}
+                  </p>
+                </div>
+                <div className="relative rounded-2xl border border-primary shadow-premium bg-card p-6">
+                  <div className="absolute -top-3 left-6">
+                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                      {annualPlan.badge}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold">Annual Membership</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {annualPlan.description}
+                  </p>
+                  <p className="mt-4 text-3xl font-bold">
+                    {formatPlanPrice(annualPlan)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            SECTION 6.7: PRICING COMPARISON
+            ═══════════════════════════════════════════ */}
+        <section className="border-t border-border/50 px-4 py-24 md:py-32">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
+              Pricing
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Choose what works for you. All options include instant access.
+            </p>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              <div className="rounded-2xl border border-border/50 bg-card p-6 text-left">
+                <h3 className="font-semibold">Individual Programs</h3>
+                <p className="mt-2 text-3xl font-bold">$24.99 - $39.99</p>
+                <p className="mt-1 text-sm text-muted-foreground">one-time</p>
+                <ul className="mt-4 space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    Lifetime access
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    Choose your program
+                  </li>
+                </ul>
+                <Link
+                  href="/programs"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "mt-6 w-full",
+                  )}
+                >
+                  Browse Programs
+                </Link>
+              </div>
+
+              <div className="relative rounded-2xl border border-primary shadow-premium bg-card p-6 text-left">
+                <div className="absolute -top-3 left-6">
+                  <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                    POPULAR
+                  </span>
+                </div>
+                <h3 className="font-semibold">All Access Membership</h3>
+                <p className="mt-2 text-3xl font-bold">$14.99/mo</p>
+                <p className="mt-1 text-sm text-muted-foreground">cancel anytime</p>
+                <ul className="mt-4 space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    All programs & challenges
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    New workouts monthly
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    Coach support
+                  </li>
+                </ul>
+                <Link
+                  href="/club"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "mt-6 w-full",
+                  )}
+                >
+                  Join Now
+                </Link>
+              </div>
+
+              <div className="rounded-2xl border border-border/50 bg-card p-6 text-left">
+                <h3 className="font-semibold">Bundles</h3>
+                <p className="mt-2 text-3xl font-bold">Save 30%</p>
+                <p className="mt-1 text-sm text-muted-foreground">one-time</p>
+                <ul className="mt-4 space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    Multiple programs
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="size-4 text-primary" />
+                    Best value
+                  </li>
+                </ul>
+                <Link
+                  href="/bundles"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "mt-6 w-full",
+                  )}
+                >
+                  View Bundles
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/pricing"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                View detailed pricing comparison →
+              </Link>
             </div>
           </div>
         </section>

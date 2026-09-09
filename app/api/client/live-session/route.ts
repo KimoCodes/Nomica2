@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { createLiveSession, getActiveSession } from "@/server/services/live-coaching.service";
 import logger from "@/lib/logger";
 
@@ -29,7 +30,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await requireAuth();
-    const { clientId, coachId } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { clientId, coachId } = body;
 
     let actualCoachId: string;
     let actualClientId: string;
@@ -38,8 +40,25 @@ export async function POST(request: Request) {
       actualCoachId = session.user.id;
       actualClientId = clientId;
     } else {
-      actualCoachId = coachId;
       actualClientId = session.user.id;
+
+      if (coachId) {
+        actualCoachId = coachId;
+      } else {
+        const profile = await prisma.clientProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { coachId: true },
+        });
+
+        if (!profile?.coachId) {
+          return NextResponse.json(
+            { error: "No coach assigned. Please contact support." },
+            { status: 400 },
+          );
+        }
+
+        actualCoachId = profile.coachId;
+      }
     }
 
     if (!actualCoachId || !actualClientId) {

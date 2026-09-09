@@ -11,7 +11,7 @@ function getEmailProvider(): EmailProvider {
   return "none";
 }
 
-async function sendEmail(
+export async function sendEmail(
   to: string,
   subject: string,
   html: string,
@@ -240,6 +240,158 @@ export async function sendCoachNewClientEmail(
                   background: #171717; color: #fff; text-decoration: none;
                   border-radius: 8px; font-weight: 500;">
           View Clients
+        </a>
+      </div>
+    `,
+  );
+}
+
+// ─── Session Emails ──────────────────────────────────────────────────────────
+
+export async function sendSessionBookedEmail(
+  email: string,
+  name: string,
+  otherName: string,
+  scheduledAt: Date,
+  role: "client" | "coach",
+): Promise<{ sent: boolean }> {
+  const dashboardUrl = `${getAppUrl()}/${role === "client" ? "client" : "coach"}/sessions`;
+  const dateStr = scheduledAt.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return sendEmail(
+    email,
+    role === "client" ? "Session Booked" : "New Booking Request",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">${role === "client" ? "Session Booked" : "New Booking Request"}</h1>
+        <p style="color: #444; line-height: 1.6;">
+          ${role === "client"
+            ? `Your session with ${otherName} is scheduled for ${dateStr}.`
+            : `${otherName} requested a session on ${dateStr}.`
+          }
+        </p>
+        <div style="margin: 24px 0; padding: 20px; background: #f9f9f9; border-radius: 12px;">
+          <p style="margin: 0 0 8px 0;"><strong>Date:</strong> ${dateStr}</p>
+        </div>
+        <a href="${dashboardUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+                  background: #171717; color: #fff; text-decoration: none;
+                  border-radius: 8px; font-weight: 500;">
+          View Sessions
+        </a>
+      </div>
+    `,
+  );
+}
+
+export async function sendSessionConfirmedEmail(
+  email: string,
+  name: string,
+  otherName: string,
+  scheduledAt: Date,
+): Promise<{ sent: boolean }> {
+  const dateStr = scheduledAt.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return sendEmail(
+    email,
+    "Session Confirmed",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Session Confirmed</h1>
+        <p style="color: #444; line-height: 1.6;">
+          ${otherName} confirmed your session on ${dateStr}.
+        </p>
+      </div>
+    `,
+  );
+}
+
+export async function sendSessionCancelledEmail(
+  email: string,
+  name: string,
+  otherName: string,
+  reason?: string,
+): Promise<{ sent: boolean }> {
+  return sendEmail(
+    email,
+    "Session Cancelled",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Session Cancelled</h1>
+        <p style="color: #444; line-height: 1.6;">
+          ${otherName} cancelled the session${reason ? `. Reason: ${reason}` : ""}.
+        </p>
+      </div>
+    `,
+  );
+}
+
+// ─── Plan Emails ─────────────────────────────────────────────────────────────
+
+export async function sendExercisePlanAssignedEmail(
+  email: string,
+  clientName: string,
+  coachName: string,
+  planName: string,
+): Promise<{ sent: boolean }> {
+  const dashboardUrl = `${getAppUrl()}/client/my-plan`;
+
+  return sendEmail(
+    email,
+    "New Exercise Plan Assigned",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">New Exercise Plan</h1>
+        <p style="color: #444; line-height: 1.6;">
+          Hi ${clientName}, ${coachName} created a personalized exercise plan for you: "${planName}".
+        </p>
+        <a href="${dashboardUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+                  background: #171717; color: #fff; text-decoration: none;
+                  border-radius: 8px; font-weight: 500;">
+          View Your Plan
+        </a>
+      </div>
+    `,
+  );
+}
+
+export async function sendNutritionPlanAssignedEmail(
+  email: string,
+  clientName: string,
+  coachName: string,
+  planName: string,
+): Promise<{ sent: boolean }> {
+  const dashboardUrl = `${getAppUrl()}/client/my-plan`;
+
+  return sendEmail(
+    email,
+    "New Nutrition Plan Assigned",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">New Nutrition Plan</h1>
+        <p style="color: #444; line-height: 1.6;">
+          Hi ${clientName}, ${coachName} created a personalized nutrition plan for you: "${planName}".
+        </p>
+        <a href="${dashboardUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+                  background: #171717; color: #fff; text-decoration: none;
+                  border-radius: 8px; font-weight: 500;">
+          View Your Plan
         </a>
       </div>
     `,

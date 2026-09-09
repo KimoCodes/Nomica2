@@ -1,5 +1,6 @@
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, type Socket } from "socket.io";
 import { prisma } from "@/lib/prisma";
+import { authenticateSocket } from "@/server/socket/auth";
 import logger from "@/lib/logger";
 
 type LiveSession = {
@@ -20,20 +21,24 @@ type LiveMessage = {
   timestamp: Date;
 };
 
-const activeSessions = new Map<string, LiveSession>();
+const globalForLiveSessions = globalThis as unknown as {
+  activeSessions: Map<string, LiveSession> | undefined;
+};
+
+const activeSessions = globalForLiveSessions.activeSessions ?? new Map<string, LiveSession>();
+globalForLiveSessions.activeSessions = activeSessions;
 
 export function initializeLiveCoaching(io: SocketIOServer) {
   const liveNamespace = io.of("/live-coaching");
 
-  liveNamespace.use(async (socket, next) => {
+  liveNamespace.use(async (socket: Socket, next) => {
     try {
-      const userId = socket.handshake.auth.userId;
-      if (!userId) {
-        return next(new Error("Authentication required"));
-      }
-      socket.data.userId = userId;
+      const user = await authenticateSocket(socket);
+      socket.data.user = user;
+      socket.data.userId = user.userId;
       next();
-    } catch {
+    } catch (err) {
+      logger.debug({ err, socketId: socket.id }, "Live coaching auth failed");
       next(new Error("Authentication failed"));
     }
   });
@@ -46,17 +51,21 @@ export function initializeLiveCoaching(io: SocketIOServer) {
       try {
         const session = activeSessions.get(sessionId);
         if (!session) {
+          logger.warn({ sessionId, userId }, "join-session: Session not found");
           socket.emit("error", { message: "Session not found" });
           return;
         }
 
         if (session.coachId !== userId && session.clientId !== userId) {
+          logger.warn({ sessionId, userId, coachId: session.coachId, clientId: session.clientId }, "join-session: Unauthorized");
           socket.emit("error", { message: "Unauthorized" });
           return;
         }
 
         socket.join(sessionId);
         socket.data.sessionId = sessionId;
+
+        logger.info({ sessionId, userId, status: session.status, coachId: session.coachId, clientId: session.clientId }, "join-session: Success");
 
         socket.emit("session-joined", {
           session: {
@@ -69,6 +78,7 @@ export function initializeLiveCoaching(io: SocketIOServer) {
 
         if (session.status === "waiting" && session.coachId === userId) {
           session.status = "active";
+          logger.info({ sessionId, userId }, "join-session: Session started by coach");
           liveNamespace.to(sessionId).emit("session-started", {
             sessionId: session.id,
           });
@@ -183,6 +193,16 @@ export function createLiveSession(
   coachId: string,
   clientId: string,
 ): LiveSession {
+  for (const session of activeSessions.values()) {
+    if (
+      session.coachId === coachId &&
+      session.clientId === clientId &&
+      session.status !== "ended"
+    ) {
+      return session;
+    }
+  }
+
   const session: LiveSession = {
     id: `session_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     coachId,

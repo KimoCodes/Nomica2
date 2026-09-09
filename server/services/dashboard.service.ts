@@ -163,7 +163,8 @@ export async function getCoachDashboardSummary(coachUserId: string) {
     const coach = await requireCoachProfile(coachUserId);
 
   const [
-    activeClients,
+    totalClients,
+    clientsWithActiveSub,
     pendingClients,
     pendingReviews,
     programTemplates,
@@ -173,6 +174,12 @@ export async function getCoachDashboardSummary(coachUserId: string) {
     programUtilization,
   ] = await Promise.all([
     prisma.clientProfile.count({ where: { coachId: coachUserId } }),
+    prisma.clientProfile.count({
+      where: {
+        coachId: coachUserId,
+        user: { subscription: { status: { in: ["active", "trialing", "past_due"] } } },
+      },
+    }),
     prisma.clientProfile.count({
       where: { coachId: null, onboardingComplete: true },
     }),
@@ -253,7 +260,8 @@ export async function getCoachDashboardSummary(coachUserId: string) {
   }
 
   return {
-    activeClients,
+    activeClients: clientsWithActiveSub,
+    totalClients,
     pendingClients,
     pendingReviews,
     programTemplates,

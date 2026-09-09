@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug, getProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { CheckoutButton } from "@/components/checkout-button";
 import {
   Dumbbell,
   ArrowRight,
@@ -169,16 +168,14 @@ export default async function ProductPage({
                 </span>
               </div>
 
-              <Link
-                href="/register"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "mt-8 w-full group shadow-premium",
-                )}
-              >
-                Get Instant Access
-                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              <div className="mt-8">
+                <CheckoutButton
+                  type="product"
+                  productId={product.id}
+                  size="lg"
+                  className="w-full"
+                />
+              </div>
 
               <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -370,16 +367,14 @@ export default async function ProductPage({
               Join women who transformed their bodies with this
               program.
             </p>
-            <Link
-              href="/register"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "mt-8 group shadow-premium",
-              )}
-            >
-              Get {product.name} — {formatPrice(product.priceCents)}
-              <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            <div className="mt-8">
+              <CheckoutButton
+                type="product"
+                productId={product.id}
+                size="lg"
+                className="mx-auto max-w-md"
+              />
+            </div>
           </div>
         </section>
 

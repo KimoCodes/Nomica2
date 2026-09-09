@@ -7,6 +7,7 @@ import {
   changePlanAction,
   cancelSubscriptionAction,
   reactivateSubscriptionAction,
+  createCustomerPortalAction,
 } from "@/actions/subscription.actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,8 @@ import {
   XCircle,
   RotateCcw,
   Loader2,
+  CreditCard,
+  ExternalLink,
 } from "lucide-react";
 
 import { trackLoading } from "@/components/ui/loading-bar";
@@ -37,6 +40,7 @@ type SubscriptionActionsProps = {
   downgradePlan: SubscriptionPlan | null;
   isCanceled: boolean;
   subscriptionId: string;
+  hasStripeId?: boolean;
 };
 
 export function SubscriptionActions({
@@ -45,9 +49,11 @@ export function SubscriptionActions({
   downgradePlan,
   isCanceled,
   subscriptionId: _subscriptionId,
+  hasStripeId = false,
 }: SubscriptionActionsProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleUpgrade() {
@@ -120,6 +126,22 @@ export function SubscriptionActions({
     }
   }
 
+  async function handleManageBilling() {
+    setPortalLoading(true);
+    try {
+      const result = await createCustomerPortalAction();
+      if (result.url) {
+        window.location.href = result.url;
+      } else if (result.error) {
+        setError(result.error.message);
+      }
+    } catch {
+      setError("Failed to open billing portal. Please try again.");
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {error && (
@@ -137,6 +159,22 @@ export function SubscriptionActions({
       </div>
 
       <div className="flex flex-wrap gap-3">
+        {hasStripeId && (
+          <Button
+            variant="outline"
+            onClick={handleManageBilling}
+            disabled={portalLoading || isPending}
+          >
+            {portalLoading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 size-4" />
+            )}
+            Manage Billing
+            <ExternalLink className="ml-1.5 size-3" />
+          </Button>
+        )}
+
         {upgradePlan && !isCanceled && (
           <AlertDialog>
             <AlertDialogTrigger

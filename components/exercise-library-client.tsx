@@ -15,12 +15,21 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Dumbbell,
   Search,
   Play,
   Filter,
   X,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
 
@@ -49,6 +58,9 @@ export function ExerciseLibraryClient({
   );
   const [showFilters, setShowFilters] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; name: string } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSearch = useCallback((value: string) => {
@@ -64,6 +76,30 @@ export function ExerciseLibraryClient({
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!videoContainerRef.current) return;
+
+    if (!document.fullscreenElement) {
+      try {
+        await videoContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+      }
+    } else {
+      await document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const filtered = useMemo(() => {
@@ -272,15 +308,14 @@ export function ExerciseLibraryClient({
                     {exercise.instructions}
                   </p>
                   {exercise.videoUrl && (
-                    <a
-                      href={exercise.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => setPreviewVideo({ url: exercise.videoUrl!, name: exercise.name })}
                       className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                     >
                       <Play className="size-3" />
                       Watch video
-                    </a>
+                    </button>
                   )}
                 </CardContent>
               </Card>
@@ -288,6 +323,77 @@ export function ExerciseLibraryClient({
           </div>
         )}
       </div>
+
+      <Dialog open={!!previewVideo} onOpenChange={(open) => {
+        if (!open) {
+          setPreviewVideo(null);
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+        }
+      }}>
+        <DialogContent className={isFullscreen ? "fixed inset-0 z-50 max-w-none h-screen w-screen border-0 rounded-none p-0" : "sm:max-w-2xl"}>
+          <DialogHeader className={isFullscreen ? "absolute top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm p-4" : ""}>
+            <DialogTitle>{previewVideo?.name}</DialogTitle>
+          </DialogHeader>
+          <div
+            ref={videoContainerRef}
+            className={isFullscreen ? "flex h-full w-full items-center justify-center bg-black" : "relative"}
+          >
+            {previewVideo?.url.match(/\.(mp4|mov|webm)/i) ? (
+              <video
+                src={previewVideo.url}
+                controls
+                autoPlay
+                className={isFullscreen ? "max-h-full max-w-full" : "w-full rounded-md"}
+              />
+            ) : previewVideo?.url.includes("youtube.com") || previewVideo?.url.includes("youtu.be") ? (
+              <iframe
+                src={previewVideo.url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
+                className={isFullscreen ? "h-full w-full" : "w-full aspect-video rounded-md"}
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            ) : previewVideo?.url.includes("vimeo.com") ? (
+              <iframe
+                src={previewVideo.url.replace("vimeo.com/", "player.vimeo.com/video/")}
+                className={isFullscreen ? "h-full w-full" : "w-full aspect-video rounded-md"}
+                allowFullScreen
+                allow="autoplay; fullscreen; picture-in-picture"
+              />
+            ) : (
+              <video
+                src={previewVideo?.url}
+                controls
+                autoPlay
+                className={isFullscreen ? "max-h-full max-w-full" : "w-full rounded-md"}
+              />
+            )}
+            {!isFullscreen && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={toggleFullscreen}
+              >
+                <Maximize className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {isFullscreen && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="fixed bottom-4 right-4 z-50"
+              onClick={toggleFullscreen}
+            >
+              <Minimize className="h-4 w-4" />
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

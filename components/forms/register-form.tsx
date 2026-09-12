@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Role } from "@prisma/client";
@@ -39,6 +39,8 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [selectedRole, setSelectedRole] = useState<string>(Role.CLIENT);
+  const roleInputRef = useRef<HTMLInputElement>(null);
 
   function validateField(name: string, value: string) {
     const result = registerSchema.shape[name as keyof typeof registerSchema.shape].safeParse(value);
@@ -179,12 +181,14 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label className="text-sm font-medium">I am a</Label>
-            <input type="hidden" name="role" value={Role.CLIENT} />
+            <input type="hidden" name="role" value={selectedRole} ref={roleInputRef} />
             <Select
               defaultValue={Role.CLIENT}
               onValueChange={(value: string | null) => {
-                const hiddenInput = document.querySelector('input[name="role"]') as HTMLInputElement;
-                if (hiddenInput && value) hiddenInput.value = value;
+                if (value) {
+                  setSelectedRole(value as Role);
+                  if (roleInputRef.current) roleInputRef.current.value = value;
+                }
               }}
             >
               <SelectTrigger className="h-11">
@@ -242,6 +246,17 @@ export function RegisterForm() {
             Create account
             <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
           </LoadingButton>
+
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account, you agree to our{" "}
+            <Link href="/terms" className="font-medium text-primary hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="font-medium text-primary hover:underline">
+              Privacy Policy
+            </Link>
+          </p>
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

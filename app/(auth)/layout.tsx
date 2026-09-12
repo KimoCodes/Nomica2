@@ -25,20 +25,20 @@ export default function AuthLayout({
               Connect with expert coaches, follow personalized programs, and
               achieve your fitness goals.
             </p>
-            <div className="grid grid-cols-3 gap-4 pt-4">
-              <div className="rounded-xl bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold">4.9</p>
-                <p className="text-xs text-muted-foreground">Avg Rating</p>
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold">100%</p>
-                <p className="text-xs text-muted-foreground">Coach-Led</p>
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold">24/7</p>
-                <p className="text-xs text-muted-foreground">Access</p>
-              </div>
-            </div>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-primary" />
+                Science-backed progressive overload programs
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-primary" />
+                Video-guided workouts with form demos
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-primary" />
+                Real coach feedback and support
+              </li>
+            </ul>
           </div>
         </div>
       </div>

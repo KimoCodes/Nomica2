@@ -208,32 +208,37 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  coachProfile          CoachProfile?
-  clientProfile         ClientProfile?
-  subscription          Subscription?
-  approvedSubscriptions Subscription[] @relation("ApprovedBy")
-  paymentRequests       PaymentRequest[] @relation("PaymentRequestClient")
-  coachedPaymentRequests PaymentRequest[] @relation("PaymentRequestCoach")
-  reviewedPaymentRequests PaymentRequest[] @relation("PaymentRequestReviewer")
-  auditLogs             PaymentRequestAuditLog[] @relation("AuditLogPerformer")
-  notifications       Notification[]
-  sentMessages          Message[]
-  clientConversations   Conversation[]    @relation("ClientConversations")
-  coachConversations    Conversation[]    @relation("CoachConversations")
-  coachedClients        ClientProfile[]   @relation("ClientCoach")
-  checkInResponses      CheckInResponse[]
-  uploadedMedia         Media[]
-  coachedProgressLogs   ProgressLog[]
-  purchases             Purchase[]
-  reviews               Review[]
-  habits                Habit[]
-  aiConversations       AiConversation[]
-  goals                 Goal[]
-  favorites             Favorite[]
-  freeTrials            FreeTrial[] @relation("FreeTrialRecipient")
-  grantedFreeTrials     FreeTrial[] @relation("FreeTrialGrantor")
-  pageVisits            PageVisit[]
-  activityLogs          ActivityLog[]
+  coachProfile            CoachProfile?
+  clientProfile           ClientProfile?
+  subscription            Subscription?
+  approvedSubscriptions   Subscription[]           @relation("ApprovedBy")
+  paymentRequests         PaymentRequest[]         @relation("PaymentRequestClient")
+  coachedPaymentRequests  PaymentRequest[]         @relation("PaymentRequestCoach")
+  reviewedPaymentRequests PaymentRequest[]         @relation("PaymentRequestReviewer")
+  auditLogs               PaymentRequestAuditLog[] @relation("AuditLogPerformer")
+  notifications           Notification[]
+  sentMessages            Message[]
+  clientConversations     Conversation[]           @relation("ClientConversations")
+  coachConversations      Conversation[]           @relation("CoachConversations")
+  coachedClients          ClientProfile[]          @relation("ClientCoach")
+  checkInResponses        CheckInResponse[]
+  uploadedMedia           Media[]
+  coachedProgressLogs     ProgressLog[]
+  purchases               Purchase[]
+  reviews                 Review[]
+  habits                  Habit[]
+  aiConversations         AiConversation[]
+  goals                   Goal[]
+  favorites               Favorite[]
+  freeTrials              FreeTrial[]              @relation("FreeTrialRecipient")
+  grantedFreeTrials       FreeTrial[]              @relation("FreeTrialGrantor")
+  pageVisits              PageVisit[]
+  activityLogs            ActivityLog[]
+  uploadedWebsiteMedia    WebsiteMedia[]
+  createdPageContents     PageContent[]
+  uploadedBrandAssets     BrandAsset[]
+  createdSiteThemes       SiteTheme[]
+  createdContentVersions  ContentVersion[]
 
   @@index([email])
   @@index([role])
@@ -263,9 +268,9 @@ model CoachProfile {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  programs Program[]
-  bookings CoachBooking[]
-  exercisePlans PersonalizedExercisePlan[]
+  programs       Program[]
+  bookings       CoachBooking[]
+  exercisePlans  PersonalizedExercisePlan[]
   nutritionPlans PersonalizedNutritionPlan[]
 
   @@index([userId])
@@ -468,7 +473,7 @@ model Exercise {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  programExercises ProgramExercise[]
+  programExercises  ProgramExercise[]
   personalizedItems PersonalizedExerciseItem[]
 
   @@index([muscleGroup])
@@ -677,30 +682,30 @@ model ProgressPhoto {
 }
 
 model TransformationSubmission {
-  id              String                @id @default(cuid())
+  id              String        @id @default(cuid())
   clientProfileId String
-  clientProfile   ClientProfile         @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
 
-  name            String
-  quote           String                @db.Text
-  story           String                @db.Text
+  name  String
+  quote String @db.Text
+  story String @db.Text
 
-  beforePhotoId   String?
-  beforePhoto     Media?                @relation("TransformationBefore", fields: [beforePhotoId], references: [id], onDelete: SetNull)
-  afterPhotoId    String?
-  afterPhoto      Media?                @relation("TransformationAfter", fields: [afterPhotoId], references: [id], onDelete: SetNull)
+  beforePhotoId String?
+  beforePhoto   Media?  @relation("TransformationBefore", fields: [beforePhotoId], references: [id], onDelete: SetNull)
+  afterPhotoId  String?
+  afterPhoto    Media?  @relation("TransformationAfter", fields: [afterPhotoId], references: [id], onDelete: SetNull)
 
-  beforeWeight    Float?
-  afterWeight     Float?
-  duration        String?
-  programName     String?
+  beforeWeight Float?
+  afterWeight  Float?
+  duration     String?
+  programName  String?
 
-  status          TransformationStatus  @default(SUBMITTED)
-  coachNote       String?               @db.Text
-  reviewedAt      DateTime?
+  status     TransformationStatus @default(SUBMITTED)
+  coachNote  String?              @db.Text
+  reviewedAt DateTime?
 
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([clientProfileId])
   @@index([status])
@@ -746,12 +751,12 @@ model Payment {
 }
 
 model BillingEvent {
-  id          String    @id @default(cuid())
-  stripeEventId String  @unique
-  type        String
-  payload     Json?
-  processedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique
+  type          String
+  payload       Json?
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
 
   @@index([stripeEventId])
   @@index([type])
@@ -759,28 +764,28 @@ model BillingEvent {
 }
 
 model PaymentRequest {
-  id                String               @id @default(cuid())
-  clientUserId      String
-  clientUser        User                 @relation("PaymentRequestClient", fields: [clientUserId], references: [id], onDelete: Cascade)
-  coachUserId       String?
-  coachUser         User?                @relation("PaymentRequestCoach", fields: [coachUserId], references: [id], onDelete: SetNull)
-  plan              SubscriptionPlan
-  amount            Int
-  currency          String               @default("USD")
-  paymentMethod     String
-  transactionRef    String?
-  proofUrl          String
-  proofFileName     String?
-  notes             String?
-  status            PaymentRequestStatus @default(PENDING)
-  reviewNote        String?
-  reviewedById      String?
-  reviewedBy        User?                @relation("PaymentRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewedAt        DateTime?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  id             String               @id @default(cuid())
+  clientUserId   String
+  clientUser     User                 @relation("PaymentRequestClient", fields: [clientUserId], references: [id], onDelete: Cascade)
+  coachUserId    String?
+  coachUser      User?                @relation("PaymentRequestCoach", fields: [coachUserId], references: [id], onDelete: SetNull)
+  plan           SubscriptionPlan
+  amount         Int
+  currency       String               @default("USD")
+  paymentMethod  String
+  transactionRef String?
+  proofUrl       String
+  proofFileName  String?
+  notes          String?
+  status         PaymentRequestStatus @default(PENDING)
+  reviewNote     String?
+  reviewedById   String?
+  reviewedBy     User?                @relation("PaymentRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
-  auditLogs         PaymentRequestAuditLog[]
+  auditLogs PaymentRequestAuditLog[]
 
   @@index([clientUserId])
   @@index([coachUserId])
@@ -789,14 +794,14 @@ model PaymentRequest {
 }
 
 model PaymentRequestAuditLog {
-  id               String        @id @default(cuid())
+  id               String         @id @default(cuid())
   paymentRequestId String
   paymentRequest   PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
   action           String
   performedById    String
-  performedBy      User          @relation("AuditLogPerformer", fields: [performedById], references: [id], onDelete: Cascade)
+  performedBy      User           @relation("AuditLogPerformer", fields: [performedById], references: [id], onDelete: Cascade)
   note             String?
-  createdAt        DateTime      @default(now())
+  createdAt        DateTime       @default(now())
 
   @@index([paymentRequestId])
   @@index([performedById])
@@ -841,9 +846,9 @@ model Media {
   programDayId String?
   programDay   ProgramDay?  @relation(fields: [programDayId], references: [id], onDelete: SetNull)
 
-  tags           MediaTag[]
-  progressLogs   ProgressLog[]
-  progressPhotos ProgressPhoto[]
+  tags                  MediaTag[]
+  progressLogs          ProgressLog[]
+  progressPhotos        ProgressPhoto[]
   transformationsBefore TransformationSubmission[] @relation("TransformationBefore")
   transformationsAfter  TransformationSubmission[] @relation("TransformationAfter")
 
@@ -901,6 +906,179 @@ model LandingContent {
   @@index([order])
 }
 
+// ─── Admin Content Management ──────────────────────────────────────────────
+
+enum WebsiteMediaStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum WebsiteMediaCategory {
+  HOMEPAGE
+  WELCOME
+  PROGRAMS
+  BUNDLES
+  SCULPT_CLUB
+  PRICING
+  ABOUT
+  PROMOTIONAL
+  BRANDING
+  GENERAL
+}
+
+model WebsiteMedia {
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  url          String
+  thumbnailUrl String?
+  mimeType     String
+  fileSize     Int
+  width        Int?
+  height       Int?
+  duration     Float?
+  altText      String?
+  category     WebsiteMediaCategory @default(GENERAL)
+  status       WebsiteMediaStatus   @default(DRAFT)
+  version      Int                  @default(1)
+  uploadedById String
+  uploadedBy   User                 @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  pageContents PageContent[]
+  brandAssets  BrandAsset[]
+
+  @@index([category])
+  @@index([status])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+model PageContent {
+  id          String             @id @default(cuid())
+  pageSlug    String
+  sectionKey  String
+  title       String?
+  subtitle    String?
+  heading     String?
+  description String?            @db.Text
+  body        Json?
+  mediaId     String?
+  media       WebsiteMedia?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  ctaText     String?
+  ctaLink     String?
+  cta2Text    String?
+  cta2Link    String?
+  badge       String?
+  sortOrder   Int                @default(0)
+  isActive    Boolean            @default(true)
+  status      WebsiteMediaStatus @default(DRAFT)
+  version     Int                @default(1)
+  createdById String
+  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  versions ContentVersion[]
+
+  @@unique([pageSlug, sectionKey])
+  @@index([pageSlug])
+  @@index([status])
+  @@index([sortOrder])
+}
+
+model BrandAsset {
+  id           String        @id @default(cuid())
+  assetType    String
+  name         String
+  url          String
+  mimeType     String
+  fileSize     Int
+  width        Int?
+  height       Int?
+  mediaId      String?
+  media        WebsiteMedia? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  uploadedById String
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([assetType])
+  @@index([assetType])
+}
+
+enum ThemeMode {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+model SiteTheme {
+  id          String    @id @default(cuid())
+  name        String
+  mode        ThemeMode @default(SYSTEM)
+  isPublished Boolean   @default(false)
+
+  primaryColor      String?
+  primaryForeground String?
+  secondaryColor    String?
+  accentColor       String?
+  destructiveColor  String?
+  successColor      String?
+  warningColor      String?
+
+  backgroundColor String?
+  foregroundColor String?
+  cardColor       String?
+  mutedColor      String?
+  mutedFgColor    String?
+  borderColor     String?
+
+  headingFont  String?
+  bodyFont     String?
+  baseFontSize String?
+  borderRadius String?
+
+  customTokens Json?
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished])
+}
+
+model ContentVersion {
+  id            String       @id @default(cuid())
+  entityType    String
+  entityId      String
+  version       Int
+  title         String?
+  subtitle      String?
+  heading       String?
+  description   String?      @db.Text
+  body          Json?
+  mediaUrl      String?
+  ctaText       String?
+  ctaLink       String?
+  cta2Text      String?
+  cta2Link      String?
+  badge         String?
+  themeSnapshot Json?
+  snapshot      Json?
+  createdById   String
+  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime     @default(now())
+  pageContent   PageContent? @relation(fields: [pageContentId], references: [id])
+  pageContentId String?
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
 enum HabitType {
   WATER
   SLEEP
@@ -911,14 +1089,14 @@ enum HabitType {
 }
 
 model Habit {
-  id        String     @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      HabitType
-  target    Int        @default(1)
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  target    Int       @default(1)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   logs HabitLog[]
 
@@ -947,19 +1125,19 @@ enum GoalStatus {
 }
 
 model Goal {
-  id          String     @id @default(cuid())
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  category    String
-  targetValue Float?
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  category     String
+  targetValue  Float?
   currentValue Float?
-  unit        String?
-  status      GoalStatus @default(ACTIVE)
-  deadline    DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  unit         String?
+  status       GoalStatus @default(ACTIVE)
+  deadline     DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -973,12 +1151,12 @@ enum FavoriteType {
 }
 
 model Favorite {
-  id        String      @id @default(cuid())
+  id        String       @id @default(cuid())
   userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      FavoriteType
   targetId  String
-  createdAt DateTime    @default(now())
+  createdAt DateTime     @default(now())
 
   @@unique([userId, type, targetId])
   @@index([userId])
@@ -1023,20 +1201,20 @@ enum DeviceType {
 }
 
 model PageVisit {
-  id            String     @id @default(cuid())
-  path          String
-  userId        String?
-  user          User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  sessionId     String?
-  ipAddress     String?
-  userAgent     String?
-  referrer      String?
-  deviceType    DeviceType @default(UNKNOWN)
-  browser       String?
-  os            String?
-  country       String?
-  durationMs    Int?
-  createdAt     DateTime   @default(now())
+  id         String     @id @default(cuid())
+  path       String
+  userId     String?
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId  String?
+  ipAddress  String?
+  userAgent  String?
+  referrer   String?
+  deviceType DeviceType @default(UNKNOWN)
+  browser    String?
+  os         String?
+  country    String?
+  durationMs Int?
+  createdAt  DateTime   @default(now())
 
   @@index([path, createdAt])
   @@index([userId, createdAt])
@@ -1045,19 +1223,19 @@ model PageVisit {
 }
 
 model ActivityLog {
-  id            String   @id @default(cuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action        String
-  category      String?
-  resourceType  String?
-  resourceId    String?
-  description   String?
-  metadata      Json?
-  success       Boolean  @default(true)
-  ipAddress     String?
-  userAgent     String?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action       String
+  category     String?
+  resourceType String?
+  resourceId   String?
+  description  String?
+  metadata     Json?
+  success      Boolean  @default(true)
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
@@ -1082,17 +1260,17 @@ model MealLog {
 }
 
 model MealLogItem {
-  id          String   @id @default(cuid())
-  mealLogId   String
-  mealLog     MealLog  @relation(fields: [mealLogId], references: [id], onDelete: Cascade)
-  foodId      String
-  foodName    String
+  id           String   @id @default(cuid())
+  mealLogId    String
+  mealLog      MealLog  @relation(fields: [mealLogId], references: [id], onDelete: Cascade)
+  foodId       String
+  foodName     String
   portionGrams Int
-  calories    Int
-  protein     Float
-  carbs       Float
-  fat         Float
-  createdAt   DateTime @default(now())
+  calories     Int
+  protein      Float
+  carbs        Float
+  fat          Float
+  createdAt    DateTime @default(now())
 
   @@index([mealLogId])
 }
@@ -1106,12 +1284,12 @@ enum MealType {
 }
 
 model AiConversation {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userMessage     String
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userMessage      String
   assistantMessage String
-  createdAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
 
   @@index([userId])
   @@index([createdAt])
@@ -1138,31 +1316,31 @@ model VideoFeedback {
 }
 
 model CoachBooking {
-  id                String         @id @default(cuid())
-  clientProfileId   String
-  clientProfile     ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  coachProfileId    String
-  coachProfile      CoachProfile   @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
-  scheduledAt       DateTime
-  durationMinutes   Int            @default(60)
-  status            SessionStatus  @default(PENDING)
-  sessionType       SessionType    @default(CONSULTATION)
-  notes             String?
-  cancellationReason String?
-  rescheduleOfId    String?
-  rescheduleOf      CoachBooking?  @relation("RescheduledFrom", fields: [rescheduleOfId], references: [id], onDelete: SetNull)
+  id                  String         @id @default(cuid())
+  clientProfileId     String
+  clientProfile       ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coachProfileId      String
+  coachProfile        CoachProfile   @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  scheduledAt         DateTime
+  durationMinutes     Int            @default(60)
+  status              SessionStatus  @default(PENDING)
+  sessionType         SessionType    @default(CONSULTATION)
+  notes               String?
+  cancellationReason  String?
+  rescheduleOfId      String?
+  rescheduleOf        CoachBooking?  @relation("RescheduledFrom", fields: [rescheduleOfId], references: [id], onDelete: SetNull)
   rescheduledBookings CoachBooking[] @relation("RescheduledFrom")
-  rescheduleReason  String?
-  meetingUrl        String?
-  location          String?
-  createdBy         String?
-  coachNotes        String?
-  clientConfirmed   Boolean        @default(false)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  rescheduleReason    String?
+  meetingUrl          String?
+  location            String?
+  createdBy           String?
+  coachNotes          String?
+  clientConfirmed     Boolean        @default(false)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  exercisePlans     PersonalizedExercisePlan[]
-  nutritionPlans    PersonalizedNutritionPlan[]
+  exercisePlans  PersonalizedExercisePlan[]
+  nutritionPlans PersonalizedNutritionPlan[]
 
   @@index([clientProfileId])
   @@index([coachProfileId])
@@ -1183,22 +1361,22 @@ model PersonalizedExercisePlan {
   bookingId       String?
   booking         CoachBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
-  name            String
-  description     String?       @db.Text
-  goal            String?
-  status          PlanStatus    @default(DRAFT)
-  startDate       DateTime?
-  endDate         DateTime?
+  name        String
+  description String?    @db.Text
+  goal        String?
+  status      PlanStatus @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
 
-  weeklySchedule  Json?
-  coachNotes      String?       @db.Text
-  clientNotes     String?       @db.Text
+  weeklySchedule Json?
+  coachNotes     String? @db.Text
+  clientNotes    String? @db.Text
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  exercises       PersonalizedExerciseItem[]
-  progress        PlanProgress[]
+  exercises PersonalizedExerciseItem[]
+  progress  PlanProgress[]
 
   @@index([clientProfileId])
   @@index([coachProfileId])
@@ -1207,25 +1385,25 @@ model PersonalizedExercisePlan {
 }
 
 model PersonalizedExerciseItem {
-  id                    String                   @id @default(cuid())
-  personalizedPlanId    String
-  personalizedPlan      PersonalizedExercisePlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
-  exerciseId            String?
-  exercise              Exercise?                @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
-  name                  String
-  muscleGroup           MuscleGroup?
-  dayOfWeek             Int?
-  order                 Int
-  sets                  Int?
-  reps                  Int?
-  durationMinutes       Int?
-  restSeconds           Int?
-  intensity             String?
-  instructions          String?                  @db.Text
-  notes                 String?
+  id                 String                   @id @default(cuid())
+  personalizedPlanId String
+  personalizedPlan   PersonalizedExercisePlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
+  exerciseId         String?
+  exercise           Exercise?                @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
+  name               String
+  muscleGroup        MuscleGroup?
+  dayOfWeek          Int?
+  order              Int
+  sets               Int?
+  reps               Int?
+  durationMinutes    Int?
+  restSeconds        Int?
+  intensity          String?
+  instructions       String?                  @db.Text
+  notes              String?
 
-  createdAt             DateTime                 @default(now())
-  updatedAt             DateTime                 @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([personalizedPlanId, dayOfWeek, order])
   @@index([personalizedPlanId])
@@ -1241,27 +1419,27 @@ model PersonalizedNutritionPlan {
   bookingId       String?
   booking         CoachBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
-  name            String
-  description     String?       @db.Text
-  goal            String?
-  status          PlanStatus    @default(DRAFT)
-  startDate       DateTime?
-  endDate         DateTime?
+  name        String
+  description String?    @db.Text
+  goal        String?
+  status      PlanStatus @default(DRAFT)
+  startDate   DateTime?
+  endDate     DateTime?
 
-  dailyCalories   Int?
-  dailyProtein    Float?
-  dailyCarbs      Float?
-  dailyFat        Float?
-  dailyWaterMl    Int?
+  dailyCalories Int?
+  dailyProtein  Float?
+  dailyCarbs    Float?
+  dailyFat      Float?
+  dailyWaterMl  Int?
 
-  coachNotes      String?       @db.Text
-  clientNotes     String?       @db.Text
+  coachNotes  String? @db.Text
+  clientNotes String? @db.Text
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  meals           PersonalizedMeal[]
-  progress        PlanProgress[]
+  meals    PersonalizedMeal[]
+  progress PlanProgress[]
 
   @@index([clientProfileId])
   @@index([coachProfileId])
@@ -1270,44 +1448,44 @@ model PersonalizedNutritionPlan {
 }
 
 model PersonalizedMeal {
-  id                   String                  @id @default(cuid())
-  personalizedPlanId   String
-  personalizedPlan     PersonalizedNutritionPlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
-  name                 String
-  mealType             MealType
-  timeOfDay            String?
-  order                Int
-  foods                Json?
-  instructions         String?                 @db.Text
-  notes                String?
+  id                 String                    @id @default(cuid())
+  personalizedPlanId String
+  personalizedPlan   PersonalizedNutritionPlan @relation(fields: [personalizedPlanId], references: [id], onDelete: Cascade)
+  name               String
+  mealType           MealType
+  timeOfDay          String?
+  order              Int
+  foods              Json?
+  instructions       String?                   @db.Text
+  notes              String?
 
-  createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([personalizedPlanId, mealType, order])
   @@index([personalizedPlanId])
 }
 
 model PlanProgress {
-  id                      String    @id @default(cuid())
-  exercisePlanId          String?
-  exercisePlan            PersonalizedExercisePlan? @relation(fields: [exercisePlanId], references: [id], onDelete: Cascade)
-  nutritionPlanId         String?
-  nutritionPlan           PersonalizedNutritionPlan? @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
-  clientProfileId         String
-  clientProfile           ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  id              String                     @id @default(cuid())
+  exercisePlanId  String?
+  exercisePlan    PersonalizedExercisePlan?  @relation(fields: [exercisePlanId], references: [id], onDelete: Cascade)
+  nutritionPlanId String?
+  nutritionPlan   PersonalizedNutritionPlan? @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
+  clientProfileId String
+  clientProfile   ClientProfile              @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
 
-  date                    DateTime  @default(now())
-  completed               Boolean   @default(false)
-  completionPercentage    Float?
-  setsCompleted           Int?
-  repsCompleted           Int?
-  durationMinutes         Int?
-  adherenceScore          Float?
-  notes                   String?   @db.Text
-  coachFeedback           String?   @db.Text
+  date                 DateTime @default(now())
+  completed            Boolean  @default(false)
+  completionPercentage Float?
+  setsCompleted        Int?
+  repsCompleted        Int?
+  durationMinutes      Int?
+  adherenceScore       Float?
+  notes                String?  @db.Text
+  coachFeedback        String?  @db.Text
 
-  createdAt               DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([exercisePlanId])
   @@index([nutritionPlanId])

@@ -41,6 +41,11 @@ export const CLIENT_NAV = [
 
 export const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
+  { label: "Content", href: "/admin/content", icon: "programs" },
+  { label: "Media Library", href: "/admin/content/media", icon: "media" },
+  { label: "Pages", href: "/admin/content/pages", icon: "programs" },
+  { label: "Theme", href: "/admin/content/theme", icon: "settings" },
+  { label: "Branding", href: "/admin/content/branding", icon: "settings" },
   { label: "Analytics", href: "/admin/analytics", icon: "progress" },
   { label: "Users", href: "/admin/users", icon: "clients" },
   { label: "Coaches", href: "/admin/coaches", icon: "clients" },

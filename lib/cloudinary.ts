@@ -36,6 +36,8 @@ type UploadFolder =
   | "site/hero"
   | "site/products"
   | "site/quiz"
+  | "site/website-media"
+  | "site/brand-assets"
   | "payment-proofs";
 
 type UploadResult = {

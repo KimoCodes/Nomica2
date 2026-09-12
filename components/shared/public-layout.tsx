@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
@@ -25,6 +25,8 @@ export function PublicLayout({ children }: PublicLayoutProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
@@ -40,8 +42,8 @@ export function PublicLayout({ children }: PublicLayoutProps) {
         Skip to content
       </a>
 
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/50 bg-card/50 px-4 backdrop-blur-sm md:px-6">
-        <Link href="/" className="flex items-center gap-2.5">
+      <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/50 bg-background/80 px-4 backdrop-blur-md md:px-6">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="NomiTips home">
           <Image
             src="/logo2.png"
             alt="NomiTips"
@@ -91,6 +93,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             className="flex size-9 items-center justify-center rounded-lg md:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
           >
             <Menu className="size-5" />
           </button>
@@ -99,17 +102,17 @@ export function PublicLayout({ children }: PublicLayoutProps) {
 
       {/* Mobile menu overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMobile}
           />
           <div className="absolute top-0 right-0 flex h-full w-72 flex-col bg-card shadow-premium-lg animate-slide-in-right">
             <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
               <Link
                 href="/"
                 className="flex items-center gap-2.5"
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
               >
                 <Image
                   src="/logo2.png"
@@ -120,7 +123,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 />
               </Link>
               <button
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 className="flex size-9 items-center justify-center rounded-lg"
                 aria-label="Close menu"
               >
@@ -133,7 +136,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={closeMobile}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
                     isActive(link.href)
@@ -150,7 +153,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             <div className="flex flex-col gap-2 border-t border-border/50 p-4">
               <Link
                 href="/login"
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "w-full justify-center",
@@ -160,7 +163,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               </Link>
               <Link
                 href="/register"
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 className={cn(buttonVariants(), "w-full justify-center")}
               >
                 Get started
@@ -174,12 +177,12 @@ export function PublicLayout({ children }: PublicLayoutProps) {
         {children}
       </main>
 
-      <footer className="shrink-0 border-t border-border/50 bg-card/50 px-4 py-12 md:px-6">
+      <footer className="shrink-0 border-t border-border/50 bg-muted/30 px-4 py-12 md:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <Link href="/" className="flex items-center gap-2.5">
+              <Link href="/" className="flex items-center gap-2.5" aria-label="NomiTips home">
                 <Image
                   src="/logo2.png"
                   alt="NomiTips"
@@ -189,8 +192,8 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                 />
               </Link>
               <p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">
-                Expert-led feminine fitness. Structured programs, progressive
-                overload methodology, and dedicated coach support.
+                Structured fitness coaching for women. Progressive overload
+                programs, video-guided workouts, and real coach support.
               </p>
             </div>
 

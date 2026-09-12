@@ -6,3 +6,6 @@ node_modules/
 standalone-coming-soon/.env
 tsconfig.tsbuildinfo
 Untitled-*
+nomitips_before_migration_fix.sql
+env copy
+.DS_Store

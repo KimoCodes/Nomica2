@@ -13,8 +13,12 @@ import {
   createUser,
   createVerificationToken,
   verifyEmailToken,
+  createPasswordResetToken,
+  verifyPasswordResetToken,
+  resetUserPassword,
+  getUserByEmail,
 } from "@/server/services/user.service";
-import { sendVerificationEmail } from "@/server/services/email.service";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/server/services/email.service";
 import {
   registerSchema,
 } from "@/server/validators/auth.schema";
@@ -186,5 +190,88 @@ export async function verifyEmail(
   } catch (error) {
     logger.error({ err: error, action: "verifyEmail" }, "Failed to verify email");
     return createErrorResponse("Failed to verify email", "INTERNAL_ERROR");
+  }
+}
+
+// ─── Password Reset ──────────────────────────────────────────────────────────
+
+export async function requestPasswordReset(
+  email: string,
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return createErrorResponse("Invalid email address", "VALIDATION_ERROR");
+    }
+
+    await enforceAuthRateLimit("password-reset", email);
+
+    const user = await getUserByEmail(email);
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return createSuccessResponse({
+        message: "If an account exists with that email, you'll receive a reset link shortly.",
+      });
+    }
+
+    const { token } = await createPasswordResetToken(email);
+    await sendPasswordResetEmail(email, token);
+
+    logActivity({
+      action: "PASSWORD_RESET_REQUESTED",
+      category: "auth",
+      description: `Password reset requested for: ${email}`,
+    }).catch(() => {});
+
+    return createSuccessResponse({
+      message: "If an account exists with that email, you'll receive a reset link shortly.",
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "RATE_LIMITED") {
+      return createErrorResponse(
+        "Too many attempts. Please try again later.",
+        "RATE_LIMITED",
+      );
+    }
+
+    logger.error({ err: error, action: "requestPasswordReset" }, "Failed to request password reset");
+    return createErrorResponse("Failed to process request", "INTERNAL_ERROR");
+  }
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    if (!token) {
+      return createErrorResponse("Invalid or expired reset link", "INVALID_TOKEN");
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      return createErrorResponse("Password must be at least 8 characters", "VALIDATION_ERROR");
+    }
+
+    const email = await verifyPasswordResetToken(token);
+
+    if (!email) {
+      return createErrorResponse(
+        "Invalid or expired reset link",
+        "INVALID_TOKEN",
+      );
+    }
+
+    await resetUserPassword(email, newPassword);
+
+    logActivity({
+      action: "PASSWORD_RESET_COMPLETED",
+      category: "auth",
+      description: `Password reset completed for: ${email}`,
+    }).catch(() => {});
+
+    return createSuccessResponse({ message: "Password reset successfully" });
+  } catch (error) {
+    logger.error({ err: error, action: "resetPassword" }, "Failed to reset password");
+    return createErrorResponse("Failed to reset password", "INTERNAL_ERROR");
   }
 }

@@ -397,3 +397,34 @@ export async function sendNutritionPlanAssignedEmail(
     `,
   );
 }
+
+// ─── Password Reset ──────────────────────────────────────────────────────────
+
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string,
+): Promise<{ sent: boolean }> {
+  const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
+
+  return sendEmail(
+    email,
+    "Reset your NomiTips password",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Password Reset</h1>
+        <p style="color: #444; line-height: 1.6;">
+          We received a request to reset your password. Click the button below to choose a new one.
+        </p>
+        <a href="${resetUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+                  background: #171717; color: #fff; text-decoration: none;
+                  border-radius: 8px; font-weight: 500;">
+          Reset Password
+        </a>
+        <p style="color: #888; font-size: 14px;">
+          This link expires in 1 hour. If you did not request a password reset, you can ignore this email.
+        </p>
+      </div>
+    `,
+  );
+}

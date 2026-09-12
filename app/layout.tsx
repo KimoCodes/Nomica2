@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { LoadingBarProvider } from "@/components/ui/loading-bar";
 import { Providers } from "@/components/providers";
 import { VisitTracker } from "@/components/analytics/visit-tracker";
+import { ThemeInjector } from "@/components/theme-injector";
 
 export const runtime = "nodejs";
 const geistSans = Geist({
@@ -63,6 +64,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ThemeInjector />
         <Providers>
           <VisitTracker />
           <LoadingBarProvider>

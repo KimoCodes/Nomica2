@@ -127,3 +127,54 @@ export async function verifyEmailToken(token: string) {
 
   return record.identifier;
 }
+
+// ─── Password Reset ──────────────────────────────────────────────────────────
+
+const RESET_TOKEN_PREFIX = "reset:";
+
+export async function createPasswordResetToken(email: string) {
+  const token = crypto.randomUUID();
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const identifier = `${RESET_TOKEN_PREFIX}${email}`;
+
+  await prisma.verificationToken.deleteMany({
+    where: { identifier },
+  });
+
+  return prisma.verificationToken.create({
+    data: {
+      identifier,
+      token,
+      expires,
+    },
+  });
+}
+
+export async function verifyPasswordResetToken(token: string) {
+  const record = await prisma.verificationToken.findUnique({
+    where: { token },
+  });
+
+  if (!record || record.expires < new Date()) {
+    return null;
+  }
+
+  if (!record.identifier.startsWith(RESET_TOKEN_PREFIX)) {
+    return null;
+  }
+
+  const email = record.identifier.slice(RESET_TOKEN_PREFIX.length);
+
+  await prisma.verificationToken.delete({ where: { id: record.id } });
+
+  return email;
+}
+
+export async function resetUserPassword(email: string, newPassword: string) {
+  const hashedPassword = await hashPassword(newPassword);
+
+  return prisma.user.update({
+    where: { email },
+    data: { password: hashedPassword },
+  });
+}

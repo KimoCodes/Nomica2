@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const STATIC_CACHE = `nomitips-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `nomitips-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `nomitips-images-${CACHE_VERSION}`;
@@ -55,6 +55,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.startsWith("/socket.io") || url.pathname.startsWith("/api/socket")) {
+    return;
+  }
 
   if (url.pathname.startsWith("/api/")) {
     fetchEvent.respondWith(

@@ -8,6 +8,7 @@ import { TestimonialCard } from "@/components/social-proof";
 import { getProducts, getPublishedReviews, getBundleProducts } from "@/server/services/product.service";
 import { getApprovedTransformations } from "@/server/services/transformation.service";
 import { formatPrice, PLANS, formatPlanPrice } from "@/constants/subscriptions";
+import { getPublishedPageContent, getSectionText, getSectionMedia } from "@/lib/content";
 import {
   Dumbbell,
   ArrowRight,
@@ -16,23 +17,22 @@ import {
   Target,
   TrendingUp,
   Play,
-  Star,
   ChevronDown,
   Sparkles,
   Users,
   Flame,
   Package,
-  Shield,
+  BarChart3,
 } from "lucide-react";
 
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "NomiTips — Premium Feminine Transformation Fitness",
+  title: "NomiTips — Structured Fitness Coaching for Women",
   description:
-    "The only fitness platform built around progressive overload science, glute-focused programming, and the confidence you deserve.",
+    "Science-backed workout programs with progressive overload, video demos, and real coach support. Stop guessing. Start seeing results.",
   openGraph: {
-    title: "NomiTips — Stop Scrolling. Start Sculpting.",
+    title: "NomiTips — Structured Fitness Coaching for Women",
     description:
       "Personalized fitness coaching with progressive overload science, video demos, and real coach support.",
   },
@@ -40,28 +40,28 @@ export const metadata: Metadata = {
 
 const painPoints = [
   {
-    emoji: "\uD83D\uDE29",
-    text: '"I work out but nothing changes"',
+    icon: Target,
+    text: "I work out consistently but my body never changes",
   },
   {
-    emoji: "\uD83D\uDE24",
-    text: '"I see other women getting results and I\'m stuck"',
+    icon: TrendingUp,
+    text: "I see other women progressing while I stay stuck",
   },
   {
-    emoji: "\uD83D\uDE14",
-    text: '"I don\'t know what to do in the gym"',
+    icon: Dumbbell,
+    text: "I walk into the gym and don't know what to do",
   },
   {
-    emoji: "\uD83D\uDE24",
-    text: '"I\'ve tried so many programs that don\'t work"',
+    icon: Zap,
+    text: "I've tried programs that promise results but never deliver",
   },
   {
-    emoji: "\uD83D\uDE29",
-    text: '"I\'m scared of getting bulky"',
+    icon: Users,
+    text: "I'm afraid of getting bulky instead of toned",
   },
   {
-    emoji: "\uD83E\uDD37",
-    text: '"I don\'t have time for this"',
+    icon: BarChart3,
+    text: "I don't have hours to spend in the gym",
   },
 ];
 
@@ -71,7 +71,7 @@ const steps = [
     icon: Target,
     title: "ASSESS",
     description:
-      "Take the quiz \u2192 get matched to the right program for YOUR goals, level, and setup.",
+      "Take the quiz → get matched to the right program for YOUR goals, level, and setup.",
   },
   {
     number: "02",
@@ -85,7 +85,7 @@ const steps = [
     icon: TrendingUp,
     title: "TRANSFORM",
     description:
-      "Track progress, upload photos, get real feedback \u2014 see the body you're building week by week.",
+      "Track progress, upload photos, get real feedback — see the body you're building week by week.",
   },
 ];
 
@@ -130,12 +130,12 @@ const faqs = [
   {
     question: "Do I need a gym membership?",
     answer:
-      "Some programs require a gym, others are home-based. The quiz matches you to programs that fit YOUR setup \u2014 gym, home, or hybrid.",
+      "Some programs require a gym, others are home-based. The quiz matches you to programs that fit YOUR setup — gym, home, or hybrid.",
   },
   {
     question: "What if I don't see results?",
     answer:
-      "The system is built on progressive overload science \u2014 it's designed to produce results. Plus, with coach support, we'll troubleshoot anything that isn't working.",
+      "The system is built on progressive overload science — it's designed to produce results. Plus, with coach support, we'll troubleshoot anything that isn't working.",
   },
   {
     question: "Can I cancel my membership anytime?",
@@ -145,21 +145,26 @@ const faqs = [
   {
     question: "How is this different from YouTube workouts?",
     answer:
-      "YouTube gives you random workouts. NomiTips gives you a SYSTEM \u2014 progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be.",
+      "YouTube gives you random workouts. NomiTips gives you a SYSTEM — progressive programming, structured overload, form feedback, and a clear path from where you are to where you want to be.",
   },
 ];
 
 
 export default async function HomePage() {
-  const [products, reviews, transformations, bundles] = await Promise.all([
+  const [products, reviews, transformations, bundles, homeContent] = await Promise.all([
     getProducts({ kind: "PROGRAM", take: 3 }),
     getPublishedReviews(4),
     getApprovedTransformations(4),
     getBundleProducts(),
+    getPublishedPageContent("home").catch(() => []),
   ]);
 
   const monthlyPlan = PLANS.find((p) => p.id === "ALL_ACCESS_MONTHLY")!;
   const annualPlan = PLANS.find((p) => p.id === "ALL_ACCESS_ANNUAL")!;
+
+  const heroMedia = getSectionMedia(homeContent, "hero");
+  const heroVideo = heroMedia?.mimeType?.startsWith("video/") ? heroMedia.url : null;
+  const heroImage = heroMedia && !heroMedia.mimeType?.startsWith("video/") ? heroMedia.url : (heroMedia?.thumbnailUrl || null);
 
   return (
     <PublicLayout>
@@ -169,16 +174,29 @@ export default async function HomePage() {
             ═══════════════════════════════════════════ */}
         <section className="relative overflow-hidden px-4 pt-16 pb-24 md:pt-24 md:pb-32">
           <div className="absolute inset-0 -z-10">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-              poster="/media/hero/hero-woman-squat.jpg"
-            >
-              <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
-            </video>
+            {heroVideo ? (
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover"
+                poster={heroImage || "/media/hero/hero-woman-squat.jpg"}
+              >
+                <source src={heroVideo} type="video/mp4" />
+              </video>
+            ) : (
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover"
+                poster="/media/hero/hero-woman-squat.jpg"
+              >
+                <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
+              </video>
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/70" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           </div>
@@ -186,77 +204,84 @@ export default async function HomePage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
-                <div className="mb-6 inline-flex animate-slide-up items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
                   <Sparkles className="size-3.5" />
-                  Built for women who want results
+                  {getSectionText(homeContent, "hero", "badge", "Science-backed women's fitness")}
                 </div>
 
-                <h1 className="animate-slide-up stagger-1 text-4xl font-bold tracking-tight leading-[1.1] md:text-5xl lg:text-6xl">
-                  Stop Scrolling.{" "}
-                  <span className="text-gradient">Start Sculpting.</span>
+                <h1 className="text-4xl font-bold tracking-tight leading-[1.1] text-white md:text-5xl lg:text-6xl">
+                  {getSectionText(homeContent, "hero", "heading", "Structured Programs. Real Results.")}
                 </h1>
 
-                <p className="mt-6 max-w-lg animate-slide-up stagger-2 text-lg leading-relaxed text-muted-foreground">
-                  The only fitness platform built around progressive overload
-                  science, glute-focused programming, and the confidence you
-                  deserve.
+                <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/80">
+                  {getSectionText(homeContent, "hero", "description", "Follow progressive overload programs designed for women who want to build strength and confidence — with video demos, coach support, and a clear path forward.")}
                 </p>
 
-                <p className="mt-2 animate-slide-up stagger-2 text-sm text-muted-foreground">
-                  No random workouts. No guessing. Just a clear path to the body
-                  you want.
-                </p>
-
-                <div className="mt-10 flex animate-slide-up stagger-3 flex-wrap gap-4">
+                <div className="mt-10 flex flex-wrap gap-4">
                   <Link
-                    href="/register"
+                    href={getSectionText(homeContent, "hero", "ctaLink", "/register")}
                     className={cn(
                       buttonVariants({ size: "lg" }),
-                      "group shadow-premium",
+                      "group shadow-lg",
                     )}
                   >
-                    Start My Transformation
+                    {getSectionText(homeContent, "hero", "ctaText", "Start My Transformation")}
                     <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <Link
-                    href="/quiz"
+                    href={getSectionText(homeContent, "hero", "cta2Link", "/quiz")}
                     className={cn(
                       buttonVariants({ size: "lg", variant: "outline" }),
+                      "border-white/30 bg-white/10 text-white hover:bg-white/20",
                     )}
                   >
-                    Take the 2-Minute Quiz
+                    {getSectionText(homeContent, "hero", "cta2Text", "Take the 2-Minute Quiz")}
                   </Link>
                 </div>
 
-                <div className="mt-8 flex animate-slide-up stagger-4 items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex -space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="size-4 fill-warning text-warning"
-                      />
-                    ))}
-                  </div>
-                  <span>
-                    Rated highly by our members
+                <div className="mt-8 flex items-center gap-6 text-sm text-white/60">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-green-400" />
+                    No random workouts
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-green-400" />
+                    Video-guided sessions
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4 text-green-400" />
+                    Cancel anytime
                   </span>
                 </div>
               </div>
 
-              <div className="relative animate-slide-up stagger-2">
+              <div className="relative">
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 blur-3xl" />
                 <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-card shadow-premium-lg">
                   <div className="aspect-[4/3] relative overflow-hidden">
-                    <video
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="absolute inset-0 h-full w-full object-cover"
-                      poster="/media/hero/hero-woman-squat.jpg"
-                    >
-                      <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
-                    </video>
+                    {heroVideo ? (
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 h-full w-full object-cover"
+                        poster={heroImage || "/media/hero/hero-woman-squat.jpg"}
+                      >
+                        <source src={heroVideo} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 h-full w-full object-cover"
+                        poster="/media/hero/hero-woman-squat.jpg"
+                      >
+                        <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
+                      </video>
+                    )}
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/25 text-center">
                       <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
                         <Play className="size-8 text-white ml-1" />
@@ -264,7 +289,7 @@ export default async function HomePage() {
                       <div>
                         <p className="font-semibold text-white drop-shadow-lg">NomiTips Method Preview</p>
                         <p className="text-sm text-white/80 drop-shadow-lg">
-                          See the NomiTips method in action
+                          See progressive overload in action
                         </p>
                       </div>
                     </div>
@@ -277,7 +302,7 @@ export default async function HomePage() {
                       <div>
                         <p className="font-semibold">Glute Sculpt Program</p>
                         <p className="text-sm text-muted-foreground">
-                          12 weeks \u00B7 48 workouts \u00B7 Coach support
+                          12 weeks &middot; 48 workouts &middot; Coach support
                         </p>
                       </div>
                     </div>
@@ -294,8 +319,11 @@ export default async function HomePage() {
         <section className="border-t border-border/50 bg-muted/30 px-4 py-24 md:py-32">
           <div className="mx-auto max-w-6xl">
             <div className="mb-16 text-center">
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
                 Sound Familiar?
+              </p>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                The Problem With Most Fitness Programs
               </h2>
             </div>
 
@@ -303,17 +331,19 @@ export default async function HomePage() {
               {painPoints.map((point, index) => (
                 <div
                   key={index}
-                  className={`animate-slide-up stagger-${Math.min(index + 1, 8)} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
+                  className="flex items-start gap-4 rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium"
                 >
-                  <span className="text-3xl">{point.emoji}</span>
-                  <p className="mt-3 font-medium">{point.text}</p>
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+                    <point.icon className="size-5 text-destructive" />
+                  </div>
+                  <p className="font-medium leading-snug">{point.text}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-12 text-center">
               <p className="text-lg font-semibold text-primary">
-                \u2191 This is why NomiTips exists.
+                This is why NomiTips exists.
               </p>
               <p className="mt-2 text-muted-foreground">
                 You&apos;ve tried the random YouTube workouts. You&apos;ve
@@ -321,7 +351,7 @@ export default async function HomePage() {
                 women transform while you&apos;re stuck in the same loop.
               </p>
               <p className="mt-2 font-medium">
-                It&apos;s not your fault. You just never had a SYSTEM.
+                It&apos;s not your fault. You just never had a system.
               </p>
             </div>
           </div>
@@ -345,7 +375,7 @@ export default async function HomePage() {
               {steps.map((step, index) => (
                 <div
                   key={step.number}
-                  className={`animate-slide-up stagger-${index + 1} relative text-center`}
+                  className="relative text-center"
                 >
                   <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
                     <step.icon className="size-8 text-primary" />
@@ -394,7 +424,7 @@ export default async function HomePage() {
               ].map((video, i) => (
                 <div
                   key={i}
-                  className={`animate-slide-up stagger-${(i % 6) + 1} group relative overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10`}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10"
                 >
                   <div className="aspect-[4/5] relative">
                     <video
@@ -444,66 +474,66 @@ export default async function HomePage() {
             {products.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {products.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
-                      index === 0
-                        ? "border-primary shadow-premium scale-[1.02]"
-                        : "border-border/50"
-                    }`}
-                  >
-                    {index === 0 && (
-                      <div className="absolute -top-3 left-6">
-                        <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                          MOST POPULAR
+                    <div
+                      key={product.id}
+                      className={`group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                        index === 0
+                          ? "border-primary shadow-premium scale-[1.02]"
+                          : "border-border/50"
+                      }`}
+                    >
+                      {index === 0 && (
+                        <div className="absolute -top-3 left-6">
+                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                            MOST POPULAR
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
+                        <Dumbbell className="size-6 text-primary" />
+                      </div>
+
+                      <h3 className="text-lg font-bold">{product.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {product.tagline}
+                      </p>
+
+                      <div className="mt-4">
+                        <span className="text-3xl font-bold">
+                          {formatPrice(product.priceCents)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {" "}one-time
                         </span>
                       </div>
-                    )}
 
-                    <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                      <Dumbbell className="size-6 text-primary" />
+                      <ul className="mt-6 flex-1 space-y-3">
+                        {product.features.slice(0, 4).map((feature) => (
+                          <li
+                            key={feature}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Link
+                        href={`/programs/${product.slug}`}
+                        className={cn(
+                          buttonVariants({
+                            variant: index === 0 ? "default" : "outline",
+                          }),
+                          "mt-6 w-full group/btn",
+                        )}
+                      >
+                        Get Instant Access
+                        <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
+                      </Link>
                     </div>
-
-                    <h3 className="text-lg font-bold">{product.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {product.tagline}
-                    </p>
-
-                    <div className="mt-4">
-                      <span className="text-3xl font-bold">
-                        {formatPrice(product.priceCents)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {" "}one-time
-                      </span>
-                    </div>
-
-                    <ul className="mt-6 flex-1 space-y-3">
-                      {product.features.slice(0, 4).map((feature) => (
-                        <li
-                          key={feature}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <CheckCircle2 className="size-4 shrink-0 text-primary" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Link
-                      href={`/programs/${product.slug}`}
-                      className={cn(
-                        buttonVariants({
-                          variant: index === 0 ? "default" : "outline",
-                        }),
-                        "mt-6 w-full group/btn",
-                      )}
-                    >
-                      Get Instant Access
-                      <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
-                    </Link>
-                  </div>
-                ))}
+                  ))}
               </div>
             ) : (
               <p className="text-center text-muted-foreground">
@@ -647,10 +677,10 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              {whyItWorks.map((item, index) => (
+              {whyItWorks.map((item) => (
                 <div
                   key={item.title}
-                  className={`animate-slide-up stagger-${index + 1} flex gap-4 rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
+                  className="flex gap-4 rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium"
                 >
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                     <item.icon className="size-6 text-primary" />
@@ -703,7 +733,7 @@ export default async function HomePage() {
                     <Link
                       key={bundle.id}
                       href={`/bundles/${bundle.slug}`}
-                      className={`animate-slide-up stagger-${index + 1} group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                      className={`group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
                         index === 0
                           ? "border-primary shadow-premium scale-[1.02]"
                           : "border-border/50"
@@ -992,7 +1022,7 @@ export default async function HomePage() {
                 </div>
 
                 <p className="mt-4 text-xs text-muted-foreground">
-                  \u2713 No spam \u00B7 \u2713 Unsubscribe anytime \u00B7 \u2713
+                  ✓ No spam · ✓ Unsubscribe anytime · ✓
                   Instant access
                 </p>
               </div>
@@ -1015,7 +1045,7 @@ export default async function HomePage() {
               {faqs.map((faq, index) => (
                 <details
                   key={index}
-                  className={`animate-slide-up stagger-${Math.min(index + 1, 8)} group rounded-2xl border border-border/50 bg-card`}
+                  className="group rounded-2xl border border-border/50 bg-card"
                 >
                   <summary className="flex cursor-pointer items-center justify-between p-6 font-medium">
                     {faq.question}
@@ -1036,11 +1066,11 @@ export default async function HomePage() {
         <section className="border-t border-border/50 px-4 py-24 md:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Your Transformation Starts Now
+              Ready to Stop Guessing?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              &ldquo;The best time to start was yesterday. The second best time
-              is right now.&rdquo;
+              Take the quiz to find the right program for your goals, or start
+              with a free 5-day guide to see the method in action.
             </p>
 
             <div className="mt-10 flex flex-wrap justify-center gap-4">
@@ -1055,18 +1085,17 @@ export default async function HomePage() {
                 <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                href="/register"
+                href="/free-guide"
                 className={cn(
                   buttonVariants({ size: "lg", variant: "outline" }),
                 )}
               >
-                View All Programs
+                Get the Free Guide
               </Link>
             </div>
 
             <p className="mt-8 text-sm text-muted-foreground">
-              ★★★★★ Join women who stopped
-              waiting and started transforming.
+              Join women who stopped waiting and started transforming.
             </p>
           </div>
         </section>

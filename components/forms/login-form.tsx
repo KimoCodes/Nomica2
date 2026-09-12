@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, CheckCircle2, ArrowLeft } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
 
@@ -28,12 +28,11 @@ export function LoginForm() {
 
   const authErrorParam = searchParams.get("error");
   const registeredParam = searchParams.get("registered");
-  const planParam = searchParams.get("plan");
 
   const [error, setError] = useState<string | null>(
     authErrorParam === "CredentialsSignin" ? "Invalid email or password" : null
   );
-  const [success, setSuccess] = useState<string | null>(
+  const [success] = useState<string | null>(
     registeredParam === "true" ? "Account created successfully! Sign in to continue." : null
   );
   const [isPending, setIsPending] = useState(false);
@@ -120,6 +119,16 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a
+        href="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        suppressHydrationWarning
+      >
+        <ArrowLeft className="size-4" />
+        Back to home
+      </a>
+
       <CardHeader className="px-0 pb-6">
         <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -133,7 +142,7 @@ export function LoginForm() {
 
         <CardContent className="space-y-4 px-0">
           {success && (
-            <div aria-live="polite" className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <div aria-live="polite" className="flex items-center gap-2 rounded-xl border border-success/50 bg-success/10 px-4 py-3 text-sm text-success">
               <CheckCircle2 className="size-4 shrink-0" />
               {success}
             </div>
@@ -187,6 +196,14 @@ export function LoginForm() {
             {fieldErrors.password && (
               <p role="alert" className="text-xs text-destructive">{fieldErrors.password}</p>
             )}
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
         </CardContent>
 

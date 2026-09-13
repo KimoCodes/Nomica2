@@ -58,22 +58,13 @@ export default function CoachSessionsPage() {
   const loadSessions = useCallback(async () => {
     setLoading(true);
     try {
-      const now = new Date().toISOString();
-      const [upcomingResult, historyResult, statsResult] = await Promise.all([
-        listSessionsAction({ from: now, limit: 100 }),
-        listSessionsAction({ to: now, limit: 100 }),
+      const [allResult, statsResult] = await Promise.all([
+        listSessionsAction({ limit: 200 }),
         getSessionStatsAction(),
       ]);
 
-      if (upcomingResult.success && upcomingResult.data) {
-        setSessions(upcomingResult.data.sessions as Session[]);
-      }
-      if (historyResult.success && historyResult.data) {
-        setSessions((prev) => {
-          const existing = new Set(prev.map((s) => s.id));
-          const newSessions = (historyResult.data!.sessions as Session[]).filter((s) => !existing.has(s.id));
-          return [...prev, ...newSessions];
-        });
+      if (allResult.success && allResult.data) {
+        setSessions(allResult.data.sessions as Session[]);
       }
       if (statsResult.success && statsResult.data) {
         setStats(statsResult.data);
@@ -95,8 +86,14 @@ export default function CoachSessionsPage() {
     (s) => new Date(s.scheduledAt) < now || ["CANCELLED", "COMPLETED", "MISSED"].includes(s.status)
   );
   const pendingSessions = upcomingSessions.filter((s) => s.status === "PENDING");
+  const confirmedSessions = upcomingSessions.filter((s) => s.status === "CONFIRMED");
 
-  const filteredSessions = (activeTab === "upcoming" ? upcomingSessions : pastSessions).filter((s) => {
+  const displaySessions = activeTab === "upcoming" ? upcomingSessions :
+    activeTab === "pending" ? pendingSessions :
+    activeTab === "confirmed" ? confirmedSessions :
+    pastSessions;
+
+  const filteredSessions = displaySessions.filter((s) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const name = s.clientProfile.user.name?.toLowerCase() ?? "";
@@ -223,6 +220,12 @@ export default function CoachSessionsPage() {
               <TabsList>
                 <TabsTrigger value="upcoming">
                   Upcoming ({upcomingSessions.length})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  Pending ({pendingSessions.length})
+                </TabsTrigger>
+                <TabsTrigger value="confirmed">
+                  Confirmed ({confirmedSessions.length})
                 </TabsTrigger>
                 <TabsTrigger value="history">
                   History ({pastSessions.length})

@@ -14,6 +14,7 @@ import {
   archiveWebsiteMedia,
   deleteWebsiteMedia,
   getMediaStats,
+  createWebsiteMedia,
   type UploadWebsiteMediaInput,
 } from "@/server/services/website-media.service";
 import { uploadMedia, deleteMedia } from "@/lib/cloudinary";
@@ -56,7 +57,6 @@ export async function uploadWebsiteMediaAction(
     const session = await requireRole([Role.ADMIN]);
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploadResult = await uploadMedia(buffer, file.name, "site/website-media");
-    const { createWebsiteMedia } = await import("@/server/services/website-media.service");
     const media = await createWebsiteMedia({
       ...input,
       url: uploadResult.url,

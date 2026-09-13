@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,10 +121,15 @@ export default function ThemeManagerClient() {
     setSaving(true);
     const defaultResult = await getDefaultThemeAction();
     if (defaultResult.success && defaultResult.data && typeof defaultResult.data === "object") {
-      await createThemeAction({
+      const result = await createThemeAction({
         ...(defaultResult.data as SiteThemeInput),
         name: newThemeName,
       });
+      if (result.success) {
+        toast.success("Theme created");
+      } else {
+        toast.error(result.error?.message || "Failed to create theme");
+      }
     }
     setShowCreateDialog(false);
     setNewThemeName("");
@@ -133,7 +139,12 @@ export default function ThemeManagerClient() {
 
   const handlePublishTheme = async (id: string) => {
     setSaving(true);
-    await publishThemeAction(id);
+    const result = await publishThemeAction(id);
+    if (result.success) {
+      toast.success("Theme published");
+    } else {
+      toast.error(result.error?.message || "Failed to publish theme");
+    }
     await loadThemes();
     setSaving(false);
   };
@@ -141,7 +152,12 @@ export default function ThemeManagerClient() {
   const handleDeleteTheme = async (id: string) => {
     if (confirm("Delete this theme? This cannot be undone.")) {
       setSaving(true);
-      await deleteThemeAction(id);
+      const result = await deleteThemeAction(id);
+      if (result.success) {
+        toast.success("Theme deleted");
+      } else {
+        toast.error(result.error?.message || "Failed to delete theme");
+      }
       await loadThemes();
       setSaving(false);
     }
@@ -150,7 +166,7 @@ export default function ThemeManagerClient() {
   const handleSaveTheme = async () => {
     if (!editingTheme) return;
     setSaving(true);
-    await updateThemeAction(editingTheme.id, {
+    const result = await updateThemeAction(editingTheme.id, {
       name: editingTheme.name,
       mode: editingTheme.mode,
       primaryColor: editingTheme.primaryColor || undefined,
@@ -171,6 +187,11 @@ export default function ThemeManagerClient() {
       baseFontSize: editingTheme.baseFontSize || undefined,
       borderRadius: editingTheme.borderRadius || undefined,
     });
+    if (result.success) {
+      toast.success("Theme saved");
+    } else {
+      toast.error(result.error?.message || "Failed to save theme");
+    }
     await loadThemes();
     setSaving(false);
   };

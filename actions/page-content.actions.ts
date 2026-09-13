@@ -105,6 +105,7 @@ export async function deletePageContentAction(id: string): Promise<ApiResponse> 
     await deletePageContent(id);
     revalidatePath("/admin/content");
     revalidatePath(`/admin/content/pages/${content.pageSlug}`);
+    revalidatePath(`/${content.pageSlug === "home" ? "" : content.pageSlug}`);
     return createSuccessResponse({ deleted: true });
   } catch (error) {
     logger.error({ err: error }, "Failed to delete page content");

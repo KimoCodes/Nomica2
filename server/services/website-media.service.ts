@@ -6,21 +6,6 @@ import {
   Prisma,
 } from "@prisma/client";
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/svg+xml",
-];
-const ALLOWED_VIDEO_TYPES = [
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-];
-
 export const uploadWebsiteMediaSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
@@ -29,36 +14,6 @@ export const uploadWebsiteMediaSchema = z.object({
 });
 
 export type UploadWebsiteMediaInput = z.infer<typeof uploadWebsiteMediaSchema>;
-
-export function validateMediaFile(file: File): {
-  valid: boolean;
-  error?: string;
-} {
-  if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    if (file.size > MAX_IMAGE_SIZE) {
-      return {
-        valid: false,
-        error: `Image exceeds maximum size of ${MAX_IMAGE_SIZE / 1024 / 1024}MB`,
-      };
-    }
-    return { valid: true };
-  }
-
-  if (ALLOWED_VIDEO_TYPES.includes(file.type)) {
-    if (file.size > MAX_VIDEO_SIZE) {
-      return {
-        valid: false,
-        error: `Video exceeds maximum size of ${MAX_VIDEO_SIZE / 1024 / 1024}MB`,
-      };
-    }
-    return { valid: true };
-  }
-
-  return {
-    valid: false,
-    error: `Unsupported file type: ${file.type}. Allowed: JPEG, PNG, WebP, GIF, SVG, MP4, WebM, MOV`,
-  };
-}
 
 export async function getWebsiteMedia(params?: {
   category?: WebsiteMediaCategory;

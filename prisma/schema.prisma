@@ -981,8 +981,6 @@ model PageContent {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
-  versions ContentVersion[]
-
   @@unique([pageSlug, sectionKey])
   @@index([pageSlug])
   @@index([status])
@@ -1052,14 +1050,14 @@ model SiteTheme {
 }
 
 model ContentVersion {
-  id            String       @id @default(cuid())
+  id            String   @id @default(cuid())
   entityType    String
   entityId      String
   version       Int
   title         String?
   subtitle      String?
   heading       String?
-  description   String?      @db.Text
+  description   String?  @db.Text
   body          Json?
   mediaUrl      String?
   ctaText       String?
@@ -1070,10 +1068,8 @@ model ContentVersion {
   themeSnapshot Json?
   snapshot      Json?
   createdById   String
-  createdBy     User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt     DateTime     @default(now())
-  pageContent   PageContent? @relation(fields: [pageContentId], references: [id])
-  pageContentId String?
+  createdBy     User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([createdAt])

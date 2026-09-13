@@ -67,14 +67,50 @@ export async function getPageContentById(id: string) {
 export async function upsertPageContent(
   data: PageContentInput & { createdById: string },
 ) {
-  const existing = await prisma.pageContent.findUnique({
-    where: { pageSlug_sectionKey: { pageSlug: data.pageSlug, sectionKey: data.sectionKey } },
-  });
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.pageContent.findUnique({
+      where: { pageSlug_sectionKey: { pageSlug: data.pageSlug, sectionKey: data.sectionKey } },
+    });
 
-  if (existing) {
-    const updated = await prisma.pageContent.update({
-      where: { id: existing.id },
+    if (existing) {
+      const updateData: Record<string, unknown> = {
+        title: data.title,
+        subtitle: data.subtitle,
+        heading: data.heading,
+        description: data.description,
+        body: data.body as Prisma.InputJsonValue | undefined,
+        ctaText: data.ctaText,
+        ctaLink: data.ctaLink,
+        cta2Text: data.cta2Text,
+        cta2Link: data.cta2Link,
+        badge: data.badge,
+        sortOrder: data.sortOrder,
+        isActive: data.isActive,
+        version: existing.version + 1,
+      };
+      if (data.mediaId !== undefined) {
+        updateData.mediaId = data.mediaId;
+      }
+      const updated = await tx.pageContent.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
+
+      await createContentVersion({
+        entityType: "page_content",
+        entityId: updated.id,
+        version: updated.version,
+        data: updated,
+        createdById: data.createdById,
+      });
+
+      return updated;
+    }
+
+    const created = await tx.pageContent.create({
       data: {
+        pageSlug: data.pageSlug,
+        sectionKey: data.sectionKey,
         title: data.title,
         subtitle: data.subtitle,
         heading: data.heading,
@@ -88,51 +124,20 @@ export async function upsertPageContent(
         badge: data.badge,
         sortOrder: data.sortOrder,
         isActive: data.isActive,
-        version: existing.version + 1,
+        createdById: data.createdById,
       },
     });
 
     await createContentVersion({
       entityType: "page_content",
-      entityId: updated.id,
-      version: updated.version,
-      data: updated,
+      entityId: created.id,
+      version: 1,
+      data: created,
       createdById: data.createdById,
     });
 
-    return updated;
-  }
-
-  const created = await prisma.pageContent.create({
-    data: {
-      pageSlug: data.pageSlug,
-      sectionKey: data.sectionKey,
-      title: data.title,
-      subtitle: data.subtitle,
-      heading: data.heading,
-      description: data.description,
-      body: data.body as Prisma.InputJsonValue | undefined,
-      mediaId: data.mediaId,
-      ctaText: data.ctaText,
-      ctaLink: data.ctaLink,
-      cta2Text: data.cta2Text,
-      cta2Link: data.cta2Link,
-      badge: data.badge,
-      sortOrder: data.sortOrder,
-      isActive: data.isActive,
-      createdById: data.createdById,
-    },
+    return created;
   });
-
-  await createContentVersion({
-    entityType: "page_content",
-    entityId: created.id,
-    version: 1,
-    data: created,
-    createdById: data.createdById,
-  });
-
-  return created;
 }
 
 export async function publishPageContent(id: string) {
@@ -222,6 +227,7 @@ export async function rollbackPageContent(
       cta2Text: (snapshot.cta2Text as string) ?? current.cta2Text,
       cta2Link: (snapshot.cta2Link as string) ?? current.cta2Link,
       badge: (snapshot.badge as string) ?? current.badge,
+      sortOrder: (snapshot.sortOrder as number) ?? current.sortOrder,
       version: current.version + 1,
     },
   });

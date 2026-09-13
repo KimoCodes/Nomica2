@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ interface ContentSection {
   subtitle: string | null;
   heading: string | null;
   description: string | null;
+  body: unknown;
   ctaText: string | null;
   ctaLink: string | null;
   cta2Text: string | null;
@@ -174,58 +176,84 @@ export default function PageContentEditorClient({
 
   const handleSaveSection = async (section: ContentSection) => {
     setSaving(true);
-    await upsertPageContentAction({
+    const result = await upsertPageContentAction({
       pageSlug,
       sectionKey: section.sectionKey,
       title: section.title || undefined,
       subtitle: section.subtitle || undefined,
       heading: section.heading || undefined,
       description: section.description || undefined,
+      body: section.body || undefined,
       ctaText: section.ctaText || undefined,
       ctaLink: section.ctaLink || undefined,
       cta2Text: section.cta2Text || undefined,
       cta2Link: section.cta2Link || undefined,
       badge: section.badge || undefined,
-      mediaId: section.mediaId || undefined,
+      mediaId: section.mediaId === undefined ? undefined : section.mediaId,
       sortOrder: section.sortOrder,
       isActive: section.isActive,
     });
-    setEditingSection(null);
-    await loadData();
+    if (result.success) {
+      setEditingSection(null);
+      await loadData();
+      toast.success("Section saved");
+    } else {
+      toast.error(result.error?.message || "Failed to save section");
+    }
     setSaving(false);
   };
 
   const handlePublishSection = async (id: string) => {
-    await publishPageContentAction(id);
-    await loadData();
+    const result = await publishPageContentAction(id);
+    if (result.success) {
+      await loadData();
+      toast.success("Section published");
+    } else {
+      toast.error(result.error?.message || "Failed to publish");
+    }
   };
 
   const handleUnpublishSection = async (id: string) => {
-    await unpublishPageContentAction(id);
-    await loadData();
+    const result = await unpublishPageContentAction(id);
+    if (result.success) {
+      await loadData();
+      toast.success("Section unpublished");
+    } else {
+      toast.error(result.error?.message || "Failed to unpublish");
+    }
   };
 
   const handleDeleteSection = async (id: string) => {
     if (confirm("Delete this section? This cannot be undone.")) {
-      await deletePageContentAction(id);
-      await loadData();
+      const result = await deletePageContentAction(id);
+      if (result.success) {
+        await loadData();
+        toast.success("Section deleted");
+      } else {
+        toast.error(result.error?.message || "Failed to delete");
+      }
     }
   };
 
   const handleAddSection = async () => {
     if (!newSectionKey || !newSectionTitle) return;
     setSaving(true);
-    await upsertPageContentAction({
+    const result = await upsertPageContentAction({
       pageSlug,
       sectionKey: newSectionKey,
       title: newSectionTitle,
       sortOrder: sections.length,
       isActive: true,
     });
-    setShowAddSection(false);
-    setNewSectionKey("");
-    setNewSectionTitle("");
-    await loadData();
+    if (result.success) {
+      setShowAddSection(false);
+      setNewSectionKey("");
+      setNewSectionTitle("");
+      await loadData();
+      toast.success("Section added");
+    } else {
+      toast.error(result.error?.message || "Failed to add section");
+    }
     setSaving(false);
   };
 
@@ -239,9 +267,14 @@ export default function PageContentEditorClient({
 
   const handleRollback = async (contentId: string, versionId: string) => {
     if (confirm("Rollback to this version? Current changes will be saved as a new version.")) {
-      await rollbackPageContentAction(contentId, versionId);
-      setShowVersions(null);
-      await loadData();
+      const result = await rollbackPageContentAction(contentId, versionId);
+      if (result.success) {
+        setShowVersions(null);
+        await loadData();
+        toast.success("Rolled back to previous version");
+      } else {
+        toast.error(result.error?.message || "Failed to rollback");
+      }
     }
   };
 
@@ -459,7 +492,7 @@ export default function PageContentEditorClient({
                       <Select
                         value={section.mediaId || ""}
                         onValueChange={(v) =>
-                          updateSection(index, "mediaId", v || null)
+                          updateSection(index, "mediaId", v === "none" || v === "" ? null : v)
                         }
                       >
                         <SelectTrigger className="flex-1">
@@ -475,6 +508,51 @@ export default function PageContentEditorClient({
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label>Sort Order</Label>
+                      <Input
+                        type="number"
+                        value={section.sortOrder}
+                        onChange={(e) =>
+                          updateSection(index, "sortOrder", parseInt(e.target.value) || 0)
+                        }
+                        min={0}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pt-6">
+                      <input
+                        type="checkbox"
+                        id={`active-${section.id}`}
+                        checked={section.isActive}
+                        onChange={(e) =>
+                          updateSection(index, "isActive", e.target.checked)
+                        }
+                        className="size-4 rounded border-border"
+                      />
+                      <Label htmlFor={`active-${section.id}`}>Active</Label>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Body (JSON)</Label>
+                    <Textarea
+                      value={section.body ? JSON.stringify(section.body, null, 2) : ""}
+                      onChange={(e) => {
+                        try {
+                          const parsed = e.target.value ? JSON.parse(e.target.value) : null;
+                          updateSection(index, "body", parsed);
+                        } catch {
+                          // Allow invalid JSON while typing
+                        }
+                      }}
+                      placeholder='{"items": [...]} or leave empty'
+                      rows={4}
+                      className="font-mono text-sm"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Optional structured data. Must be valid JSON.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -520,6 +598,10 @@ export default function PageContentEditorClient({
                           Media attached
                         </span>
                       )}
+                      {section.body != null && (
+                        <span>Has body data</span>
+                      )}
+                      <span>v{section.version}</span>
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">

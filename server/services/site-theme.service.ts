@@ -58,14 +58,15 @@ export async function updateTheme(id: string, data: Partial<SiteThemeInput>) {
 }
 
 export async function publishTheme(id: string) {
-  await prisma.siteTheme.updateMany({
-    where: { isPublished: true },
-    data: { isPublished: false },
-  });
-
-  return prisma.siteTheme.update({
-    where: { id },
-    data: { isPublished: true },
+  return prisma.$transaction(async (tx) => {
+    await tx.siteTheme.updateMany({
+      where: { isPublished: true },
+      data: { isPublished: false },
+    });
+    return tx.siteTheme.update({
+      where: { id },
+      data: { isPublished: true },
+    });
   });
 }
 
@@ -77,7 +78,7 @@ export async function deleteTheme(id: string) {
   return prisma.siteTheme.delete({ where: { id } });
 }
 
-export async function getThemeAsCSSVariables(theme: SiteTheme | null) {
+export function getThemeAsCSSVariables(theme: SiteTheme | null) {
   if (!theme) return {};
 
   const vars: Record<string, string> = {};

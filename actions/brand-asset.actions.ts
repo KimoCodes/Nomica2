@@ -62,6 +62,7 @@ export async function uploadBrandAssetAction(assetType: string, file: File): Pro
       uploadedById: session.user.id,
     });
     revalidatePath("/admin/content/branding");
+    revalidatePath("/");
     return createSuccessResponse(asset);
   } catch (error) {
     logger.error({ err: error }, "Failed to upload brand asset");
@@ -82,6 +83,7 @@ export async function deleteBrandAssetAction(assetType: string): Promise<ApiResp
     }
     await deleteBrandAsset(assetType);
     revalidatePath("/admin/content/branding");
+    revalidatePath("/");
     return createSuccessResponse({ deleted: true });
   } catch (error) {
     logger.error({ err: error }, "Failed to delete brand asset");

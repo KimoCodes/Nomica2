@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,15 +112,25 @@ export default function BrandingClient() {
     if (!file) return;
 
     setUploading(assetType);
-    await uploadBrandAssetAction(assetType, file);
+    const result = await uploadBrandAssetAction(assetType, file);
     if (input) input.value = "";
+    if (result.success) {
+      toast.success("Brand asset uploaded");
+    } else {
+      toast.error(result.error?.message || "Failed to upload");
+    }
     await loadAssets();
     setUploading(null);
   };
 
   const handleDelete = async (assetType: string) => {
     if (confirm("Remove this brand asset?")) {
-      await deleteBrandAssetAction(assetType);
+      const result = await deleteBrandAssetAction(assetType);
+      if (result.success) {
+        toast.success("Brand asset removed");
+      } else {
+        toast.error(result.error?.message || "Failed to remove");
+      }
       await loadAssets();
     }
   };

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,10 @@ export default function MediaLibraryClient() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    loadMedia(1);
+  }, []);
+
   const handleUpload = async () => {
     if (!selectedFile || !uploadName) return;
     setUploading(true);
@@ -148,6 +153,9 @@ export default function MediaLibraryClient() {
       setUploadCategory("GENERAL");
       loadMedia(1);
       setPage(1);
+      toast.success("Media uploaded");
+    } else {
+      toast.error(result.error?.message || "Failed to upload");
     }
     setUploading(false);
   };
@@ -157,18 +165,24 @@ export default function MediaLibraryClient() {
     id: string,
   ) => {
     setActionLoading(id);
+    let result;
     switch (action) {
       case "publish":
-        await publishWebsiteMediaAction(id);
+        result = await publishWebsiteMediaAction(id);
         break;
       case "archive":
-        await archiveWebsiteMediaAction(id);
+        result = await archiveWebsiteMediaAction(id);
         break;
       case "delete":
         if (confirm("Are you sure you want to delete this media?")) {
-          await deleteWebsiteMediaAction(id);
+          result = await deleteWebsiteMediaAction(id);
         }
         break;
+    }
+    if (result && result.success) {
+      toast.success(`Media ${action === "delete" ? "deleted" : action === "publish" ? "published" : "archived"}`);
+    } else if (result && !result.success) {
+      toast.error(result.error?.message || `Failed to ${action}`);
     }
     await loadMedia();
     setActionLoading(null);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { traceApiRoute } from "@/lib/sentry-tracing";
 import logger from "@/lib/logger";
 
@@ -9,9 +10,27 @@ export async function POST(
 ) {
   return traceApiRoute("POST /api/notifications/[id]/read", async () => {
     try {
-      await requireAuth();
+      const session = await requireAuth();
       const { id } = await params;
-      void id;
+
+      // Verify the notification belongs to the authenticated user
+      const notification = await prisma.notification.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+
+      if (!notification) {
+        return NextResponse.json({ error: "Notification not found" }, { status: 404 });
+      }
+
+      if (notification.userId !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      await prisma.notification.update({
+        where: { id },
+        data: { read: true },
+      });
 
       return NextResponse.json({ success: true });
     } catch (error) {
@@ -32,9 +51,26 @@ export async function DELETE(
 ) {
   return traceApiRoute("DELETE /api/notifications/[id]", async () => {
     try {
-      await requireAuth();
+      const session = await requireAuth();
       const { id } = await params;
-      void id;
+
+      // Verify the notification belongs to the authenticated user
+      const notification = await prisma.notification.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+
+      if (!notification) {
+        return NextResponse.json({ error: "Notification not found" }, { status: 404 });
+      }
+
+      if (notification.userId !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      await prisma.notification.delete({
+        where: { id },
+      });
 
       return NextResponse.json({ success: true });
     } catch (error) {

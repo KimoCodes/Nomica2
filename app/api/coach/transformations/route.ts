@@ -12,8 +12,14 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Coaches can only see transformations from their assigned clients
+    const whereClause: any = { status: "SUBMITTED" };
+    if (session.user.role === Role.COACH) {
+      whereClause.clientProfile = { coachId: session.user.id };
+    }
+
     const submissions = await prisma.transformationSubmission.findMany({
-      where: { status: "SUBMITTED" },
+      where: whereClause,
       include: {
         beforePhoto: true,
         afterPhoto: true,

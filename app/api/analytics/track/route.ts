@@ -15,20 +15,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { path, userId, sessionId, referrer } = body;
+    const { path, sessionId, referrer } = body;
 
     if (!path || typeof path !== "string") {
       return NextResponse.json({ error: "path is required" }, { status: 400 });
     }
+
+    // Sanitize path — prevent injection of arbitrary data
+    const sanitizedPath = path.slice(0, 500);
 
     const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       ?? request.headers.get("x-real-ip")
       ?? null;
     const userAgent = request.headers.get("user-agent") ?? null;
 
+    // Do NOT accept userId from the client — analytics tracking is anonymous
     await trackPageVisit({
-      path,
-      userId: userId ?? null,
+      path: sanitizedPath,
+      userId: null,
       sessionId: sessionId ?? null,
       ipAddress,
       userAgent,

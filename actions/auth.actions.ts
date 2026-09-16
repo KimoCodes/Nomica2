@@ -44,11 +44,13 @@ export async function registerUser(
   formData: FormData,
 ): Promise<ApiResponse<{ message: string }>> {
   try {
+    // Always force CLIENT role for public registration.
+    // Coach accounts must go through a separate application + admin approval flow.
     const raw = {
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
-      role: formData.get("role") ?? Role.CLIENT,
+      role: Role.CLIENT,
     };
 
     const parsed = registerSchema.safeParse(raw);

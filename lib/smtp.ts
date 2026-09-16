@@ -37,7 +37,14 @@ function getSmtpConfig(): SmtpConfig | null {
 }
 
 function getSmtpFrom(): string {
-  return process.env.SMTP_FROM ?? "NomiTips <batsindakeynesbenoit10101@gmail.com>";
+  const smtpFrom = process.env.SMTP_FROM;
+  if (!smtpFrom) {
+    throw new Error(
+      "SMTP_FROM environment variable is not configured. " +
+      "Set it to your verified sender address."
+    );
+  }
+  return smtpFrom;
 }
 
 let transporter: nodemailer.Transporter | null = null;

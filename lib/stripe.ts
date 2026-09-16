@@ -2,6 +2,41 @@ import Stripe from "stripe";
 
 let stripeInstance: Stripe | null = null;
 
+/**
+ * Validate that Stripe keys are not test keys in production.
+ * Test keys start with "sk_test_", "pk_test_", "whsec_test_".
+ * Live keys start with "sk_live_", "pk_live_", "whsec_".
+ */
+function validateStripeKeysForProduction() {
+  if (process.env.NODE_ENV !== "production") return;
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  const warnings: string[] = [];
+
+  if (secretKey?.startsWith("sk_test_")) {
+    warnings.push("STRIPE_SECRET_KEY is a test key (sk_test_...)");
+  }
+  if (publishableKey?.startsWith("pk_test_")) {
+    warnings.push("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is a test key (pk_test_...)");
+  }
+  if (webhookSecret?.startsWith("whsec_test_")) {
+    warnings.push("STRIPE_WEBHOOK_SECRET is a test webhook secret (whsec_test_...)");
+  }
+
+  if (warnings.length > 0) {
+    console.error(
+      "\n⚠️  STRIPE PRODUCTION WARNING:\n" +
+      warnings.map((w) => `  • ${w}`).join("\n") +
+      "\n\nThese appear to be test/development Stripe keys.\n" +
+      "Production payments will NOT work with test keys.\n" +
+      "Set live Stripe keys in your production environment.\n"
+    );
+  }
+}
+
 export function getStripe(): Stripe {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error(
@@ -10,6 +45,7 @@ export function getStripe(): Stripe {
   }
 
   if (!stripeInstance) {
+    validateStripeKeysForProduction();
     stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2026-07-29.dahlia",
     });

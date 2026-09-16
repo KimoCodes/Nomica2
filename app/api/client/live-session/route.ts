@@ -38,6 +38,25 @@ export async function POST(request: Request) {
 
     if (session.user.role === "COACH") {
       actualCoachId = session.user.id;
+
+      // Verify the client is assigned to this coach
+      if (clientId) {
+        const clientProfile = await prisma.clientProfile.findFirst({
+          where: {
+            userId: clientId,
+            coachId: session.user.id,
+          },
+          select: { id: true },
+        });
+
+        if (!clientProfile) {
+          return NextResponse.json(
+            { error: "This client is not assigned to you" },
+            { status: 403 },
+          );
+        }
+      }
+
       actualClientId = clientId;
     } else {
       actualClientId = session.user.id;

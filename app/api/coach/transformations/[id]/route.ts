@@ -37,7 +37,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       where: { id: submissionId },
       include: {
         clientProfile: {
-          include: { user: { select: { id: true, name: true } } },
+          include: {
+            user: { select: { id: true, name: true } },
+            coach: { select: { id: true } },
+          },
         },
       },
     });
@@ -54,6 +57,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { error: "This submission has already been reviewed" },
         { status: 400 },
       );
+    }
+
+    // Coaches can only review transformations from their assigned clients
+    if (session.user.role === Role.COACH) {
+      if (submission.clientProfile.coachId !== session.user.id) {
+        return NextResponse.json(
+          { error: "You can only review transformations from your assigned clients" },
+          { status: 403 },
+        );
+      }
     }
 
     const updated =

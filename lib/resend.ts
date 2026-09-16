@@ -23,5 +23,12 @@ export function getAppUrl(): string {
 }
 
 export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM ?? "NomiTips <batsindakeynesbenoit10101@gmail.com>";
+  const emailFrom = process.env.EMAIL_FROM;
+  if (!emailFrom) {
+    throw new Error(
+      "EMAIL_FROM environment variable is not configured. " +
+      "Set it to your verified sender address (e.g. 'NomiTips <noreply@nomitips.com>')."
+    );
+  }
+  return emailFrom;
 }

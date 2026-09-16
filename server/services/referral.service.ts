@@ -1,3 +1,5 @@
+import { getAppUrl } from "@/lib/resend";
+
 export type ReferralResult = {
   success: boolean;
   referralCode?: string;
@@ -21,7 +23,7 @@ export function generateReferralCode(userId: string): ReferralResult {
     return {
       success: true,
       referralCode: existing.code,
-      referralLink: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}?ref=${existing.code}`,
+      referralLink: `${getAppUrl()}?ref=${existing.code}`,
     };
   }
 
@@ -32,7 +34,7 @@ export function generateReferralCode(userId: string): ReferralResult {
   return {
     success: true,
     referralCode: code,
-    referralLink: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}?ref=${code}`,
+    referralLink: `${getAppUrl()}?ref=${code}`,
   };
 }
 

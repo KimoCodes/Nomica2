@@ -19,6 +19,21 @@ import { hashSync } from "bcrypt";
  * end-to-end in development.
  */
 
+// ─── Production Safety Guard ─────────────────────────────────────────────────
+// This seed script creates development/catalog data. It must NEVER run
+// automatically in production. Use `NODE_ENV=production_seed npx tsx prisma/seed.ts`
+// only when deliberately seeding production catalog data for the first time.
+if (process.env.NODE_ENV === "production") {
+  console.error(
+    "\n❌ SEED BLOCKED: Refusing to run in production environment.\n\n" +
+    "This script is intended for development and initial catalog seeding only.\n" +
+    "If you need to seed production catalog data, run:\n\n" +
+    "  NODE_ENV=production_seed npx tsx prisma/seed.ts\n\n" +
+    "This safety guard prevents accidental data corruption.\n"
+  );
+  process.exit(1);
+}
+
 const BCRYPT_ROUNDS = 12;
 
 // ---------------------------------------------------------------------------

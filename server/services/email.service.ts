@@ -168,7 +168,7 @@ export async function sendSubscriptionCancelledEmail(
         <p style="color: #444; line-height: 1.6;">
           We'd love to have you back. If you change your mind, you can resubscribe anytime from your dashboard.
         </p>
-        <a href="${getAppUrl()}/pricing}"
+        <a href="${getAppUrl()}/pricing"
            style="display: inline-block; margin: 24px 0; padding: 12px 24px;
                   background: #171717; color: #fff; text-decoration: none;
                   border-radius: 8px; font-weight: 500;">

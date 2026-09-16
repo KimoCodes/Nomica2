@@ -24,6 +24,11 @@ const serverSchema = z.object({
   SENTRY_DSN: z.string().url().optional(),
 });
 
+// Production-specific overrides: these MUST be set in production
+const productionOverrides = z.object({
+  EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required in production — set it to your verified sender address"),
+});
+
 const clientSchema = z.object({
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1, "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is required"),
 });
@@ -43,6 +48,24 @@ function validateEnv() {
   if (!clientResult.success) {
     for (const issue of clientResult.error.issues) {
       errors.push(`[Client] ${issue.path.join(".")}: ${issue.message}`);
+    }
+  }
+
+  // Production-only validation
+  if (process.env.NODE_ENV === "production") {
+    const prodResult = productionOverrides.safeParse(process.env);
+    if (!prodResult.success) {
+      for (const issue of prodResult.error.issues) {
+        errors.push(`[Production] ${issue.path.join(".")}: ${issue.message}`);
+      }
+    }
+
+    // Warn about test Stripe keys in production
+    if (process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_")) {
+      errors.push("[Production] STRIPE_SECRET_KEY appears to be a test key (sk_test_...). Production requires live keys.");
+    }
+    if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test_")) {
+      errors.push("[Production] NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY appears to be a test key (pk_test_...). Production requires live keys.");
     }
   }
 

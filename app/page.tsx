@@ -181,7 +181,7 @@ export default async function HomePage() {
                 loop
                 playsInline
                 className="absolute inset-0 h-full w-full object-cover"
-                poster={heroImage || "/media/hero/hero-woman-squat.jpg"}
+                poster={heroImage || "/media/coach-profile-1.jpg"}
               >
                 <source src={heroVideo} type="video/mp4" />
               </video>
@@ -192,7 +192,7 @@ export default async function HomePage() {
                 loop
                 playsInline
                 className="absolute inset-0 h-full w-full object-cover"
-                poster="/media/hero/hero-woman-squat.jpg"
+                poster="/media/coach-profile-1.jpg"
               >
                 <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
               </video>
@@ -266,9 +266,9 @@ export default async function HomePage() {
                         loop
                         playsInline
                         className="absolute inset-0 h-full w-full object-cover"
-                        poster={heroImage || "/media/hero/hero-woman-squat.jpg"}
+                        poster={heroImage || "/media/coach-profile-2.jpg"}
                       >
-                        <source src={heroVideo} type="video/mp4" />
+                        <source src={heroVideo || "/media/workout-leg-elevation.mp4"} type="video/mp4" />
                       </video>
                     ) : (
                       <video
@@ -277,9 +277,9 @@ export default async function HomePage() {
                         loop
                         playsInline
                         className="absolute inset-0 h-full w-full object-cover"
-                        poster="/media/hero/hero-woman-squat.jpg"
+                        poster="/media/coach-profile-2.jpg"
                       >
-                        <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
+                        <source src="/media/workout-leg-elevation.mp4" type="video/mp4" />
                       </video>
                     )}
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/25 text-center">
@@ -415,12 +415,12 @@ export default async function HomePage() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                { src: "/media/workout-glutes-quads-hamstrings.mp4", poster: "/media/hero/hero-woman-squat.jpg", title: "Glute & Quad Burner", tag: "Lower Body" },
-                { src: "/media/workout-glutes-burner.mp4", poster: "/media/hero/hero-woman-deadlift.jpg", title: "Progressive Glute Isolation", tag: "Glutes" },
-                { src: "/media/workout-glutes-quads-inner-thighs.mp4", poster: "/media/hero/hero-gym-workout.jpg", title: "Full Leg Sculpt", tag: "Legs" },
-                { src: "/media/workout-stretch-glutes.mp4", poster: "/media/hero/hero-woman-weights.jpg", title: "Active Recovery & Mobility", tag: "Recovery" },
-                { src: "/media/workout-combo-lower-body.mp4", poster: "/media/hero/hero-fitness-class.jpg", title: "Compound Power Combo", tag: "Full Body" },
-                { src: "/media/workout-leg-elevation.mp4", poster: "/media/hero/hero-gym-equipment.jpg", title: "Elevated Leg Series", tag: "Advanced" },
+                { src: "/media/workout-glutes-quads-hamstrings.mp4", poster: "/media/coach-profile-1.jpg", title: "Glute & Quad Burner", tag: "Lower Body" },
+                { src: "/media/workout-glutes-burner.mp4", poster: "/media/coach-profile-2.jpg", title: "Progressive Glute Isolation", tag: "Glutes" },
+                { src: "/media/workout-glutes-quads-inner-thighs.mp4", poster: "/media/coach-profile-3.jpg", title: "Full Leg Sculpt", tag: "Legs" },
+                { src: "/media/workout-stretch-glutes.mp4", poster: "/media/coach-profile-4.jpg", title: "Active Recovery & Mobility", tag: "Recovery" },
+                { src: "/media/workout-combo-lower-body.mp4", poster: "/media/coach-profile-1.jpg", title: "Compound Power Combo", tag: "Full Body" },
+                { src: "/media/workout-leg-elevation.mp4", poster: "/media/coach-profile-2.jpg", title: "Elevated Leg Series", tag: "Advanced" },
               ].map((video, i) => (
                 <div
                   key={i}

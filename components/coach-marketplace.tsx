@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,13 @@ type CoachMarketplaceProps = {
   onBookCoach?: (coachId: string) => void;
   onViewProfile?: (coachId: string) => void;
 };
+
+const brandCoachPhotos = [
+  "/media/coach-profile-1.jpg",
+  "/media/coach-profile-2.jpg",
+  "/media/coach-profile-3.jpg",
+  "/media/coach-profile-4.jpg",
+];
 
 export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachMarketplaceProps) {
   const [search, setSearch] = useState("");
@@ -91,7 +99,13 @@ export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachM
             <p className="text-muted-foreground">No coaches found</p>
           </div>
         ) : (
-          filtered.map((coach) => (
+          filtered.map((coach) => {
+            const fallbackAvatar = brandCoachPhotos[
+              Math.abs(coach.name.split("").reduce((total, char) => total + char.charCodeAt(0), 0)) % brandCoachPhotos.length
+            ] || brandCoachPhotos[0];
+            const coachAvatar = coach.avatar || fallbackAvatar;
+
+            return (
             <Card
               key={coach.id}
               className="cursor-pointer transition-all hover:shadow-md"
@@ -100,12 +114,15 @@ export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachM
               <CardContent className="p-5">
                 <div className="flex items-start gap-4">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full">
-                    {coach.avatar ? (
-                      <img
-                        src={coach.avatar}
+                    {coachAvatar ? (
+                      <Image
+                        src={coachAvatar}
                         alt={coach.name}
+                        width={56}
+                        height={56}
                         className="h-full w-full object-cover"
                         loading="lazy"
+                        unoptimized
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-primary/10 text-xl font-bold text-primary">
@@ -172,7 +189,8 @@ export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachM
                 )}
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
     </div>

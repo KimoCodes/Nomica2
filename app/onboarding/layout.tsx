@@ -1,4 +1,4 @@
-import { Dumbbell } from "lucide-react";
+import Image from "next/image";
 
 export default function OnboardingLayout({
   children,
@@ -8,11 +8,15 @@ export default function OnboardingLayout({
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-transparent to-primary/5 p-4">
       <div className="relative w-full max-w-lg">
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
-            <Dumbbell className="size-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold">NomiTips</span>
+        <div className="mb-8 flex items-center justify-center">
+          <Image
+            src="/logo2.png"
+            alt="NomiTips"
+            width={220}
+            height={80}
+            priority
+            className="h-14 w-auto"
+          />
         </div>
         {children}
       </div>

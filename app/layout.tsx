@@ -23,6 +23,11 @@ export const metadata: Metadata = {
     default: "NomiTips",
     template: "%s | NomiTips",
   },
+  icons: {
+    icon: "/logo2.png",
+    shortcut: "/logo2.png",
+    apple: "/logo2.png",
+  },
   description:
     "NomiTips — Personalized fitness coaching with custom workout programs, nutrition tracking, and 1-on-1 coaching for women building strength and confidence.",
   keywords: ["fitness coaching", "workout programs", "nutrition tracking", "personal trainer", "women fitness", "strength training"],

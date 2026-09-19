@@ -112,6 +112,32 @@ export async function sendWelcomeEmail(
   );
 }
 
+export async function sendCoachApprovalEmail(
+  email: string,
+  name: string,
+): Promise<{ sent: boolean }> {
+  const loginUrl = `${getAppUrl()}/login`;
+
+  return sendEmail(
+    email,
+    "Your NomiTips coach account has been approved",
+    `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome aboard, ${name}!</h1>
+        <p style="color: #444; line-height: 1.6;">
+          Your coach account on NomiTips has been approved. You can now sign in and start coaching.
+        </p>
+        <a href="${loginUrl}"
+           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+                  background: #171717; color: #fff; text-decoration: none;
+                  border-radius: 8px; font-weight: 500;">
+          Sign in to your dashboard
+        </a>
+      </div>
+    `,
+  );
+}
+
 export async function sendAdminNewUserNotification({
   email,
   name,

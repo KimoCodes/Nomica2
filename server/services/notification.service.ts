@@ -1,7 +1,7 @@
 import { NotificationType, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/resend";
-import { sendEmail } from "./email.service";
+import { sendCoachApprovalEmail, sendEmail } from "./email.service";
 import {
   renderEmailTemplate,
   infoCard,
@@ -440,14 +440,23 @@ export async function notifyCoachPendingApproval(adminUserIds: string[], coachNa
 }
 
 export async function notifyCoachApproved(coachUserId: string) {
+  const coach = await prisma.user.findUnique({
+    where: { id: coachUserId },
+    select: { email: true, name: true },
+  });
+
   await createNotification({
     userId: coachUserId,
     type: "SUBSCRIPTION_APPROVED",
     title: "Coach Account Approved",
     body: "Your coach account has been approved! You can now log in and start coaching.",
     link: "/coach",
-    sendEmail: true,
+    sendEmail: false,
   });
+
+  if (coach?.email) {
+    await sendCoachApprovalEmail(coach.email, coach.name ?? "Coach").catch(() => {});
+  }
 }
 
 // Payment Proof Requested

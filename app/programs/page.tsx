@@ -30,6 +30,7 @@ const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 
 type SearchParams = Promise<{
   kind?: string;
+  missing?: string;
 }>;
 
 export default async function ProgramsPage({
@@ -39,6 +40,7 @@ export default async function ProgramsPage({
 }) {
   const params = await searchParams;
   const kindFilter = params.kind as "PROGRAM" | "CHALLENGE" | "BUNDLE" | undefined;
+  const isMissingProgram = params.missing === "1";
   const products = await getProducts(kindFilter ? { kind: kindFilter } : undefined);
 
   const tabs = [
@@ -51,6 +53,12 @@ export default async function ProgramsPage({
   return (
     <PublicLayout>
       <main className="flex flex-1 flex-col">
+        {isMissingProgram && (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
+            That program link isn’t active anymore. Here are our current options.
+          </div>
+        )}
+
         {/* Hero */}
         <section className="relative overflow-hidden px-4 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="absolute inset-0 -z-10">

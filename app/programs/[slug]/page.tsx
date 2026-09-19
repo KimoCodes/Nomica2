@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug, getProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
@@ -43,7 +43,7 @@ export default async function ProductPage({
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    notFound();
+    redirect("/programs?missing=1");
   }
 
   const allProducts = await getProducts();

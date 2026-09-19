@@ -90,10 +90,16 @@ export async function completeCoachOnboarding(
   userId: string,
   data: CoachOnboardingInput,
 ) {
-  const profile = await getCoachProfile(userId);
+  let profile = await getCoachProfile(userId);
 
   if (!profile) {
-    throw new Error("PROFILE_NOT_FOUND");
+    profile = await prisma.coachProfile.create({
+      data: {
+        userId,
+        specialties: [],
+      },
+      include: { user: { select: { name: true, email: true } } },
+    });
   }
 
   if (profile.onboardingComplete) {

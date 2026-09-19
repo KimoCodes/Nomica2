@@ -112,6 +112,67 @@ export async function sendWelcomeEmail(
   );
 }
 
+export async function sendAdminNewUserNotification({
+  email,
+  name,
+  role,
+}: {
+  email: string;
+  name: string;
+  role: "CLIENT" | "COACH" | string;
+}): Promise<{ sent: boolean }> {
+  const defaultCoachEmails = [
+    "nomitipscoaching@gmail.com",
+    "bahatsinoellabra@gmail.com",
+    "noella.bahatsi@tstech.com",
+  ];
+
+  const adminEmails = [
+    process.env.ADMIN_EMAIL ?? "batsindakeynesbenoit10101@gmail.com",
+    ...((process.env.COACH_NOTIFICATION_EMAILS ?? defaultCoachEmails.join(","))
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)),
+  ];
+
+  const roleLabel = role === "COACH" ? "Coach" : "Client";
+  const recipients = [...new Set(adminEmails.filter(Boolean))];
+
+  let sent = false;
+
+  for (const recipient of recipients) {
+    const result = await sendEmail(
+      recipient,
+      `New ${roleLabel} registration — NomiTips`,
+      `
+        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+          <h1 style="font-size: 24px; margin-bottom: 12px;">New account signup</h1>
+          <p style="color: #444; line-height: 1.6; margin: 0 0 16px;">
+            A new ${roleLabel.toLowerCase()} account was created on NomiTips.
+          </p>
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: 600; width: 120px;">Name</td>
+              <td style="padding: 12px; border-bottom: 1px solid #ddd;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: 600;">Email</td>
+              <td style="padding: 12px; border-bottom: 1px solid #ddd;">${email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; font-weight: 600;">Role</td>
+              <td style="padding: 12px;">${roleLabel}</td>
+            </tr>
+          </table>
+        </div>
+      `,
+    );
+    sent = sent || result.sent;
+  }
+
+  return { sent };
+}
+
 export async function sendSubscriptionConfirmationEmail(
   email: string,
   name: string,

@@ -15,11 +15,18 @@ export function getResendClient(): Resend | null {
 }
 
 export function getAppUrl(): string {
-  const url = process.env.AUTH_URL;
+  const rawUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+  const url = rawUrl.trim();
+
   if (!url) {
     throw new Error("AUTH_URL environment variable is not set");
   }
-  return url;
+
+  if (!/^https?:\/\//i.test(url)) {
+    return `http://${url}`;
+  }
+
+  return url.replace(/\/$/, "");
 }
 
 export function getEmailFrom(): string {

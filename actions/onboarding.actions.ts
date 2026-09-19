@@ -105,7 +105,10 @@ export async function saveClientOnboardingStepAction(
     await saveClientOnboardingStep(session.user.id, stepParsed.data, parsed.data);
 
     if (stepParsed.data === 4) {
-      await sendWelcomeEmail(session.user.email, session.user.name ?? "there", "client");
+      void sendWelcomeEmail(session.user.email, session.user.name ?? "there", "client")
+        .catch((emailError) => {
+          logger.error({ err: emailError, userId: session.user.id }, "Failed to send client welcome email after onboarding");
+        });
 
       return createSuccessResponse({
         nextStep: null,
@@ -146,7 +149,10 @@ export async function submitCoachOnboarding(
 
     const profile = await completeCoachOnboarding(session.user.id, parsed.data);
 
-    await sendWelcomeEmail(profile.user.email, profile.user.name, "coach");
+    void sendWelcomeEmail(profile.user.email, profile.user.name, "coach")
+      .catch((emailError) => {
+        logger.error({ err: emailError, userId: session.user.id }, "Failed to send coach welcome email after onboarding");
+      });
 
     return createSuccessResponse({ redirectTo: "/coach" });
   } catch (error) {

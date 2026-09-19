@@ -18,7 +18,11 @@ import {
   resetUserPassword,
   getUserByEmail,
 } from "@/server/services/user.service";
-import { sendVerificationEmail, sendPasswordResetEmail } from "@/server/services/email.service";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendAdminNewUserNotification,
+} from "@/server/services/email.service";
 import {
   registerSchema,
 } from "@/server/validators/auth.schema";
@@ -44,13 +48,11 @@ export async function registerUser(
   formData: FormData,
 ): Promise<ApiResponse<{ message: string }>> {
   try {
-    // Always force CLIENT role for public registration.
-    // Coach accounts must go through a separate application + admin approval flow.
     const raw = {
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
-      role: Role.CLIENT,
+      role: formData.get("role") ?? Role.CLIENT,
     };
 
     const parsed = registerSchema.safeParse(raw);
@@ -67,6 +69,11 @@ export async function registerUser(
     const user = await createUser(parsed.data);
     const verification = await createVerificationToken(user.email);
     const { sent } = await sendVerificationEmail(user.email, user.name, verification.token);
+    await sendAdminNewUserNotification({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
 
     logActivity({
       action: "USER_REGISTERED",

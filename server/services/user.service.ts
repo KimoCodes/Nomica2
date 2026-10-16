@@ -23,7 +23,7 @@ export async function getUserById(id: string) {
   });
 }
 
-export async function createUser(input: RegisterInput) {
+export async function createUser(input: RegisterInput, referredById?: string | null) {
   const existing = await prisma.user.findUnique({
     where: { email: input.email },
   });
@@ -41,6 +41,7 @@ export async function createUser(input: RegisterInput) {
         email: input.email,
         password: hashedPassword,
         role: input.role,
+        referredById: referredById ?? null,
       },
     });
 

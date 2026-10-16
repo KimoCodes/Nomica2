@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { CLIENT_NAV } from "@/constants/navigation";
 import {
   MUSCLE_GROUP_LABELS,
@@ -278,11 +279,12 @@ export function ExerciseLibraryClient({
               >
                 {exercise.videoUrl ? (
                   <div className="relative aspect-video bg-muted overflow-hidden">
-                    <img
+                    <Image
                       src="/media/hero/hero-gym-workout.jpg"
                       alt={`${exercise.name} demo`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-black/30" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
@@ -296,11 +298,12 @@ export function ExerciseLibraryClient({
                   </div>
                 ) : (
                   <div className="relative aspect-video bg-muted overflow-hidden">
-                    <img
+                    <Image
                       src="/media/hero/hero-woman-weights.jpg"
                       alt="Exercise demo"
-                      className="h-full w-full object-cover opacity-50"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover opacity-50"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Dumbbell className="size-10 text-white/40" />

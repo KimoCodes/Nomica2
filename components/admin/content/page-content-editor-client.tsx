@@ -48,8 +48,6 @@ import { WebsiteMediaStatus } from "@prisma/client";
 
 const PAGE_LABELS: Record<string, string> = {
   home: "Homepage",
-  pricing: "Pricing",
-  club: "Sculpt Club",
   bundles: "Bundles",
   programs: "Programs",
   transformations: "Transformations",
@@ -93,22 +91,8 @@ const SECTION_PRESETS: Record<string, { key: string; title: string }[]> = {
     { key: "how_it_works", title: "How It Works" },
     { key: "video_showcase", title: "Video Showcase" },
     { key: "why_it_works", title: "Why It Works" },
-    { key: "sculpt_club", title: "Sculpt Club / All Access" },
     { key: "pricing_comparison", title: "Pricing Comparison" },
     { key: "lead_magnet", title: "Lead Magnet" },
-    { key: "faq", title: "FAQ" },
-    { key: "final_cta", title: "Final CTA" },
-  ],
-  pricing: [
-    { key: "hero", title: "Hero Section" },
-    { key: "trust_signals", title: "Trust Signals" },
-    { key: "faq", title: "FAQ" },
-    { key: "cta", title: "Final CTA" },
-  ],
-  club: [
-    { key: "hero", title: "Hero Section" },
-    { key: "features", title: "Features" },
-    { key: "guarantee", title: "Guarantee" },
     { key: "faq", title: "FAQ" },
     { key: "final_cta", title: "Final CTA" },
   ],
@@ -490,7 +474,7 @@ export default function PageContentEditorClient({
                         onChange={(e) =>
                           updateSection(index, "cta2Link", e.target.value)
                         }
-                        placeholder="e.g. /pricing"
+                        placeholder="e.g. /programs"
                       />
                     </div>
                   </div>

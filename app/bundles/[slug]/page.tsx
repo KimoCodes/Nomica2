@@ -7,6 +7,7 @@ import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
 import { CartProductButton } from "@/components/cart/cart-product-button";
+import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import { CheckCircle2, ChevronRight, Dumbbell, Package } from "lucide-react";
@@ -125,7 +126,7 @@ export default async function BundleDetailPage({ params }: Props) {
                     </p>
                   )}
 
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-2">
                     <CartProductButton
                       productId={bundle.id}
                       owned={ownedIds.has(bundle.id)}
@@ -133,6 +134,12 @@ export default async function BundleDetailPage({ params }: Props) {
                         ? `You already own ${ownedCount} of ${products.length} included programs. Incremental bundle pricing is not available yet.`
                         : undefined}
                     />
+                    {!ownedIds.has(bundle.id) && (
+                      <SaveProductButton
+                        productId={bundle.id}
+                        className="w-full"
+                      />
+                    )}
                   </div>
 
                   <p className="mt-3 text-center text-xs text-muted-foreground">
@@ -141,26 +148,35 @@ export default async function BundleDetailPage({ params }: Props) {
                 </div>
               </div>
 
-              {/* Stacked Cards Visual */}
-              <div className="relative hidden md:block">
-                <div className="relative h-80">
-                  {products.map((product, i) => (
+              {/* Included Programs Preview */}
+              <div className="hidden md:block">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Includes
+                  </p>
+                  {products.slice(0, 5).map((product) => (
                     <div
                       key={product.id}
-                      className="absolute right-0 left-8 rounded-2xl border border-border/50 bg-gradient-to-br from-muted/80 to-muted/40 p-4 shadow-sm transition-all hover:scale-[1.02]"
-                      style={{
-                        top: `${i * 24}px`,
-                        height: "120px",
-                        width: `${100 - i * 8}%`,
-                        zIndex: products.length - i,
-                      }}
+                      className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 shadow-sm"
                     >
-                      <p className="font-semibold">{product.name}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {product.tagline}
-                      </p>
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Dumbbell className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {product.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {product.tagline}
+                        </p>
+                      </div>
                     </div>
                   ))}
+                  {products.length > 5 && (
+                    <div className="rounded-xl border border-dashed border-border/50 p-3 text-center text-sm text-muted-foreground">
+                      + {products.length - 5} more included
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

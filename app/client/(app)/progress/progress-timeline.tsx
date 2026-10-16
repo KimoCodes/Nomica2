@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Camera,
@@ -179,10 +180,12 @@ export function ProgressTimeline({ logs }: ProgressTimelineProps) {
                   <div className="mt-4 flex gap-3">
                     {log.photos.map((photo) => (
                       <div key={photo.id} className="relative">
-                        <img
+                        <Image
                           src={photo.media.url}
                           alt={`${photo.view} view`}
-                          className="h-24 w-24 rounded-lg object-cover"
+                          width={96}
+                          height={96}
+                          className="rounded-lg object-cover"
                         />
                         <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white capitalize">
                           {photo.view.toLowerCase()}

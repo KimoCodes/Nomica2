@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 
 const VALID_SLUGS = [
   "home",
-  "pricing",
-  "club",
   "bundles",
   "programs",
   "transformations",

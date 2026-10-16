@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,16 @@ const whyItWorks = [
 ];
 
 const faqs = [
+  {
+    question: "Is this a subscription?",
+    answer:
+      "No. Every program and bundle is a one-time purchase. Create a free account, buy only what you need, and there are no recurring charges.",
+  },
+  {
+    question: "Do I keep access after I buy?",
+    answer:
+      "Yes. Purchased programs stay in your My Programs library permanently — no expiry, no renewals. Coach feedback and video support remain available on eligible programs.",
+  },
   {
     question: "I'm a complete beginner. Is this for me?",
     answer:
@@ -562,10 +573,12 @@ export default async function HomePage() {
                     <div className="grid grid-cols-2 gap-1">
                       <div className="relative aspect-[3/4] bg-muted">
                         {t.beforePhoto ? (
-                          <img
+                          <Image
                             src={t.beforePhoto.thumbnailUrl ?? t.beforePhoto.url}
                             alt="Before"
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -578,10 +591,12 @@ export default async function HomePage() {
                       </div>
                       <div className="relative aspect-[3/4] bg-muted">
                         {t.afterPhoto ? (
-                          <img
+                          <Image
                             src={t.afterPhoto.thumbnailUrl ?? t.afterPhoto.url}
                             alt="After"
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

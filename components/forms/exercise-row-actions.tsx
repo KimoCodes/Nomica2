@@ -1,7 +1,8 @@
 "use client";
 
 import type { Difficulty, MuscleGroup } from "@prisma/client";
-import { PencilIcon, Trash2Icon, Upload, X, Video, Image } from "lucide-react";
+import Image from "next/image";
+import { PencilIcon, Trash2Icon, Upload, X, Video, Image as ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import {
@@ -282,6 +283,7 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
                         controls
                       />
                     ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- blob: object URLs from URL.createObjectURL are not supported by next/image
                       <img
                         src={videoPreview}
                         alt="Preview"
@@ -293,7 +295,7 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
                         {videoFile?.type.startsWith("video/") ? (
                           <Video className="h-4 w-4" />
                         ) : (
-                          <Image className="h-4 w-4" />
+                          <ImageIcon className="h-4 w-4" />
                         )}
                         {videoFile?.name}
                       </span>
@@ -321,10 +323,12 @@ export function ExerciseRowActions({ exercise }: ExerciseRowActionsProps) {
                         controls
                       />
                     ) : (
-                      <img
+                      <Image
                         src={exercise.videoUrl}
                         alt="Current"
-                        className="mx-auto max-h-48 rounded-md object-contain"
+                        width={480}
+                        height={320}
+                        className="mx-auto h-auto max-h-48 w-auto rounded-md object-contain"
                       />
                     )}
                     <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">

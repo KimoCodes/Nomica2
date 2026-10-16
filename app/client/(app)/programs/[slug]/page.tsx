@@ -8,6 +8,7 @@ import { getProtectedProductProgram } from "@/server/services/product.service";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReviewPrompt } from "@/components/reviews/review-prompt";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default async function OwnedProgramPage({
@@ -31,6 +32,26 @@ export default async function OwnedProgramPage({
   const fullProduct = await getProtectedProductProgram(slug);
   if (!fullProduct?.program) notFound();
 
+  const totalDays = fullProduct.program.weeks.reduce(
+    (acc, week) => acc + week.days.length,
+    0,
+  );
+  const clientProgram = await prisma.clientProgram.findFirst({
+    where: {
+      programId: fullProduct.program.id,
+      clientProfile: { userId: session.user.id },
+    },
+    select: { id: true },
+  });
+  const completedDayRows = clientProgram
+    ? await prisma.workoutCompletion.findMany({
+      where: { clientProgramId: clientProgram.id },
+      distinct: ["programDayId"],
+      select: { programDayId: true },
+    })
+    : [];
+  const completedDays = completedDayRows.length;
+
   return (
     <DashboardLayout title={fullProduct.name} navItems={[...CLIENT_NAV]} userName={session.user.name} userRole="Client">
       <div className="space-y-6">
@@ -41,6 +62,14 @@ export default async function OwnedProgramPage({
           <h2 className="text-2xl font-bold tracking-tight">{fullProduct.name}</h2>
           <p className="mt-2 max-w-3xl text-muted-foreground">{fullProduct.description}</p>
         </div>
+        {totalDays > 0 && (
+          <ReviewPrompt
+            productId={fullProduct.id}
+            productName={fullProduct.name}
+            completedDays={completedDays}
+            totalDays={totalDays}
+          />
+        )}
         {fullProduct.program.weeks.map((week) => (
           <Card key={week.id}>
             <CardHeader><CardTitle>Week {week.weekNumber}{week.title ? ` · ${week.title}` : ""}</CardTitle></CardHeader>

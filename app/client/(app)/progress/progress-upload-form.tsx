@@ -215,6 +215,7 @@ export function ProgressUploadForm({ clientProfileId }: ProgressUploadFormProps)
           {selectedFiles.map((file, i) => (
             <div key={i} className="relative">
               {previews[i] ? (
+                // eslint-disable-next-line @next/next/no-img-element -- blob: object URLs from URL.createObjectURL are not supported by next/image
                 <img
                   src={previews[i]}
                   alt={`Preview ${i + 1}`}

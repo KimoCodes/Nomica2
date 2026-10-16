@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { getMessagesAction } from "@/actions/message.actions";
 import { uploadChatImageAction } from "@/actions/upload.actions";
 import { Spinner } from "@/components/ui/spinner";
@@ -432,11 +433,12 @@ export function MessagingApp({
                       )}
                     >
                       {message.imageUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={message.imageUrl}
                           alt="Shared image"
-                          className="mb-2 max-h-64 rounded-xl object-cover"
+                          width={512}
+                          height={384}
+                          className="mb-2 h-auto max-h-64 w-auto rounded-xl object-cover"
                         />
                       )}
                       {message.content && (

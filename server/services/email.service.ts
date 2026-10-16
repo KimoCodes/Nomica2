@@ -199,68 +199,65 @@ export async function sendAdminNewUserNotification({
   return { sent };
 }
 
-export async function sendSubscriptionConfirmationEmail(
+export async function sendOrderConfirmationEmail(
   email: string,
   name: string,
-  plan: string,
+  order: {
+    id: string;
+    totalCents: number;
+    currency: string;
+    items: { productName: string; lineTotalCents: number }[];
+  },
 ): Promise<{ sent: boolean }> {
-  const dashboardUrl = `${getAppUrl()}/client/subscription`;
-  const planName = plan === "ALL_ACCESS_MONTHLY" ? "Monthly" : "Annual";
+  const ordersUrl = `${getAppUrl()}/client/orders`;
+  const programsUrl = `${getAppUrl()}/client/programs`;
+  const total = (order.totalCents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: order.currency.toUpperCase(),
+  });
+  const itemRows = order.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${item.productName}</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">
+            ${(item.lineTotalCents / 100).toLocaleString("en-US", { style: "currency", currency: order.currency.toUpperCase() })}
+          </td>
+        </tr>`,
+    )
+    .join("");
 
   return sendEmail(
     email,
-    "Your NomiTips subscription is active",
+    "Your NomiTips purchase is confirmed",
     `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 24px; margin-bottom: 16px;">Welcome to NomiTips All Access, ${name}!</h1>
+        <h1 style="font-size: 24px; margin-bottom: 16px;">Thanks, ${name}!</h1>
         <p style="color: #444; line-height: 1.6;">
-          Your ${planName} subscription is now active. You have full access to all programs, workouts, and features.
+          Your purchase is confirmed and your programs are ready in your library.
         </p>
-        <div style="margin: 24px 0; padding: 20px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0;">
-          <h2 style="font-size: 16px; margin-bottom: 8px; color: #166534;">What's included:</h2>
-          <ul style="color: #444; line-height: 1.8; padding-left: 20px; margin: 0;">
-            <li>Unlimited access to all fitness programs</li>
-            <li>Custom workout tracking</li>
-            <li>Nutrition planning tools</li>
-            <li>Progress photos and analytics</li>
-          </ul>
-        </div>
-        <a href="${dashboardUrl}"
-           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
+        <table style="width: 100%; margin: 24px 0; border-collapse: collapse;">
+          ${itemRows}
+          <tr>
+            <td style="padding: 12px 0 0; font-weight: 600;">Total</td>
+            <td style="padding: 12px 0 0; text-align: right; font-weight: 600;">${total}</td>
+          </tr>
+        </table>
+        <a href="${programsUrl}"
+           style="display: inline-block; margin: 8px 16px 8px 0; padding: 12px 24px;
                   background: #171717; color: #fff; text-decoration: none;
                   border-radius: 8px; font-weight: 500;">
-          Start Training
+          Open My Programs
         </a>
-        <p style="color: #888; font-size: 14px;">
-          Questions? Reply to this email or visit our help center.
-        </p>
-      </div>
-    `,
-  );
-}
-
-export async function sendSubscriptionCancelledEmail(
-  email: string,
-  name: string,
-): Promise<{ sent: boolean }> {
-  return sendEmail(
-    email,
-    "Your NomiTips subscription has been cancelled",
-    `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 24px; margin-bottom: 16px;">Subscription Cancelled</h1>
-        <p style="color: #444; line-height: 1.6;">
-          Hi ${name}, your NomiTips subscription has been cancelled. You'll retain access until the end of your current billing period.
-        </p>
-        <p style="color: #444; line-height: 1.6;">
-          We'd love to have you back. If you change your mind, you can resubscribe anytime from your dashboard.
-        </p>
-        <a href="${getAppUrl()}/pricing"
-           style="display: inline-block; margin: 24px 0; padding: 12px 24px;
-                  background: #171717; color: #fff; text-decoration: none;
-                  border-radius: 8px; font-weight: 500;">
-          View Plans
+        <a href="${ordersUrl}"
+           style="display: inline-block; padding: 12px 24px;
+                  background: #fff; color: #171717; text-decoration: none;
+                  border: 1px solid #ddd; border-radius: 8px; font-weight: 500;">
+          View Order
         </a>
+        <p style="color: #888; font-size: 14px; margin-top: 24px;">
+          Order ${order.id} · One-time purchase — no recurring charges.
+        </p>
       </div>
     `,
   );

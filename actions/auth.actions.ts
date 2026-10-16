@@ -18,6 +18,7 @@ import {
   resetUserPassword,
   getUserByEmail,
 } from "@/server/services/user.service";
+import { resolveReferralCode } from "@/server/services/referral.service";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -66,7 +67,17 @@ export async function registerUser(
 
     await enforceAuthRateLimit("register", parsed.data.email);
 
-    const user = await createUser(parsed.data);
+    const referralCode = typeof formData.get("ref") === "string"
+      ? String(formData.get("ref")).trim().toUpperCase()
+      : "";
+    const referral = referralCode
+      ? await resolveReferralCode(referralCode)
+      : { valid: false as const };
+
+    const user = await createUser(
+      parsed.data,
+      referral.valid ? referral.referredBy : null,
+    );
     const verification = await createVerificationToken(user.email);
     const { sent } = await sendVerificationEmail(user.email, user.name, verification.token);
     await sendAdminNewUserNotification({

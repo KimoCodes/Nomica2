@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { MediaType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Film, Image, Play } from "lucide-react";
+import { Film, Image as ImageIcon, Play } from "lucide-react";
 
 type MediaItem = {
   id: string;
@@ -55,7 +56,7 @@ export function ClientMediaGrid({ media }: ClientMediaGridProps) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {media.map((item) => {
           const isVideo = item.mimeType.startsWith("video/");
-          const Icon = isVideo ? Film : Image;
+          const Icon = isVideo ? Film : ImageIcon;
 
           return (
             <button
@@ -65,10 +66,12 @@ export function ClientMediaGrid({ media }: ClientMediaGridProps) {
             >
               <div className="relative aspect-video bg-muted">
                 {item.thumbnailUrl ? (
-                  <img
+                  <Image
                     src={item.thumbnailUrl}
                     alt={item.title}
-                    className="size-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 300px"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="flex size-full items-center justify-center">
@@ -140,10 +143,12 @@ export function ClientMediaGrid({ media }: ClientMediaGridProps) {
                     className="size-full object-contain"
                   />
                 ) : (
-                  <img
+                  <Image
                     src={selected.url}
                     alt={selected.title}
-                    className="size-full object-contain"
+                    fill
+                    sizes="(max-width: 1024px) 80vw, 640px"
+                    className="object-contain"
                   />
                 )}
               </div>

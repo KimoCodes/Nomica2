@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -196,10 +197,12 @@ export default function BrandingClient() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 rounded-lg border border-border/30 p-3">
                       <div className="size-12 overflow-hidden rounded-lg bg-muted">
-                        <img
+                        <Image
                           src={asset.url}
                           alt={asset.name}
-                          className="size-full object-contain"
+                          fill
+                          sizes="48px"
+                          className="object-contain"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -291,10 +294,12 @@ export default function BrandingClient() {
           {previewAsset && (
             <div className="space-y-4">
               <div className="flex items-center justify-center rounded-lg bg-muted p-8">
-                <img
+                <Image
                   src={previewAsset.url}
                   alt={previewAsset.name}
-                  className="max-h-64 object-contain"
+                  width={512}
+                  height={512}
+                  className="h-auto max-h-64 w-auto object-contain"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">

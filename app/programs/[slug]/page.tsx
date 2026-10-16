@@ -4,9 +4,11 @@ import { PublicLayout } from "@/components/shared/public-layout";
 import {
   getProductBySlug,
   getProducts,
+  getPublishedBundlesContaining,
 } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
 import { CartProductButton } from "@/components/cart/cart-product-button";
+import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import {
@@ -70,6 +72,10 @@ export default async function ProductPage({
     (acc, week) => acc + week.days.length,
     0,
   ) ?? 0;
+
+  const containingBundles = !isOwned && product.kind === "PROGRAM"
+    ? await getPublishedBundlesContaining(product.id)
+    : [];
 
   const avgRating = product.reviews.length
     ? (
@@ -214,10 +220,16 @@ export default async function ProductPage({
                     </Link>
                   )
                   : (
-                    <CartProductButton
-                      productId={product.id}
-                      owned={isOwned}
-                    />
+                    <div className="space-y-2">
+                      <CartProductButton
+                        productId={product.id}
+                        owned={isOwned}
+                      />
+                      <SaveProductButton
+                        productId={product.id}
+                        className="w-full"
+                      />
+                    </div>
                   )}
               </div>
 
@@ -228,6 +240,33 @@ export default async function ProductPage({
                 <span>·</span>
                 <span>No automatic renewal</span>
               </div>
+
+              {containingBundles.length > 0 && (
+                <div className="mt-6 space-y-2">
+                  {containingBundles.map((bundle) => (
+                    <Link
+                      key={bundle.id}
+                      href={`/bundles/${bundle.slug}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm transition-colors hover:bg-primary/10"
+                    >
+                      <span>
+                        Also in{" "}
+                        <span className="font-semibold">{bundle.name}</span>
+                        {bundle.compareAtCents && bundle.compareAtCents > bundle.priceCents && (
+                          <span className="ml-1 text-success">
+                            — save{" "}
+                            {formatPrice(bundle.compareAtCents - bundle.priceCents)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 font-medium text-primary">
+                        {formatPrice(bundle.priceCents)}
+                        <ArrowRight className="size-3.5" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-6 flex items-center gap-2">
                 {avgRating && (

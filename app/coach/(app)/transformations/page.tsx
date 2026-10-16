@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -147,13 +148,15 @@ export default function CoachTransformationsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
                     {selected.beforePhoto ? (
-                      <img
+                      <Image
                         src={
                           selected.beforePhoto.thumbnailUrl ??
                           selected.beforePhoto.url
                         }
                         alt="Before"
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 25vw"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -166,13 +169,15 @@ export default function CoachTransformationsPage() {
                   </div>
                   <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
                     {selected.afterPhoto ? (
-                      <img
+                      <Image
                         src={
                           selected.afterPhoto.thumbnailUrl ??
                           selected.afterPhoto.url
                         }
                         alt="After"
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 25vw"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -285,13 +290,15 @@ export default function CoachTransformationsPage() {
                     <div className="flex gap-1">
                       {submission.beforePhoto && (
                         <div className="relative h-24 w-20 overflow-hidden rounded-lg bg-muted">
-                          <img
+                          <Image
                             src={
                               submission.beforePhoto.thumbnailUrl ??
                               submission.beforePhoto.url
                             }
                             alt="Before"
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="80px"
+                            className="object-cover"
                           />
                           <span className="absolute bottom-0.5 left-0.5 rounded bg-black/60 px-1 py-px text-[10px] text-white">
                             Before
@@ -300,13 +307,15 @@ export default function CoachTransformationsPage() {
                       )}
                       {submission.afterPhoto && (
                         <div className="relative h-24 w-20 overflow-hidden rounded-lg bg-muted">
-                          <img
+                          <Image
                             src={
                               submission.afterPhoto.thumbnailUrl ??
                               submission.afterPhoto.url
                             }
                             alt="After"
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="80px"
+                            className="object-cover"
                           />
                           <span className="absolute bottom-0.5 left-0.5 rounded bg-primary/80 px-1 py-px text-[10px] text-primary-foreground">
                             After

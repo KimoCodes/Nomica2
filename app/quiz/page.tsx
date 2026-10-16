@@ -110,9 +110,6 @@ export default function QuizPage() {
                     minimumFractionDigits: 0,
                   }).format(recommendation.price)}
                 </span>
-                {recommendation.type === "club" && (
-                  <span className="text-muted-foreground">/mo</span>
-                )}
               </div>
 
               <Link

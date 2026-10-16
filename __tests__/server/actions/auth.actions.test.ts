@@ -69,6 +69,7 @@ describe("registerUser", () => {
         email: "jane@example.com",
         role: "COACH",
       }),
+      null,
     );
     expect(sendAdminNewUserNotificationMock).toHaveBeenCalledWith({
       name: "Jane Coach",

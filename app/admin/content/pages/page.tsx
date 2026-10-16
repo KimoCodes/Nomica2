@@ -16,8 +16,6 @@ import {
 
 const PAGE_SECTIONS = [
   { slug: "home", label: "Homepage", description: "Hero section, features, CTAs, FAQ" },
-  { slug: "pricing", label: "Pricing", description: "Pricing cards, trust signals, FAQ" },
-  { slug: "club", label: "Sculpt Club", description: "Membership hero, features, pricing" },
   { slug: "bundles", label: "Bundles", description: "Bundle listings, value props" },
   { slug: "programs", label: "Programs", description: "Program listings, hero section" },
   { slug: "transformations", label: "Transformations", description: "Results, testimonials" },

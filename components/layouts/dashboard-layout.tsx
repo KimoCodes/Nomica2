@@ -35,6 +35,7 @@ import {
   ListChecks,
   Target,
   Heart,
+  Gift,
 } from "lucide-react";
 
 type NavItem = {
@@ -66,6 +67,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   habits: ListChecks,
   goals: Target,
   favorites: Heart,
+  referrals: Gift,
   nutrition: Footprints,
   timers: Footprints,
   sessions: CalendarCheck,

@@ -15,7 +15,7 @@ export function getResendClient(): Resend | null {
 }
 
 export function getAppUrl(): string {
-  const rawUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+  const rawUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const url = rawUrl.trim();
 
   if (!url) {

@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/auth";
+import Image from "next/image";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText,
-  Image,
+  Image as ImageIcon,
   Palette,
   Star,
   TrendingUp,
@@ -18,8 +19,6 @@ import Link from "next/link";
 
 const PAGE_SECTIONS = [
   { slug: "home", label: "Homepage", description: "Hero, sections, CTAs" },
-  { slug: "pricing", label: "Pricing", description: "Pricing cards, FAQs" },
-  { slug: "club", label: "Sculpt Club", description: "Membership page" },
   { slug: "bundles", label: "Bundles", description: "Bundle listings" },
   { slug: "programs", label: "Programs", description: "Program listings" },
   { slug: "transformations", label: "Transformations", description: "Results page" },
@@ -51,7 +50,7 @@ export default async function AdminContentDashboard() {
     {
       label: "Published Media",
       value: mediaStats._count,
-      icon: Image,
+      icon: ImageIcon,
       color: "text-blue-500",
       bg: "bg-blue-500/10",
     },
@@ -133,7 +132,7 @@ export default async function AdminContentDashboard() {
                   className="flex items-center gap-3 rounded-xl border border-border/50 p-4 transition-colors hover:bg-accent/30"
                 >
                   <div className="rounded-lg bg-blue-500/10 p-2">
-                    <Image className="size-5 text-blue-500" />
+                    <ImageIcon className="size-5 text-blue-500" />
                   </div>
                   <div>
                     <p className="text-sm font-medium">Media Library</p>
@@ -195,7 +194,7 @@ export default async function AdminContentDashboard() {
             <CardContent>
               {recentMedia.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-8 text-center">
-                  <Image className="mb-3 size-8 text-muted-foreground/30" />
+                  <ImageIcon className="mb-3 size-8 text-muted-foreground/30" />
                   <p className="text-sm font-medium">No media yet</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Upload your first website media
@@ -214,11 +213,12 @@ export default async function AdminContentDashboard() {
                             <Clock className="size-4 text-muted-foreground" />
                           </div>
                         ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <Image
                             src={media.thumbnailUrl || media.url}
                             alt={media.altText || media.name}
-                            className="size-full object-cover"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
                           />
                         )}
                       </div>

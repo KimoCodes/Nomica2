@@ -19,7 +19,7 @@ export type QuizAnswer = {
 };
 
 export type QuizRecommendation = {
-  type: "product" | "bundle" | "club" | "program";
+  type: "product" | "bundle" | "program";
   id: string;
   name: string;
   reason: string;
@@ -161,11 +161,11 @@ export const QUIZ_STEPS: QuizStep[] = [
         value: "one-time",
       },
       {
-        id: "monthly",
-        label: "Monthly membership",
-        description: "I like ongoing support and updates",
+        id: "best-value",
+        label: "Biggest savings",
+        description: "Show me the best bundle deal",
         icon: "RefreshCw",
-        value: "monthly",
+        value: "best-value",
       },
       {
         id: "either",
@@ -184,16 +184,17 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
   const scheduleAnswer = answers.find((a) => a.stepId === "schedule")?.value;
   const budgetAnswer = answers.find((a) => a.stepId === "budget")?.value;
 
-  if (budgetAnswer === "monthly" || (budgetAnswer === "either" && goalAnswer === "confidence")) {
+  // Best-value answer gets the largest bundle (54% off the full catalog).
+  if (budgetAnswer === "best-value") {
     return {
-      type: "club",
-      id: "sculpt-pro",
-      name: "Sculpt Pro Membership",
+      type: "bundle",
+      id: "complete-nomitips-bundle",
+      name: "Complete NomiTips Bundle",
       reason:
-        "Based on your goals and preference for ongoing support, the Sculpt Pro membership gives you 1-on-1 coaching, custom programming, and a supportive community.",
-      price: 79,
-      cta: "Join Sculpt Pro",
-      href: "/register?club=sculpt-pro",
+        "The best value in the catalog. This one-time bundle includes all 6 signature programs and all 5 focused challenges — everything we make — at 54% off, and you keep it forever.",
+      price: 119.99,
+      cta: "Get the Bundle",
+      href: "/bundles/complete-nomitips-bundle",
     };
   }
 
@@ -201,24 +202,24 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
     if (goalAnswer === "glutes") {
       return {
         type: "bundle",
-        id: "beginner-bundle",
-        name: "Beginner Bundle",
+        id: "lower-body-bundle",
+        name: "Lower-Body Bundle",
         reason:
-          "Perfect for starting your glute journey. You'll learn proper form, activate your glutes, and build a solid foundation with 38 guided workouts.",
-        price: 57,
+          "Perfect for starting your glute journey. You'll build a solid foundation with Glute Builder, Toned Legs, and two focused challenges.",
+        price: 54.99,
         cta: "Get the Bundle",
-        href: "/bundles/beginner-bundle",
+        href: "/bundles/lower-body-bundle",
       };
     }
     return {
       type: "product",
-      id: "beginner-gym-guide",
-      name: "Beginner Gym Guide",
+      id: "beginner-gym-confidence",
+      name: "Beginner Gym Confidence",
       reason:
-        "As a beginner, this guide will teach you proper form for every exercise, help you feel confident in the gym, and build a strong foundation.",
-      price: 37,
-      cta: "Get the Guide",
-      href: "/programs/beginner-gym-guide",
+        "As a beginner, this program will teach you proper form, help you feel confident in the gym, and build a strong foundation with simple guided sessions.",
+      price: 24.99,
+      cta: "Get the Program",
+      href: "/programs/beginner-gym-confidence",
     };
   }
 
@@ -226,35 +227,61 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
     if (scheduleAnswer === "2-3") {
       return {
         type: "product",
-        id: "glute-sculpt-12wk",
-        name: "12-Week Glute Sculpt",
+        id: "glute-builder",
+        name: "Glute Builder",
         reason:
-          "Designed for 3 days per week, this progressive program will grow your glutes with science-backed programming and proper overload.",
-        price: 47,
-        cta: "Start Sculpting",
-        href: "/programs/12-week-glute-sculpt",
+          "Designed for 3 days per week, this progressive program will grow your glutes with structured overload and proper programming.",
+        price: 34.99,
+        cta: "Start Building",
+        href: "/programs/glute-builder",
       };
     }
     return {
       type: "bundle",
-      id: "glute-bundle",
-      name: "Glute Bundle",
+      id: "lower-body-bundle",
+      name: "Lower-Body Bundle",
       reason:
-        "The ultimate glute-building collection. Two programs, 64 workouts, and progressive overload designed to maximize your results.",
-      price: 77,
+        "The ultimate glute-building collection. Glute Builder, Toned Legs, and two focused challenges — progressive training to maximize your results.",
+      price: 54.99,
       cta: "Get the Bundle",
-      href: "/bundles/glute-bundle",
+      href: "/bundles/lower-body-bundle",
+    };
+  }
+
+  if (goalAnswer === "strength") {
+    return {
+      type: "product",
+      id: "strong-and-toned",
+      name: "Strong & Toned",
+      reason:
+        "Our most complete strength program. Progressive full-body training combining strength, sculpting, and conditioning.",
+      price: 39.99,
+      cta: "Start Training",
+      href: "/programs/strong-and-toned",
+    };
+  }
+
+  if (goalAnswer === "tone") {
+    return {
+      type: "product",
+      id: "hourglass-sculpt",
+      name: "Hourglass Sculpt",
+      reason:
+        "A balanced plan emphasizing glutes, shoulders, back, and core strength — ideal for getting lean and defined.",
+      price: 34.99,
+      cta: "Start Sculpting",
+      href: "/programs/hourglass-sculpt",
     };
   }
 
   return {
     type: "product",
-    id: "glute-sculpt-12wk",
-    name: "12-Week Glute Sculpt",
+    id: "glute-builder",
+    name: "Glute Builder",
     reason:
-      "Our most popular program. 12 weeks of progressive, science-backed training designed to sculpt your glutes and transform your body.",
-    price: 47,
-    cta: "Start Sculpting",
-    href: "/programs/12-week-glute-sculpt",
+      "Our most popular program. Progressive, structured training designed to sculpt your glutes and build confidence.",
+    price: 34.99,
+    cta: "Start Building",
+    href: "/programs/glute-builder",
   };
 }

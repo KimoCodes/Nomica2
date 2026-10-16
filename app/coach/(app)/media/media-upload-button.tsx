@@ -152,6 +152,7 @@ export function MediaUploadButton() {
           >
             {preview ? (
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob object URLs unsupported by next/image */}
                 <img
                   src={preview}
                   alt="Preview"

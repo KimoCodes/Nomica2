@@ -18,6 +18,15 @@ type OrderSummary = {
     | "PARTIALLY_REFUNDED"
     | "REFUNDED";
   items: Array<{ id: string; productId: string; productName: string }>;
+  crossSellBundles?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    priceCents: number;
+    compareAtCents: number | null;
+    itemCount: number;
+    savingsCents: number;
+  }>;
 };
 
 type ViewState =
@@ -168,6 +177,29 @@ export default function CheckoutSuccessContent() {
                     </Button>
                   </Link>
                 </div>
+                {!legacySubscriptionReturn && (order?.crossSellBundles?.length ?? 0) > 0 && (
+                  <div className="mt-6 w-full space-y-2 border-t pt-6 text-left">
+                    <p className="text-sm font-semibold">Complete your library</p>
+                    {order?.crossSellBundles?.map((bundle) => (
+                      <Link
+                        key={bundle.id}
+                        href={`/bundles/${bundle.slug}`}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm transition-colors hover:bg-primary/10"
+                      >
+                        <span>
+                          <span className="font-medium">{bundle.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {bundle.itemCount} programs
+                            {bundle.savingsCents > 0 && " · best-value bundle"}
+                          </span>
+                        </span>
+                        <span className="font-semibold text-primary">
+                          ${(bundle.priceCents / 100).toFixed(2)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </>
             )
             : state === "refunded"

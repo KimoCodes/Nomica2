@@ -238,6 +238,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  /// Unique share code for the referral program; null until generated.
+  referralCode String? @unique
+  /// Set at registration when the user arrived with a valid ?ref= code.
+  referredById String?
+  referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals    User[]  @relation("UserReferrals")
+
+  @@index([referredById])
+
   coachProfile            CoachProfile?
   clientProfile           ClientProfile?
   subscription            Subscription?

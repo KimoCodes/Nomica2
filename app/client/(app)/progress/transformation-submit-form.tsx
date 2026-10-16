@@ -145,6 +145,7 @@ export function TransformationSubmitForm({
           >
             {beforePreview ? (
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob object URLs unsupported by next/image */}
                 <img
                   src={beforePreview}
                   alt="Before"
@@ -187,6 +188,7 @@ export function TransformationSubmitForm({
           >
             {afterPreview ? (
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob object URLs unsupported by next/image */}
                 <img
                   src={afterPreview}
                   alt="After"

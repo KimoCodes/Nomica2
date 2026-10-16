@@ -1,4 +1,4 @@
-export const PUBLIC_ROUTES = ["/", "/pricing", "/programs", "/bundles", "/club", "/quiz", "/free-guide", "/transformations", "/login", "/register"] as const;
+export const PUBLIC_ROUTES = ["/", "/programs", "/bundles", "/quiz", "/free-guide", "/transformations", "/login", "/register", "/pricing", "/club"] as const;
 
 export const AUTH_ROUTES = ["/login", "/register"] as const;
 

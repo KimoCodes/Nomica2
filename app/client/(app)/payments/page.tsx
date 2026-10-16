@@ -4,14 +4,15 @@ import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSubscriptionForClient } from "@/server/services/subscription.service";
+import { formatPrice } from "@/constants/subscriptions";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, Clock, CreditCard } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, CreditCard, Package } from "lucide-react";
 
 export default async function ClientPaymentsPage() {
   const session = await requireRole([Role.CLIENT]);
 
-  const [, fullSubscription, paymentCount] = await Promise.all([
+  const [, fullSubscription, paymentCount, purchaseSummary] = await Promise.all([
     getSubscriptionForClient(session.user.id),
     prisma.subscription.findUnique({
       where: { userId: session.user.id },
@@ -28,10 +29,21 @@ export default async function ClientPaymentsPage() {
         subscription: { userId: session.user.id },
       },
     }),
+    prisma.order.aggregate({
+      where: {
+        userId: session.user.id,
+        status: { in: ["PAID", "PARTIALLY_REFUNDED"] },
+      },
+      _count: true,
+      _sum: { totalCents: true },
+    }),
   ]);
 
   const hasStripeCustomer = fullSubscription?.stripeCustomerId &&
     !fullSubscription.stripeCustomerId.startsWith("manual_");
+
+  const paidOrderCount = purchaseSummary._count;
+  const lifetimeCents = purchaseSummary._sum.totalCents ?? 0;
 
   return (
     <DashboardLayout
@@ -44,10 +56,61 @@ export default async function ClientPaymentsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Billing</h2>
           <p className="mt-1 text-muted-foreground">
-            Review historical billing records and manage any legacy recurring
-            billing.
+            Your one-time purchases, with legacy billing details below if you
+            ever had a subscription.
           </p>
         </div>
+
+        {/* Purchases Summary */}
+        <Card className="animate-slide-up">
+          <CardHeader>
+            <CardTitle className="text-base">Your Purchases</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {paidOrderCount > 0
+              ? (
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-xl bg-primary/10 p-2.5">
+                      <Package className="size-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {paidOrderCount}{" "}
+                        order{paidOrderCount === 1 ? "" : "s"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {lifetimeCents > 0
+                          ? `${formatPrice(lifetimeCents)} lifetime total`
+                          : "One-time program purchases"}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/client/orders"
+                    className="inline-flex rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    View order history
+                  </Link>
+                </div>
+              )
+              : (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center">
+                  <Package className="mb-3 size-10 text-muted-foreground/30" />
+                  <p className="text-sm font-medium">No purchases yet</p>
+                  <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                    Programs you buy appear here and in your library.
+                  </p>
+                  <Link
+                    href="/programs"
+                    className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    Explore Programs
+                  </Link>
+                </div>
+              )}
+          </CardContent>
+        </Card>
 
         {/* Current Plan Summary */}
         <div className="grid gap-4 sm:grid-cols-3">
@@ -142,8 +205,8 @@ export default async function ClientPaymentsPage() {
               <div>
                 <p className="font-medium">Payment past due</p>
                 <p className="text-sm text-muted-foreground">
-                  Your latest payment failed. Update your payment method below
-                  to restore access.
+                  Your latest payment failed. Contact support to update your
+                  payment method and restore access.
                 </p>
               </div>
             </CardContent>
@@ -196,12 +259,6 @@ export default async function ClientPaymentsPage() {
               <p className="text-sm text-muted-foreground">
                 You have {paymentCount}{" "}
                 recorded payment{paymentCount === 1 ? "" : "s"}.
-                {hasStripeCustomer && (
-                  <>
-                    {" "}
-                    View full details in the Stripe billing portal above.
-                  </>
-                )}
               </p>
             </CardContent>
           </Card>

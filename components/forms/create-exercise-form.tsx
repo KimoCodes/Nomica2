@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Upload, X, Video, Image } from "lucide-react";
+import { Upload, X, Video, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function CreateExerciseForm() {
@@ -189,6 +189,7 @@ export function CreateExerciseForm() {
                   controls
                 />
               ) : (
+                // eslint-disable-next-line @next/next/no-img-element -- blob: object URLs from URL.createObjectURL are not supported by next/image
                 <img
                   src={videoPreview}
                   alt="Preview"
@@ -200,7 +201,7 @@ export function CreateExerciseForm() {
                   {videoFile?.type.startsWith("video/") ? (
                     <Video className="h-4 w-4" />
                   ) : (
-                    <Image className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4" />
                   )}
                   {videoFile?.name}
                 </span>

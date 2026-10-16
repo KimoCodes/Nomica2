@@ -75,6 +75,11 @@ export function RegisterForm() {
 
     setFieldErrors({});
 
+    const referralCode = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("ref")?.trim().toUpperCase()
+      : undefined;
+    if (referralCode) formData.set("ref", referralCode);
+
     const result = await trackLoading(() => registerUser(formData));
 
     if (!result.success) {

@@ -33,6 +33,7 @@ const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 type SearchParams = Promise<{
   kind?: string;
   missing?: string;
+  q?: string;
 }>;
 
 export default async function ProgramsPage({
@@ -47,31 +48,29 @@ export default async function ProgramsPage({
     | "BUNDLE"
     | undefined;
   const isMissingProgram = params.missing === "1";
-  const products = await getProducts(
-    kindFilter ? { kind: kindFilter } : undefined,
-  );
+  const query = typeof params.q === "string" ? params.q.trim().slice(0, 50) : "";
+  const products = await getProducts({
+    ...(kindFilter && { kind: kindFilter }),
+    ...(query && { q: query }),
+  });
   const session = await auth();
   const ownedIds = session?.user?.id
     ? new Set(await getOwnedCatalogProductIds(session.user.id))
     : new Set<string>();
 
+  function buildHref(kind: string | undefined) {
+    const sp = new URLSearchParams();
+    if (kind) sp.set("kind", kind);
+    if (query) sp.set("q", query);
+    const s = sp.toString();
+    return s ? `/programs?${s}` : "/programs";
+  }
+
   const tabs = [
-    { label: "All", href: "/programs", active: !kindFilter },
-    {
-      label: "Programs",
-      href: "/programs?kind=PROGRAM",
-      active: kindFilter === "PROGRAM",
-    },
-    {
-      label: "Challenges",
-      href: "/programs?kind=CHALLENGE",
-      active: kindFilter === "CHALLENGE",
-    },
-    {
-      label: "Bundles",
-      href: "/programs?kind=BUNDLE",
-      active: kindFilter === "BUNDLE",
-    },
+    { label: "All", href: buildHref(undefined), active: !kindFilter },
+    { label: "Programs", href: buildHref("PROGRAM"), active: kindFilter === "PROGRAM" },
+    { label: "Challenges", href: buildHref("CHALLENGE"), active: kindFilter === "CHALLENGE" },
+    { label: "Bundles", href: buildHref("BUNDLE"), active: kindFilter === "BUNDLE" },
   ];
 
   return (
@@ -150,6 +149,38 @@ export default async function ProgramsPage({
                 </p>
               </div>
             </div>
+
+            <form
+              action="/programs"
+              method="get"
+              className="mt-6 flex gap-2"
+              role="search"
+            >
+              {kindFilter && <input type="hidden" name="kind" value={kindFilter} />}
+              <input
+                type="search"
+                name="q"
+                defaultValue={query}
+                placeholder="Search programs, challenges, bundles…"
+                maxLength={50}
+                aria-label="Search programs"
+                className="w-full flex-1 rounded-lg border border-border/50 bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              />
+              <button
+                type="submit"
+                className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Search
+              </button>
+              {query && (
+                <Link
+                  href={buildHref(undefined)}
+                  className="shrink-0 rounded-lg border border-border/50 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+                >
+                  Clear
+                </Link>
+              )}
+            </form>
           </div>
         </section>
 
@@ -286,7 +317,17 @@ export default async function ProgramsPage({
               : (
                 <div className="text-center text-muted-foreground">
                   <Dumbbell className="mx-auto mb-4 size-12 text-muted-foreground/30" />
-                  <p>Programs will appear here once they are published.</p>
+                  {query
+                    ? (
+                      <p>
+                        No results for &ldquo;{query}&rdquo;.
+                        {kindFilter ? " Try a different filter or " : " "}
+                        <Link href="/programs" className="font-medium text-primary underline-offset-4 hover:underline">
+                          browse everything
+                        </Link>.
+                      </p>
+                    )
+                    : <p>Programs will appear here once they are published.</p>}
                 </div>
               )}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -422,11 +423,12 @@ export default function MediaLibraryClient() {
                     <Video className="size-10 text-muted-foreground/30" />
                   </div>
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={item.thumbnailUrl || item.url}
                     alt={item.altText || item.name}
-                    className="size-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    className="object-cover"
                   />
                 )}
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
@@ -509,11 +511,12 @@ export default function MediaLibraryClient() {
                         <Video className="size-4 text-muted-foreground/30" />
                       </div>
                     ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={item.thumbnailUrl || item.url}
                         alt={item.altText || item.name}
-                        className="size-full object-cover"
+                        fill
+                        sizes="48px"
+                        className="object-cover"
                       />
                     )}
                   </div>
@@ -612,11 +615,12 @@ export default function MediaLibraryClient() {
                     poster={previewItem.thumbnailUrl || undefined}
                   />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={previewItem.url}
                     alt={previewItem.altText || previewItem.name}
-                    className="w-full object-contain"
+                    width={960}
+                    height={540}
+                    className="h-auto w-full object-contain"
                   />
                 )}
               </div>

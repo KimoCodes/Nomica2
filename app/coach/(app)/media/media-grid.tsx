@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { MediaType } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Film, Image, Play, Eye } from "lucide-react";
+import { Film, Image as ImageIcon, Play, Eye } from "lucide-react";
 
 type MediaItem = {
   id: string;
@@ -33,9 +34,9 @@ type MediaGridProps = {
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   WORKOUT_VIDEO: Film,
   EXERCISE_DEMO: Film,
-  TRAINING_IMAGE: Image,
-  TRANSFORMATION: Image,
-  PROGRESS_PHOTO: Image,
+  TRAINING_IMAGE: ImageIcon,
+  TRANSFORMATION: ImageIcon,
+  PROGRESS_PHOTO: ImageIcon,
   PROGRESS_VIDEO: Film,
 };
 
@@ -91,10 +92,12 @@ export function MediaGrid({ media }: MediaGridProps) {
             >
               <div className="relative aspect-video bg-muted">
                 {item.thumbnailUrl && !item.thumbnailUrl.match(/\.(mp4|mov|webm)/i) ? (
-                  <img
+                  <Image
                     src={item.thumbnailUrl}
                     alt={item.title}
-                    className="size-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 300px"
+                    className="object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
@@ -179,10 +182,12 @@ export function MediaGrid({ media }: MediaGridProps) {
                     className="size-full object-contain"
                   />
                 ) : (
-                  <img
+                  <Image
                     src={selectedMedia.url}
                     alt={selectedMedia.title}
-                    className="size-full object-contain"
+                    fill
+                    sizes="(max-width: 1024px) 80vw, 640px"
+                    className="object-contain"
                   />
                 )}
               </div>

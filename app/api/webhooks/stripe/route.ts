@@ -15,7 +15,7 @@ import {
   notifyCoachClientCancelled,
   notifyCoachClientPlanChanged,
 } from "@/server/services/notification.service";
-import { sendEmail } from "@/server/services/email.service";
+import { sendEmail, sendOrderConfirmationEmail } from "@/server/services/email.service";
 import {
   renderEmailTemplate,
   infoCard,
@@ -347,6 +347,33 @@ async function handleOrderCheckoutPaid(
     { event: "order.paid", orderId: metadata.orderId, userId: metadata.userId, stripeEventId: eventId, route: "webhooks/stripe" },
     "One-time order verified and product entitlements granted",
   );
+
+  const purchaser = await prisma.user.findUnique({
+    where: { id: metadata.userId },
+    select: {
+      email: true,
+      name: true,
+      orders: {
+        where: { id: metadata.orderId },
+        select: {
+          id: true,
+          totalCents: true,
+          currency: true,
+          items: { select: { productName: true, lineTotalCents: true } },
+        },
+      },
+    },
+  });
+  const paidOrder = purchaser?.orders[0];
+  if (purchaser && paidOrder) {
+    sendOrderConfirmationEmail(purchaser.email, purchaser.name ?? "there", paidOrder)
+      .catch((error) => {
+        logger.warn(
+          { event: "order.confirmation_email_failed", orderId: metadata.orderId, error },
+          "Order confirmation email failed to send",
+        );
+      });
+  }
 }
 
 async function handleOrderCheckoutFailed(session: Stripe.Checkout.Session) {
@@ -543,7 +570,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
           const html = renderEmailTemplate({
             title: "Subscription Cancelled",
             content: textBlock(`Hi ${user.name ?? "there"}, your NomiTips subscription has been cancelled. You'll retain access until the end of your current billing period.`),
-            action: { label: "View Plans", url: "/pricing" },
+            action: { label: "Explore Programs", url: "/programs" },
           });
           await sendEmail(user.email, "Your NomiTips subscription has been cancelled", html);
         }
@@ -610,7 +637,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         const html = renderEmailTemplate({
           title: "Subscription Cancelled",
           content: textBlock(`Hi ${user.name ?? "there"}, your NomiTips subscription has been cancelled. You'll retain access until the end of your current billing period.`),
-          action: { label: "View Plans", url: "/pricing" },
+          action: { label: "Explore Programs", url: "/programs" },
         });
         await sendEmail(user.email, "Your NomiTips subscription has been cancelled", html);
       }

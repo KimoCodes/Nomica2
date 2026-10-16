@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import type { Transformation } from "@/constants/transformations";
 
@@ -82,22 +83,24 @@ export function TransformationCarousel({
             {/* Before/After */}
             <div className="mb-4 grid grid-cols-2 gap-2">
               <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
-                <img
+                <Image
                   src="/media/hero/hero-woman-weights.jpg"
                   alt={`${t.name} before transformation`}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="200px"
+                  className="object-cover"
                 />
                 <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
                   Before
                 </span>
               </div>
               <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-primary/10">
-                <img
+                <Image
                   src="/media/hero/hero-woman-squat.jpg"
                   alt={`${t.name} after transformation`}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+                  fill
+                  sizes="200px"
+                  className="object-cover"
                 />
                 <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2 py-0.5 text-xs font-medium text-primary-foreground backdrop-blur-sm">
                   After

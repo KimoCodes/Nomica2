@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { traceApiRoute } from "@/lib/sentry-tracing";
-import { generateReferralCode, getReferralStats } from "@/server/services/referral.service";
+import { getOrCreateReferralCode, getReferralStats } from "@/server/services/referral.service";
 import logger from "@/lib/logger";
 
 export async function GET() {
@@ -9,8 +9,8 @@ export async function GET() {
     try {
       const session = await requireAuth();
 
-      const result = generateReferralCode(session.user.id);
-      const stats = getReferralStats(session.user.id);
+      const result = await getOrCreateReferralCode(session.user.id);
+      const stats = await getReferralStats(session.user.id);
 
       return NextResponse.json({ ...result, stats });
     } catch (error) {

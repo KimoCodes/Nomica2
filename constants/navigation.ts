@@ -18,6 +18,8 @@ export const CLIENT_NAV = [
   { label: "Dashboard", href: "/client", icon: "dashboard" },
   { label: "My Programs", href: "/client/programs", icon: "programs" },
   { label: "Orders", href: "/client/orders", icon: "subscription" },
+  { label: "Saved", href: "/client/saved", icon: "favorites" },
+  { label: "Referrals", href: "/client/referrals", icon: "referrals" },
   { label: "Browse Programs", href: "/programs", icon: "programs" },
   { label: "Workouts", href: "/client/workouts", icon: "workouts" },
   { label: "My Plan", href: "/client/my-plan", icon: "programs" },

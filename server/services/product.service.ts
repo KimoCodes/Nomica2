@@ -6,14 +6,23 @@ type ProductFilter = {
   focus?: ProductFocus;
   status?: ProductStatus;
   take?: number;
+  q?: string;
 };
 
 export async function getProducts(filter: ProductFilter = {}) {
+  const query = filter.q?.trim();
   return prisma.product.findMany({
     where: {
       status: filter.status ?? ProductStatus.PUBLISHED,
       ...(filter.kind && { kind: filter.kind }),
       ...(filter.focus && { focus: filter.focus }),
+      ...(query && {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { tagline: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+        ],
+      }),
     },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     ...(filter.take && { take: filter.take }),
@@ -64,6 +73,26 @@ export async function getProductBySlug(slug: string) {
         },
       },
     },
+  });
+}
+
+/** Published bundles that contain the given product (for "also in a bundle" hints). */
+export async function getPublishedBundlesContaining(productId: string) {
+  return prisma.product.findMany({
+    where: {
+      kind: "BUNDLE",
+      status: "PUBLISHED",
+      bundleItems: { some: { itemId: productId } },
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      priceCents: true,
+      compareAtCents: true,
+    },
+    orderBy: { sortOrder: "asc" },
+    take: 2,
   });
 }
 

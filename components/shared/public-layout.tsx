@@ -8,6 +8,7 @@ import { useState, useCallback } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
+import { CartCount } from "@/components/cart/cart-count";
 
 type PublicLayoutProps = {
   children: ReactNode;
@@ -16,9 +17,7 @@ type PublicLayoutProps = {
 const navLinks = [
   { label: "Programs", href: "/programs" },
   { label: "Bundles", href: "/bundles" },
-  { label: "Sculpt Club", href: "/club" },
   { label: "Results", href: "/transformations" },
-  { label: "Pricing", href: "/pricing" },
 ] as const;
 
 export function PublicLayout({ children }: PublicLayoutProps) {
@@ -72,6 +71,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
         </nav>
 
         <div className="flex items-center gap-2">
+          <CartCount className="hidden sm:inline-flex" />
           {/* Desktop auth buttons */}
           <div className="hidden items-center gap-2 md:flex">
             <Link
@@ -132,6 +132,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
             </div>
 
             <nav className="flex flex-1 flex-col gap-1 p-4" aria-label="Mobile navigation">
+              <Link href="/cart" onClick={closeMobile} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted">Shopping cart</Link>
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -217,22 +218,6 @@ export function PublicLayout({ children }: PublicLayoutProps) {
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Bundles
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/club"
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Sculpt Club
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Pricing
                   </Link>
                 </li>
               </ul>

@@ -39,7 +39,7 @@ export default async function AdminProductsPage() {
     (sum, p) => sum + p._count.purchases * p.priceCents,
     0,
   );
-  const activeCount = products.filter((p) => p.isActive).length;
+  const publishedCount = products.filter((p) => p.status === "PUBLISHED").length;
   const totalPurchases = products.reduce((sum, p) => sum + p._count.purchases, 0);
 
   return (
@@ -78,8 +78,8 @@ export default async function AdminProductsPage() {
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Active</p>
-                  <p className="text-3xl font-bold">{activeCount}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Published</p>
+                  <p className="text-3xl font-bold">{publishedCount}</p>
                 </div>
                 <div className="rounded-xl bg-success/10 p-2.5">
                   <TrendingUp className="size-5 text-success" />
@@ -164,10 +164,12 @@ export default async function AdminProductsPage() {
                       <TableCell>{product._count.purchases}</TableCell>
                       <TableCell>{product._count.reviews}</TableCell>
                       <TableCell>
-                        {product.isActive ? (
-                          <Badge className="bg-success/10 text-success border-success/20">Active</Badge>
+                        {product.status === "PUBLISHED" ? (
+                          <Badge className="bg-success/10 text-success border-success/20">Published</Badge>
+                        ) : product.status === "ARCHIVED" ? (
+                          <Badge variant="secondary">Archived</Badge>
                         ) : (
-                          <Badge variant="secondary">Inactive</Badge>
+                          <Badge variant="outline">Draft</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">

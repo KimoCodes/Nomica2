@@ -54,13 +54,6 @@ export function getStripe(): Stripe {
   return stripeInstance;
 }
 
-export function getStripePriceIds() {
-  return {
-    monthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
-    annual: process.env.STRIPE_PRICE_ANNUAL ?? "",
-  };
-}
-
 export function constructWebhookEvent(
   payload: string | Buffer,
   signature: string,
@@ -75,44 +68,44 @@ export function constructWebhookEvent(
   return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
-export type CheckoutMode = "payment" | "subscription";
-
 export async function createCheckoutSession({
-  mode,
   lineItems,
   successUrl,
   cancelUrl,
   customerId,
   metadata,
+  idempotencyKey,
 }: {
-  mode: CheckoutMode;
   lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
   successUrl: string;
   cancelUrl: string;
   customerId?: string;
   metadata?: Record<string, string>;
+  idempotencyKey?: string;
 }): Promise<Stripe.Checkout.Session> {
   const stripe = getStripe();
 
   const params: Stripe.Checkout.SessionCreateParams = {
-    mode,
+    mode: "payment",
     line_items: lineItems,
     success_url: successUrl,
     cancel_url: cancelUrl,
     metadata,
+    custom_text: {
+      submit: {
+        message: "This is a one-time purchase. You will not be charged again for this order.",
+      },
+    },
   };
 
   if (customerId) {
     params.customer = customerId;
   }
 
-  if (mode === "subscription") {
-    params.subscription_data = {
-      metadata,
-    };
-  }
-
-  return stripe.checkout.sessions.create(params);
+  return stripe.checkout.sessions.create(
+    params,
+    idempotencyKey ? { idempotencyKey } : undefined,
+  );
 }
 
 export async function getOrCreateStripeCustomer(

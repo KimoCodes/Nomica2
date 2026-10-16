@@ -151,7 +151,12 @@ export default function PageContentEditorClient({
   const [newSectionKey, setNewSectionKey] = useState("");
   const [newSectionTitle, setNewSectionTitle] = useState("");
   const [showVersions, setShowVersions] = useState<string | null>(null);
-  const [versions, setVersions] = useState<any[]>([]);
+  const [versions, setVersions] = useState<Array<{
+    id: string;
+    version: number;
+    createdAt: Date | string;
+    createdBy: { name: string | null };
+  }>>([]);
   const [mediaDialogSection, setMediaDialogSection] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -171,7 +176,10 @@ export default function PageContentEditorClient({
   };
 
   useEffect(() => {
-    loadData();
+    const initialLoad = async () => {
+      await loadData();
+    };
+    void initialLoad();
   }, [pageSlug]);
 
   const handleSaveSection = async (section: ContentSection) => {

@@ -113,7 +113,10 @@ export default function MyPlanPage() {
   }, []);
 
   useEffect(() => {
-    loadPlans();
+    const initialLoad = async () => {
+      await loadPlans();
+    };
+    void initialLoad();
   }, [loadPlans]);
 
   async function handleLogExerciseProgress(planId: string) {

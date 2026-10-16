@@ -10,7 +10,6 @@ import { ProgressTimeline } from "./progress-timeline";
 import { TransformationSubmitForm } from "./transformation-submit-form";
 import { WeightTrendChart } from "@/components/charts/weight-trend-chart";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { FeatureGate } from "@/components/shared/feature-gate";
 import {
   Card,
   CardContent,
@@ -41,7 +40,6 @@ export default async function ClientProgressPage() {
       userName={session.user.name}
       userRole="Client"
     >
-      <FeatureGate userId={session.user.id} userRole={Role.CLIENT} feature="progress">
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Progress Tracking</h2>
@@ -204,7 +202,6 @@ export default async function ClientProgressPage() {
           </TabsContent>
         </Tabs>
       </div>
-      </FeatureGate>
     </DashboardLayout>
   );
 }

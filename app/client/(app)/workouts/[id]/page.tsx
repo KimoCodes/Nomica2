@@ -62,11 +62,23 @@ export default async function WorkoutDetailPage({
       isActive: true,
       programId: programDay.week.program.id,
     },
-    select: { id: true },
+    select: { id: true, entitlementId: true },
   });
 
   if (!assignment) {
     notFound();
+  }
+
+  if (assignment.entitlementId) {
+    const entitlement = await prisma.entitlement.findFirst({
+      where: {
+        id: assignment.entitlementId,
+        userId: session.user.id,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+    if (!entitlement) notFound();
   }
 
   const existingCompletion = await prisma.workoutCompletion.findFirst({
@@ -134,7 +146,9 @@ export default async function WorkoutDetailPage({
             name: pe.exercise.name,
             muscleGroup: pe.exercise.muscleGroup,
             difficulty: pe.exercise.difficulty,
-            videoUrl: pe.exercise.videoUrl,
+            videoUrl: pe.exercise.videoUrl
+              ? `/api/media/videos/${pe.exercise.id}`
+              : null,
             sets: pe.sets ?? 3,
             reps: pe.reps ?? 10,
             restSeconds: pe.restSeconds ?? 60,

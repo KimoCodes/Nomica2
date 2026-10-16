@@ -6,7 +6,7 @@ import {
   createProductAction,
   updateProductAction,
   deleteProductAction,
-  toggleProductActiveAction,
+  setProductStatusAction,
 } from "@/actions/product-admin.actions";
 import { trackLoading } from "@/components/ui/loading-bar";
 import { Button } from "@/components/ui/button";
@@ -56,8 +56,10 @@ type Product = {
   daysPerWeek: number | null;
   focus: string | null;
   features: string[];
+  equipment: string[];
   imageUrl: string | null;
-  isActive: boolean;
+  previewVideoUrl: string | null;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   sortOrder: number;
   programId: string | null;
   _count: { purchases: number; reviews: number };
@@ -106,8 +108,16 @@ function ProductForm({ product, programs, onSave, onCancel }: ProductFormProps) 
         : undefined,
       focus: (formData.get("focus") as string || undefined) as "SWEAT" | "SCULPT" | "CLIMB" | undefined,
       features,
+      equipment: (formData.get("equipment") as string ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
       imageUrl: formData.get("imageUrl") as string,
-      isActive: formData.get("isActive") === "on",
+      previewVideoUrl: formData.get("previewVideoUrl") as string,
+      status: (formData.get("status") as string || "DRAFT") as
+        | "DRAFT"
+        | "PUBLISHED"
+        | "ARCHIVED",
       sortOrder: formData.get("sortOrder")
         ? parseInt(formData.get("sortOrder") as string)
         : 0,
@@ -231,6 +241,42 @@ function ProductForm({ product, programs, onSave, onCancel }: ProductFormProps) 
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="previewVideoUrl">Preview Video URL</Label>
+          <Input
+            id="previewVideoUrl"
+            name="previewVideoUrl"
+            defaultValue={product?.previewVideoUrl ?? ""}
+            placeholder="Short public preview clip"
+          />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="equipment">Equipment</Label>
+          <Input
+            id="equipment"
+            name="equipment"
+            defaultValue={product?.equipment?.join(", ") ?? ""}
+            placeholder="e.g., Dumbbells, Resistance band, Bench"
+          />
+          <p className="text-xs text-muted-foreground">Comma-separated list.</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Publication Status *</Label>
+          <select
+            id="status"
+            name="status"
+            required
+            defaultValue={product?.status || "DRAFT"}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="DRAFT">Draft (admin only)</option>
+            <option value="PUBLISHED">Published (on sale)</option>
+            <option value="ARCHIVED">Archived (hidden from sale)</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="programId">Linked Program</Label>
           <select
             id="programId"
@@ -243,11 +289,6 @@ function ProductForm({ product, programs, onSave, onCancel }: ProductFormProps) 
               <option key={p.id} value={p.id}>{p.title}</option>
             ))}
           </select>
-        </div>
-
-        <div className="flex items-center gap-2 sm:col-span-2">
-          <input type="checkbox" id="isActive" name="isActive" defaultChecked={product?.isActive ?? true} className="rounded" />
-          <Label htmlFor="isActive">Active (visible on storefront)</Label>
         </div>
       </div>
 
@@ -328,18 +369,33 @@ export function ProductActions({
     setDeleting(false);
   }
 
-  async function handleToggleActive() {
-    const result = await trackLoading(() => toggleProductActiveAction(product.id));
+  async function handleTogglePublish() {
+    const next = product.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
+    const result = await trackLoading(() =>
+      setProductStatusAction(product.id, next as "DRAFT" | "PUBLISHED"),
+    );
     if (result.success) {
-      toast.success(result.data?.isActive ? "Product activated" : "Product deactivated");
+      toast.success(
+        result.data?.status === "PUBLISHED"
+          ? "Product published"
+          : "Product moved to draft",
+      );
       router.refresh();
+    } else {
+      toast.error(result.error?.message ?? "Failed to update status");
     }
   }
 
   return (
     <div className="flex items-center gap-1">
-      <Button variant="ghost" size="sm" onClick={handleToggleActive}>
-        {product.isActive ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleTogglePublish}
+        title={product.status === "PUBLISHED" ? "Move to draft" : "Publish"}
+        disabled={product.status === "ARCHIVED"}
+      >
+        {product.status === "PUBLISHED" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>
       <Button variant="ghost" size="sm" onClick={() => setEditOpen(true)}>
         <Pencil className="size-4" />

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, Difficulty, ProductKind } from "@prisma/client";
+import { Prisma, Difficulty, ProductKind, ProductStatus } from "@prisma/client";
 import { notifyCoachApproved } from "@/server/services/notification.service";
 
 /* -----------------------------
@@ -260,7 +260,7 @@ export async function updateProgramSellable(
           features: program.features,
           durationLabel,
           durationWeeks: program.duration,
-          isActive: true,
+          status: ProductStatus.PUBLISHED,
         },
       });
     } else {
@@ -277,7 +277,7 @@ export async function updateProgramSellable(
           durationLabel,
           durationWeeks: program.duration,
           programId: id,
-          isActive: true,
+          status: ProductStatus.PUBLISHED,
         },
       });
     }

@@ -77,7 +77,7 @@ export default async function CoachSubscriptionsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Client Subscriptions</h2>
           <p className="mt-1 text-muted-foreground">
-            Approve subscriptions, grant free trials, and manage client access.
+            Review legacy subscription and trial access for your clients. New recurring plans are disabled.
           </p>
         </div>
 

@@ -1,9 +1,8 @@
 "use server";
 
-import { SubscriptionPlan, Role } from "@prisma/client";
+import { Role, SubscriptionPlan } from "@prisma/client";
 import { requireAuth, requireRole } from "@/lib/auth";
 import {
-  submitPaymentRequest,
   approvePaymentRequest,
   rejectPaymentRequest,
   requestPaymentProof,
@@ -22,24 +21,15 @@ type SubmitPaymentInput = {
 };
 
 export async function submitPaymentRequestAction(input: SubmitPaymentInput) {
-  try {
-    const session = await requireAuth();
-
-    if (input.amount <= 0) {
-      return { success: false as const, error: { message: "Amount must be greater than zero" } };
-    }
-
-    await submitPaymentRequest(session.user.id, input);
-    return { success: true as const };
-  } catch (error) {
-    logger.error({ err: error, action: "submitPaymentRequestAction" }, "Failed to submit payment request");
-    return {
-      success: false as const,
-      error: {
-        message: error instanceof Error ? error.message : "Failed to submit payment request",
-      },
-    };
-  }
+  void input;
+  await requireAuth();
+  return {
+    success: false as const,
+    error: {
+      message:
+        "New recurring-plan payment requests are no longer available. Browse one-time programs in the catalog.",
+    },
+  };
 }
 
 export async function adminApprovePaymentAction(
@@ -51,11 +41,16 @@ export async function adminApprovePaymentAction(
     await approvePaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "adminApprovePaymentAction" }, "Failed to approve payment");
+    logger.error(
+      { err: error, action: "adminApprovePaymentAction" },
+      "Failed to approve payment",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to approve payment",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to approve payment",
       },
     };
   }
@@ -70,11 +65,16 @@ export async function adminRejectPaymentAction(
     await rejectPaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "adminRejectPaymentAction" }, "Failed to reject payment");
+    logger.error(
+      { err: error, action: "adminRejectPaymentAction" },
+      "Failed to reject payment",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to reject payment",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to reject payment",
       },
     };
   }
@@ -89,11 +89,16 @@ export async function adminRequestProofAction(
     await requestPaymentProof(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "adminRequestProofAction" }, "Failed to request proof");
+    logger.error(
+      { err: error, action: "adminRequestProofAction" },
+      "Failed to request proof",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to request proof",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to request proof",
       },
     };
   }
@@ -113,21 +118,34 @@ export async function coachApprovePaymentAction(
     });
 
     if (!paymentRequest) {
-      return { success: false as const, error: { message: "Payment request not found" } };
+      return {
+        success: false as const,
+        error: { message: "Payment request not found" },
+      };
     }
 
     if (paymentRequest.coachUserId !== session.user.id) {
-      return { success: false as const, error: { message: "You can only review payments from your own clients" } };
+      return {
+        success: false as const,
+        error: {
+          message: "You can only review payments from your own clients",
+        },
+      };
     }
 
     await approvePaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "coachApprovePaymentAction" }, "Failed to approve payment");
+    logger.error(
+      { err: error, action: "coachApprovePaymentAction" },
+      "Failed to approve payment",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to approve payment",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to approve payment",
       },
     };
   }
@@ -146,21 +164,34 @@ export async function coachRejectPaymentAction(
     });
 
     if (!paymentRequest) {
-      return { success: false as const, error: { message: "Payment request not found" } };
+      return {
+        success: false as const,
+        error: { message: "Payment request not found" },
+      };
     }
 
     if (paymentRequest.coachUserId !== session.user.id) {
-      return { success: false as const, error: { message: "You can only review payments from your own clients" } };
+      return {
+        success: false as const,
+        error: {
+          message: "You can only review payments from your own clients",
+        },
+      };
     }
 
     await rejectPaymentRequest(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "coachRejectPaymentAction" }, "Failed to reject payment");
+    logger.error(
+      { err: error, action: "coachRejectPaymentAction" },
+      "Failed to reject payment",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to reject payment",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to reject payment",
       },
     };
   }
@@ -179,21 +210,34 @@ export async function coachRequestProofAction(
     });
 
     if (!paymentRequest) {
-      return { success: false as const, error: { message: "Payment request not found" } };
+      return {
+        success: false as const,
+        error: { message: "Payment request not found" },
+      };
     }
 
     if (paymentRequest.coachUserId !== session.user.id) {
-      return { success: false as const, error: { message: "You can only review payments from your own clients" } };
+      return {
+        success: false as const,
+        error: {
+          message: "You can only review payments from your own clients",
+        },
+      };
     }
 
     await requestPaymentProof(paymentRequestId, session.user.id, reviewNote);
     return { success: true as const };
   } catch (error) {
-    logger.error({ err: error, action: "coachRequestProofAction" }, "Failed to request proof");
+    logger.error(
+      { err: error, action: "coachRequestProofAction" },
+      "Failed to request proof",
+    );
     return {
       success: false as const,
       error: {
-        message: error instanceof Error ? error.message : "Failed to request proof",
+        message: error instanceof Error
+          ? error.message
+          : "Failed to request proof",
       },
     };
   }

@@ -80,7 +80,7 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Subscriptions</h2>
           <p className="mt-1 text-muted-foreground">
-            Manage client subscriptions, grant free trials, and view payment history.
+            Review historical subscription and trial records. New recurring plans are disabled.
           </p>
         </div>
 

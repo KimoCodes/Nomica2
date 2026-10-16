@@ -59,6 +59,7 @@ export const deactivateAssignmentSchema = z.object({
 });
 
 export const completeWorkoutSchema = z.object({
+  clientProgramId: z.string().cuid(),
   programDayId: z.string().cuid(),
   notes: z.string().max(500).trim().optional().or(z.literal("")),
   setLogs: z

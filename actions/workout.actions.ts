@@ -14,6 +14,7 @@ import { completeWorkoutSchema } from "@/server/validators/program.schema";
 import { emitPrAchieved } from "@/server/socket/emitters";
 
 export async function completeWorkout(input: {
+  clientProgramId: string;
   programDayId: string;
   notes?: string;
   setLogs?: {

@@ -89,7 +89,7 @@ async function main() {
 
   // ─── Products ───────────────────────────────────────────────────────────
   const products = await prisma.product.findMany({
-    select: { id: true, slug: true, name: true, kind: true, isActive: true },
+    select: { id: true, slug: true, name: true, kind: true, status: true },
     orderBy: { sortOrder: "asc" },
   });
 
@@ -108,7 +108,7 @@ async function main() {
     if (items.length > 0) {
       console.log(`\n  ${cls}: ${items.length}`);
       for (const p of items) {
-        console.log(`    • ${p.slug} (${p.kind}) — active: ${p.isActive}`);
+        console.log(`    • ${p.slug} (${p.kind}) — status: ${p.status}`);
       }
     }
   }

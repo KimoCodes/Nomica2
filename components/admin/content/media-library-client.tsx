@@ -134,7 +134,10 @@ export default function MediaLibraryClient() {
   };
 
   useEffect(() => {
-    loadMedia(1);
+    const initialLoad = async () => {
+      await loadMedia(1);
+    };
+    void initialLoad();
   }, []);
 
   const handleUpload = async () => {

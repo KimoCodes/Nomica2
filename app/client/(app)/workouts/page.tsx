@@ -9,7 +9,6 @@ import {
 import { getClientWorkoutOverview } from "@/server/services/workout.service";
 import { CompleteWorkoutForm } from "@/components/forms/complete-workout-form";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { FeatureGate } from "@/components/shared/feature-gate";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -60,7 +59,6 @@ export default async function ClientWorkoutsPage() {
       userName={session.user.name}
       userRole="Client"
     >
-      <FeatureGate userId={session.user.id} userRole={Role.CLIENT} feature="workouts">
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
@@ -187,7 +185,7 @@ export default async function ClientWorkoutsPage() {
                         </p>
                         {item.exercise.videoUrl && (
                           <Link
-                            href={item.exercise.videoUrl}
+                            href={`/api/media/videos/${item.exercise.id}`}
                             target="_blank"
                             className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                           >
@@ -204,6 +202,7 @@ export default async function ClientWorkoutsPage() {
 
               <div className="mt-6">
                 <CompleteWorkoutForm
+                  clientProgramId={overview.assignment.id}
                   programDayId={scheduledDay.id}
                   disabled={todaysWorkout?.completedToday}
                 />
@@ -287,7 +286,6 @@ export default async function ClientWorkoutsPage() {
           </Card>
         </div>
       </div>
-      </FeatureGate>
     </DashboardLayout>
   );
 }

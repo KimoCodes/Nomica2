@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import logger from "@/lib/logger";
 
@@ -13,7 +13,9 @@ export async function GET() {
     }
 
     // Coaches can only see transformations from their assigned clients
-    const whereClause: any = { status: "SUBMITTED" };
+    const whereClause: Prisma.TransformationSubmissionWhereInput = {
+      status: "SUBMITTED",
+    };
     if (session.user.role === Role.COACH) {
       whereClause.clientProfile = { coachId: session.user.id };
     }

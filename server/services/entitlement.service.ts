@@ -1,136 +1,78 @@
 import { prisma } from "@/lib/prisma";
-import { ACTIVE_STATUSES } from "@/constants/subscriptions";
-import { hasActiveFreeTrial } from "@/server/services/free-trial.service";
 
 /**
- * Check if a user has access to a specific product.
- * Access is derived (never stored) via:
- * 1. Active All-Access subscription
- * 2. Active free trial
- * 3. Completed purchase of the product
- * 4. Completed purchase of a bundle containing the product
+ * Catalog-only authorization. Access is derived from durable Entitlement
+ * rows (one-time orders) plus completed legacy purchases until their
+ * entitlement backfill has been reviewed and applied. Subscriptions and
+ * trials never grant catalog access.
  */
-export async function hasEntitlement(
+export async function hasProductEntitlement(
   userId: string,
   productId: string,
 ): Promise<boolean> {
-  // 1. Active subscription unlocks everything
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
-    select: { status: true },
+  const explicit = await prisma.entitlement.findFirst({
+    where: { userId, productId, status: "ACTIVE" },
+    select: { id: true },
   });
+  if (explicit) return true;
 
-  if (subscription && ACTIVE_STATUSES.includes(subscription.status)) {
-    return true;
-  }
-
-  // 2. Active free trial unlocks everything
-  if (await hasActiveFreeTrial(userId)) {
-    return true;
-  }
-
-  // 3. Direct purchase of this product
-  const directPurchase = await prisma.purchase.findFirst({
-    where: {
-      userId,
-      productId,
-      status: "COMPLETED",
-    },
+  const legacyDirect = await prisma.purchase.findFirst({
+    where: { userId, productId, status: "COMPLETED" },
+    select: { id: true },
   });
+  if (legacyDirect) return true;
 
-  if (directPurchase) {
-    return true;
-  }
-
-  // 4. Purchase of a bundle containing this product
-  const bundlePurchase = await prisma.purchase.findFirst({
+  const legacyBundle = await prisma.purchase.findFirst({
     where: {
       userId,
       status: "COMPLETED",
       product: {
         kind: "BUNDLE",
-        bundleItems: {
-          some: { itemId: productId },
-        },
+        bundleItems: { some: { itemId: productId } },
       },
     },
+    select: { id: true },
   });
-
-  if (bundlePurchase) {
-    return true;
-  }
-
-  return false;
+  return Boolean(legacyBundle);
 }
 
-/**
- * Get all product IDs a user has access to.
- */
-export async function getEntitledProductIds(userId: string): Promise<string[]> {
-  // Active subscription = access to everything
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
-    select: { status: true },
-  });
-
-  const isActiveSub = subscription && ACTIVE_STATUSES.includes(subscription.status);
-  const isActiveTrial = await hasActiveFreeTrial(userId);
-
-  if (isActiveSub || isActiveTrial) {
-    const allProducts = await prisma.product.findMany({
-      where: { isActive: true },
-      select: { id: true },
-    });
-    return allProducts.map((p) => p.id);
-  }
-
-  // Direct purchases
-  const directPurchases = await prisma.purchase.findMany({
-    where: { userId, status: "COMPLETED" },
-    select: { productId: true },
-  });
-
-  const directIds = new Set(directPurchases.map((p) => p.productId));
-
-  // Bundle purchases — get child product IDs
-  const bundlePurchases = await prisma.purchase.findMany({
-    where: {
-      userId,
-      status: "COMPLETED",
-      product: { kind: "BUNDLE" },
-    },
-    include: {
-      product: {
-        include: {
-          bundleItems: { select: { itemId: true } },
+/** Product IDs for the authenticated user's paid library, without broad
+ * subscription/trial access. Legacy completed purchases remain readable until
+ * a reviewed migration converts them into durable Entitlement rows. */
+export async function getOwnedCatalogProductIds(
+  userId: string,
+): Promise<string[]> {
+  const ids = new Set<string>();
+  const [entitlements, purchases] = await Promise.all([
+    prisma.entitlement.findMany({
+      where: { userId, status: "ACTIVE" },
+      select: { productId: true, orderItem: { select: { productId: true } } },
+    }),
+    prisma.purchase.findMany({
+      where: { userId, status: "COMPLETED" },
+      select: {
+        productId: true,
+        product: {
+          select: {
+            kind: true,
+            bundleItems: { select: { itemId: true } },
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
 
-  for (const bp of bundlePurchases) {
-    for (const item of bp.product.bundleItems) {
-      directIds.add(item.itemId);
+  for (const entitlement of entitlements) {
+    ids.add(entitlement.productId);
+    if (entitlement.orderItem) ids.add(entitlement.orderItem.productId);
+  }
+  for (const purchase of purchases) {
+    ids.add(purchase.productId);
+    if (purchase.product.kind === "BUNDLE") {
+      for (const item of purchase.product.bundleItems) ids.add(item.itemId);
+    } else {
+      ids.add(purchase.productId);
     }
   }
-
-  return Array.from(directIds);
-}
-
-/**
- * Check if a user has an active subscription or free trial.
- */
-export async function hasActiveSubscription(
-  userId: string,
-): Promise<boolean> {
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
-    select: { status: true },
-  });
-
-  if (subscription && ACTIVE_STATUSES.includes(subscription.status)) {
-    return true;
-  }
-
-  return hasActiveFreeTrial(userId);
+  return [...ids];
 }

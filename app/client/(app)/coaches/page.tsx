@@ -25,10 +25,6 @@ export default function CoachesPage() {
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  useEffect(() => {
-    fetchCoaches();
-  }, []);
-
   const fetchCoaches = async () => {
     try {
       const res = await fetch("/api/client/coaches");
@@ -40,6 +36,13 @@ export default function CoachesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await fetchCoaches();
+    };
+    void initialLoad();
+  }, []);
 
   const handleBookCoach = (coachId: string) => {
     const coach = coaches.find((c) => c.id === coachId);

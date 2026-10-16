@@ -1,20 +1,24 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { getProductBySlug, getProducts } from "@/server/services/product.service";
-import { formatPrice } from "@/constants/subscriptions";
-import { CheckoutButton } from "@/components/checkout-button";
 import {
-  Dumbbell,
-  ArrowRight,
+  getProductBySlug,
+  getProducts,
+} from "@/server/services/product.service";
+import { formatPrice } from "@/constants/subscriptions";
+import { CartProductButton } from "@/components/cart/cart-product-button";
+import { auth } from "@/lib/auth";
+import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
+import {
   ArrowLeft,
+  ArrowRight,
+  BarChart3,
   CheckCircle2,
+  Clock,
+  Dumbbell,
   Play,
   Star,
-  Clock,
-  BarChart3,
   Zap,
-  Shield,
 } from "lucide-react";
 
 export const runtime = "nodejs";
@@ -26,7 +30,9 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Program Not Found" };
+  if (!product || product.status !== "PUBLISHED") {
+    return { title: "Program Not Found" };
+  }
 
   return {
     title: `${product.name} | NomiTips`,
@@ -50,19 +56,26 @@ export default async function ProductPage({
   const relatedProducts = allProducts
     .filter((p) => p.id !== product.id)
     .slice(0, 3);
+  const session = await auth();
+  const ownedIds = session?.user?.id
+    ? new Set(await getOwnedCatalogProductIds(session.user.id))
+    : new Set<string>();
+  const isOwned = ownedIds.has(product.id);
+  const isAdmin = session?.user?.role === "ADMIN";
+  if (product.status !== "PUBLISHED" && !isOwned && !isAdmin) {
+    notFound();
+  }
 
-  const totalWorkouts =
-    product.program?.weeks?.reduce(
-      (acc, week) =>
-        acc + week.days.reduce((dAcc, day) => dAcc + day.exercises.length, 0),
-      0,
-    ) ?? 0;
+  const totalWorkouts = product.program?.weeks?.reduce(
+    (acc, week) => acc + week.days.length,
+    0,
+  ) ?? 0;
 
   const avgRating = product.reviews.length
     ? (
-        product.reviews.reduce((acc, r) => acc + r.rating, 0) /
-        product.reviews.length
-      ).toFixed(1)
+      product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+      product.reviews.length
+    ).toFixed(1)
     : null;
 
   return (
@@ -97,14 +110,19 @@ export default async function ProductPage({
                   className="h-full w-full object-cover"
                   poster="/media/hero/hero-gym-workout.jpg"
                 >
-                  <source src="/media/workout-glutes-quads-inner-thighs.mp4" type="video/mp4" />
+                  <source
+                    src={product.previewVideoUrl ?? "/media/workout-glutes-quads-inner-thighs.mp4"}
+                    type="video/mp4"
+                  />
                 </video>
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
                   <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
                     <Play className="size-8 text-white ml-1" />
                   </div>
                   <div>
-                    <p className="font-semibold text-white drop-shadow-lg">Preview Workouts</p>
+                    <p className="font-semibold text-white drop-shadow-lg">
+                      Preview Workouts
+                    </p>
                     <p className="text-sm text-white/80 drop-shadow-lg">
                       {totalWorkouts || "Sample"} exercises
                     </p>
@@ -168,22 +186,47 @@ export default async function ProductPage({
                 </span>
               </div>
 
+              {product.equipment.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Dumbbell className="size-4" />
+                    Equipment
+                  </span>
+                  {product.equipment.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full bg-muted px-3 py-1 text-xs text-foreground"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-8">
-                <CheckoutButton
-                  type="product"
-                  productId={product.id}
-                  size="lg"
-                  className="w-full"
-                />
+                {isOwned && product.kind !== "BUNDLE"
+                  ? (
+                    <Link
+                      href={`/client/programs/${product.slug}`}
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground"
+                    >
+                      Owned — Open Program
+                    </Link>
+                  )
+                  : (
+                    <CartProductButton
+                      productId={product.id}
+                      owned={isOwned}
+                    />
+                  )}
               </div>
 
               <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Shield className="size-3" />
-                  30-day money-back guarantee
+                  One-time payment
                 </span>
                 <span>·</span>
-                <span>Instant access</span>
+                <span>No automatic renewal</span>
               </div>
 
               <div className="mt-6 flex items-center gap-2">
@@ -225,7 +268,9 @@ export default async function ProductPage({
                 {product.program.weeks.slice(0, 3).map((week, index) => (
                   <div
                     key={week.id}
-                    className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
+                    className={`animate-slide-up stagger-${
+                      index + 1
+                    } rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
                   >
                     <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
                       <span className="text-lg font-bold text-primary">
@@ -327,7 +372,11 @@ export default async function ProductPage({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`size-4 ${i < review.rating ? "fill-warning text-warning" : "text-muted-foreground/30"}`}
+                          className={`size-4 ${
+                            i < review.rating
+                              ? "fill-warning text-warning"
+                              : "text-muted-foreground/30"
+                          }`}
                         />
                       ))}
                     </div>
@@ -346,7 +395,9 @@ export default async function ProductPage({
                           {review.user.name ?? "Anonymous"}
                         </p>
                         {review.isVerified && (
-                          <p className="text-xs text-success">Verified purchase</p>
+                          <p className="text-xs text-success">
+                            Verified purchase
+                          </p>
                         )}
                       </div>
                     </div>
@@ -364,16 +415,19 @@ export default async function ProductPage({
               Ready to Start?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join women who transformed their bodies with this
-              program.
+              Join women who transformed their bodies with this program.
             </p>
             <div className="mt-8">
-              <CheckoutButton
-                type="product"
-                productId={product.id}
-                size="lg"
-                className="mx-auto max-w-md"
-              />
+              {isOwned && product.kind !== "BUNDLE"
+                ? (
+                  <Link
+                    href={`/client/programs/${product.slug}`}
+                    className="inline-flex w-full max-w-md items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground"
+                  >
+                    Owned — Open Program
+                  </Link>
+                )
+                : <CartProductButton productId={product.id} owned={isOwned} />}
             </div>
           </div>
         </section>

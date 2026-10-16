@@ -20,10 +20,10 @@ export default function CheckoutCancelPage() {
           </p>
 
           <div className="mt-6 flex gap-3">
-            <Link href="/pricing">
+            <Link href="/programs">
               <Button>
                 <CreditCard className="mr-2 size-4" />
-                View Plans
+                Explore Programs
               </Button>
             </Link>
             <Link href="/client">

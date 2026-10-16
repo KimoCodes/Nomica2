@@ -81,7 +81,10 @@ export default function ClientSessionsPage() {
   }, []);
 
   useEffect(() => {
-    loadSessions();
+    const initialLoad = async () => {
+      await loadSessions();
+    };
+    void initialLoad();
   }, [loadSessions]);
 
   const now = new Date();

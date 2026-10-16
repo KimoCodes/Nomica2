@@ -24,10 +24,10 @@ export type PlanDefinition = {
 };
 
 /**
- * All-Access membership per NomiTips_Fitness_Catalog.pdf:
- * $14.99/month or $149.99/year (two months free).
- * Membership unlocks the complete catalog; one-off program/bundle purchases
- * are handled separately as Products (see constants/… replaced by DB catalog).
+ * Legacy All-Access plan definitions ($14.99/month, $149.99/year).
+ * Kept only to display historical subscription records in account/admin views.
+ * New plans cannot be purchased; catalog access is granted per product through
+ * entitlements from one-time orders.
  */
 export const PLANS: PlanDefinition[] = [
   {
@@ -77,39 +77,3 @@ export function formatPlanPrice(plan: PlanDefinition): string {
   return `${formatPrice(plan.priceCents)} / ${plan.interval}`;
 }
 
-/**
- * Feature gating map — which features require which plans.
- * With All-Access membership, all features are unlocked.
- * One-time purchasers get access to features related to their purchased product.
- */
-export const FEATURE_GATING = {
-  workouts: ["ALL_ACCESS_MONTHLY", "ALL_ACCESS_ANNUAL"] as const,
-  progress: ["ALL_ACCESS_MONTHLY", "ALL_ACCESS_ANNUAL"] as const,
-  nutrition: ["ALL_ACCESS_MONTHLY", "ALL_ACCESS_ANNUAL"] as const,
-  messaging: ["ALL_ACCESS_MONTHLY", "ALL_ACCESS_ANNUAL"] as const,
-  exerciseLibrary: ["ALL_ACCESS_MONTHLY", "ALL_ACCESS_ANNUAL"] as const,
-} as const;
-
-export type FeatureKey = keyof typeof FEATURE_GATING;
-
-export function hasFeatureAccess(
-  plan: SubscriptionPlan | null,
-  feature: FeatureKey,
-): boolean {
-  if (!plan) return false;
-  return (FEATURE_GATING[feature] as readonly SubscriptionPlan[]).includes(plan);
-}
-
-export function canUpgrade(
-  currentPlan: SubscriptionPlan,
-): SubscriptionPlan | null {
-  if (currentPlan === "ALL_ACCESS_MONTHLY") return "ALL_ACCESS_ANNUAL";
-  return null;
-}
-
-export function canDowngrade(
-  currentPlan: SubscriptionPlan,
-): SubscriptionPlan | null {
-  if (currentPlan === "ALL_ACCESS_ANNUAL") return "ALL_ACCESS_MONTHLY";
-  return null;
-}

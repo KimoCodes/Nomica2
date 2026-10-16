@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CoachProfile } from "@prisma/client";
 import { completeCoachOnboarding } from "@/server/services/onboarding.service";
 import { prisma } from "@/lib/prisma";
 
@@ -29,7 +30,9 @@ describe("completeCoachOnboarding", () => {
     };
 
     vi.mocked(prisma.coachProfile.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.coachProfile.create).mockResolvedValue(profile as any);
+    vi.mocked(prisma.coachProfile.create).mockResolvedValue(
+      profile as unknown as CoachProfile,
+    );
     vi.mocked(prisma.coachProfile.update).mockResolvedValue({
       ...profile,
       bio: "Experienced trainer",
@@ -37,7 +40,7 @@ describe("completeCoachOnboarding", () => {
       yearsExperience: 4,
       certification: "NASM",
       onboardingComplete: true,
-    } as any);
+    } as unknown as CoachProfile);
 
     await expect(
       completeCoachOnboarding("user-123", {

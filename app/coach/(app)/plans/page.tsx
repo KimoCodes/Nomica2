@@ -149,7 +149,10 @@ export default function CoachPlansPage() {
   }, []);
 
   useEffect(() => {
-    loadPlans();
+    const initialLoad = async () => {
+      await loadPlans();
+    };
+    void initialLoad();
   }, [loadPlans]);
 
   const filteredExercisePlans = exercisePlans.filter((p) =>
@@ -244,9 +247,9 @@ export default function CoachPlansPage() {
   }
 
   function updateExercise(index: number, field: keyof ExerciseItem, value: string | number) {
-    const updated = [...exercises];
-    (updated[index] as any)[field] = value;
-    setExercises(updated);
+    setExercises(exercises.map((exercise, i) =>
+      i === index ? { ...exercise, [field]: value } : exercise,
+    ));
   }
 
   function addMeal() {
@@ -258,9 +261,9 @@ export default function CoachPlansPage() {
   }
 
   function updateMeal(index: number, field: keyof MealItem, value: string | number) {
-    const updated = [...meals];
-    (updated[index] as any)[field] = value;
-    setMeals(updated);
+    setMeals(meals.map((meal, i) =>
+      i === index ? { ...meal, [field]: value } : meal,
+    ));
   }
 
   return (

@@ -1,6 +1,6 @@
 # NomiTips
 
-Premium fitness platform for coaches and clients with workout programs, progress tracking, messaging, and subscription management.
+Fitness platform for coaches and clients with a public one-time program catalog, personal program library, workout progress, and coaching tools.
 
 ## Tech Stack
 
@@ -49,8 +49,6 @@ Open [http://localhost:3000](http://localhost:3000)
 | `AUTH_URL` | Base URL (e.g., `http://localhost:3000`) | Your deployment URL |
 | `STRIPE_SECRET_KEY` | Stripe secret key | [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | [Stripe Webhooks](https://dashboard.stripe.com/webhooks) |
-| `STRIPE_PRICE_MONTHLY` | Monthly subscription price ID | [Stripe Products](https://dashboard.stripe.com/products) |
-| `STRIPE_PRICE_ANNUAL` | Annual subscription price ID | [Stripe Products](https://dashboard.stripe.com/products) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key | [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys) |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | [Cloudinary](https://console.cloudinary.com/app/settings/api-keys) |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | [Cloudinary](https://console.cloudinary.com/app/settings/api-keys) |

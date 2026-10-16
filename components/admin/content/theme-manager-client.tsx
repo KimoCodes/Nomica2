@@ -113,7 +113,10 @@ export default function ThemeManagerClient() {
   };
 
   useEffect(() => {
-    loadThemes();
+    const initialLoad = async () => {
+      await loadThemes();
+    };
+    void initialLoad();
   }, []);
 
   const handleCreateTheme = async () => {

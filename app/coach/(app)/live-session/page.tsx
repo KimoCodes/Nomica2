@@ -22,12 +22,6 @@ export default function CoachLiveSessionPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkActiveSession();
-    fetchClients();
-    fetchUserId();
-  }, []);
-
   const fetchUserId = async () => {
     try {
       const res = await fetch("/api/auth/session");
@@ -62,6 +56,13 @@ export default function CoachLiveSessionPage() {
       // Failed to fetch clients
     }
   };
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await Promise.all([checkActiveSession(), fetchClients(), fetchUserId()]);
+    };
+    void initialLoad();
+  }, []);
 
   const startSession = async () => {
     if (!selectedClient) return;

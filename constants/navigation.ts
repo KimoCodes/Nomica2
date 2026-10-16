@@ -16,6 +16,9 @@ export const COACH_NAV = [
 
 export const CLIENT_NAV = [
   { label: "Dashboard", href: "/client", icon: "dashboard" },
+  { label: "My Programs", href: "/client/programs", icon: "programs" },
+  { label: "Orders", href: "/client/orders", icon: "subscription" },
+  { label: "Browse Programs", href: "/programs", icon: "programs" },
   { label: "Workouts", href: "/client/workouts", icon: "workouts" },
   { label: "My Plan", href: "/client/my-plan", icon: "programs" },
   { label: "Sessions", href: "/client/sessions", icon: "check-ins" },
@@ -34,7 +37,6 @@ export const CLIENT_NAV = [
   { label: "Progress", href: "/client/progress", icon: "progress" },
   { label: "Messages", href: "/client/messages", icon: "messages" },
   { label: "Check-ins", href: "/client/check-ins", icon: "check-ins" },
-  { label: "Subscription", href: "/client/subscription", icon: "subscription" },
   { label: "Billing", href: "/client/payments", icon: "subscription" },
   { label: "Settings", href: "/settings", icon: "settings" },
 ] as const;
@@ -50,6 +52,8 @@ export const ADMIN_NAV = [
   { label: "Users", href: "/admin/users", icon: "clients" },
   { label: "Coaches", href: "/admin/coaches", icon: "clients" },
   { label: "Products", href: "/admin/products", icon: "programs" },
+  { label: "Orders", href: "/admin/orders", icon: "subscription" },
+  { label: "Entitlements", href: "/admin/entitlements", icon: "subscription" },
   { label: "Programs", href: "/admin/programs", icon: "programs" },
   { label: "Payments", href: "/admin/payments", icon: "subscription" },
   { label: "Subscriptions", href: "/admin/subscriptions", icon: "subscription" },

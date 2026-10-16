@@ -101,6 +101,7 @@ export function WorkoutTracker({
 
     startTransition(async () => {
       const result = await completeWorkout({
+        clientProgramId,
         programDayId,
         notes: notes || undefined,
         setLogs: allSetLogs,

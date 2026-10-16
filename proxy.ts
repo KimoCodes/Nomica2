@@ -25,10 +25,12 @@ const PUBLIC_PAGE_PREFIXES = [
   "/login", "/register", "/verify-email", "/reset-password",
   "/pricing", "/programs", "/bundles", "/club", "/quiz",
   "/free-guide", "/transformations", "/terms", "/privacy",
-  "/refund-policy", "/coming-soon",
+  "/refund-policy", "/coming-soon", "/cart", "/checkout",
 ];
 
 // API routes that are always public (no auth required)
+// /api/catalog serves public product metadata; ownership is optional and
+// resolved server-side only when a session exists.
 const PUBLIC_API_PREFIXES = [
   "/api/auth",
   "/api/health",
@@ -36,6 +38,7 @@ const PUBLIC_API_PREFIXES = [
   "/api/webhooks",
   "/api/brand-assets",
   "/api/analytics",
+  "/api/catalog",
 ];
 
 // API routes that require authentication but are not role-specific

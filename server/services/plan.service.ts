@@ -1,4 +1,4 @@
-import { PlanStatus, Role } from "@prisma/client";
+import { MealType, MuscleGroup, PlanStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireClientProfile, requireCoachProfile } from "./coach.service";
 
@@ -78,7 +78,7 @@ export async function createExercisePlan(input: CreateExercisePlanInput) {
         create: input.exercises.map((ex) => ({
           exerciseId: ex.exerciseId,
           name: ex.name,
-          muscleGroup: ex.muscleGroup as any,
+          muscleGroup: ex.muscleGroup as MuscleGroup,
           dayOfWeek: ex.dayOfWeek,
           order: ex.order,
           sets: ex.sets,
@@ -180,7 +180,7 @@ export async function updateExercisePlan(planId: string, input: UpdateExercisePl
         personalizedPlanId: planId,
         exerciseId: ex.exerciseId,
         name: ex.name,
-        muscleGroup: ex.muscleGroup as any,
+        muscleGroup: ex.muscleGroup as MuscleGroup,
         dayOfWeek: ex.dayOfWeek,
         order: ex.order,
         sets: ex.sets,
@@ -228,7 +228,7 @@ export async function createNutritionPlan(input: CreateNutritionPlanInput) {
       meals: {
         create: input.meals.map((meal) => ({
           name: meal.name,
-          mealType: meal.mealType as any,
+          mealType: meal.mealType as MealType,
           timeOfDay: meal.timeOfDay,
           order: meal.order,
           foods: meal.foods ? JSON.parse(JSON.stringify(meal.foods)) : undefined,
@@ -329,7 +329,7 @@ export async function updateNutritionPlan(planId: string, input: UpdateNutrition
       data: input.meals.map((meal) => ({
         personalizedPlanId: planId,
         name: meal.name,
-        mealType: meal.mealType as any,
+        mealType: meal.mealType as MealType,
         timeOfDay: meal.timeOfDay,
         order: meal.order,
         foods: meal.foods ? JSON.parse(JSON.stringify(meal.foods)) : undefined,

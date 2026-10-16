@@ -6,14 +6,10 @@ import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
-import { CheckoutButton } from "@/components/checkout-button";
-import {
-  CheckCircle2,
-  ChevronRight,
-  Dumbbell,
-  Package,
-  Shield,
-} from "lucide-react";
+import { CartProductButton } from "@/components/cart/cart-product-button";
+import { auth } from "@/lib/auth";
+import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
+import { CheckCircle2, ChevronRight, Dumbbell, Package } from "lucide-react";
 
 export const runtime = "nodejs";
 
@@ -22,7 +18,9 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const bundle = await getProductBySlug(slug);
-  if (!bundle || bundle.kind !== "BUNDLE") return { title: "Bundle Not Found" };
+  if (!bundle || bundle.kind !== "BUNDLE" || bundle.status !== "PUBLISHED") {
+    return { title: "Bundle Not Found" };
+  }
   return {
     title: bundle.name,
     description: bundle.tagline ?? undefined,
@@ -36,15 +34,28 @@ export default async function BundleDetailPage({ params }: Props) {
   if (!bundle || bundle.kind !== "BUNDLE") notFound();
 
   const products = bundle.bundleItems.map((bi) => bi.item);
+  const session = await auth();
+  const ownedIds = session?.user?.id
+    ? new Set(await getOwnedCatalogProductIds(session.user.id))
+    : new Set<string>();
+  if (
+    bundle.status !== "PUBLISHED" &&
+    !ownedIds.has(bundle.id) &&
+    session?.user?.role !== "ADMIN"
+  ) {
+    notFound();
+  }
+  const ownedCount =
+    products.filter((product) => ownedIds.has(product.id)).length;
   const savings = bundle.compareAtCents
     ? bundle.compareAtCents - bundle.priceCents
     : 0;
   const savingsPercent = bundle.compareAtCents
     ? Math.round(
-        ((bundle.compareAtCents - bundle.priceCents) /
-          bundle.compareAtCents) *
-          100,
-      )
+      ((bundle.compareAtCents - bundle.priceCents) /
+        bundle.compareAtCents) *
+        100,
+    )
     : 0;
 
   return (
@@ -115,17 +126,17 @@ export default async function BundleDetailPage({ params }: Props) {
                   )}
 
                   <div className="mt-6">
-                    <CheckoutButton
-                      type="product"
+                    <CartProductButton
                       productId={bundle.id}
-                      size="lg"
-                      className="w-full"
+                      owned={ownedIds.has(bundle.id)}
+                      disabledMessage={ownedCount > 0
+                        ? `You already own ${ownedCount} of ${products.length} included programs. Incremental bundle pricing is not available yet.`
+                        : undefined}
                     />
                   </div>
 
                   <p className="mt-3 text-center text-xs text-muted-foreground">
-                    <Shield className="mr-1 inline-block size-3" />
-                    30-day money-back guarantee
+                    One-time payment · no automatic renewal
                   </p>
                 </div>
               </div>
@@ -167,7 +178,9 @@ export default async function BundleDetailPage({ params }: Props) {
               {products.map((product, index) => (
                 <div
                   key={product.id}
-                  className={`animate-slide-up stagger-${index + 1} rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`}
+                  className={`animate-slide-up stagger-${
+                    index + 1
+                  } rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -263,29 +276,14 @@ export default async function BundleDetailPage({ params }: Props) {
             </div>
 
             <div className="mt-8">
-              <CheckoutButton
-                type="product"
+              <CartProductButton
                 productId={bundle.id}
-                size="lg"
-                className="mx-auto max-w-md"
+                owned={ownedIds.has(bundle.id)}
+                disabledMessage={ownedCount > 0
+                  ? `You already own ${ownedCount} included program(s). Incremental bundle pricing is not available yet.`
+                  : undefined}
               />
             </div>
-          </div>
-        </section>
-
-        {/* Guarantee */}
-        <section className="px-4 py-16 md:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-primary/10">
-              <Shield className="size-8 text-primary" />
-            </div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              30-Day Money-Back Guarantee
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Try any bundle risk-free. If you&apos;re not satisfied within 30
-              days, we&apos;ll refund your purchase. No questions asked.
-            </p>
           </div>
         </section>
 
@@ -299,12 +297,12 @@ export default async function BundleDetailPage({ params }: Props) {
             <div className="space-y-4">
               {[
                 {
-                  q: "Do I get lifetime access to all programs in the bundle?",
-                  a: "Yes. Once you purchase a bundle, you own all programs forever. No subscriptions, no recurring fees.",
+                  q: "How does access work after I buy?",
+                  a: "The bundle is a one-time purchase with no automatic renewal. Its included programs will appear in My Programs after payment is confirmed, under the access terms shown at checkout.",
                 },
                 {
                   q: "Can I buy a bundle as a gift?",
-                  a: "Absolutely. After purchase, you can share the program access with anyone using their email address.",
+                  a: "Purchases are linked to the account used at checkout. Program access cannot currently be transferred to another account.",
                 },
                 {
                   q: "What if I only want one program from a bundle?",
@@ -312,7 +310,7 @@ export default async function BundleDetailPage({ params }: Props) {
                 },
                 {
                   q: "Are there payment plans available?",
-                  a: "Not currently, but we're working on it. For now, bundles are one-time purchases with instant full access.",
+                  a: "Checkout is a one-time payment. Payment plans and installments are not currently offered.",
                 },
                 {
                   q: "What equipment do I need?",
@@ -338,15 +336,16 @@ export default async function BundleDetailPage({ params }: Props) {
               Ready to Transform?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join women who&apos;ve transformed their bodies with
-              NomiTips programs.
+              Join women who&apos;ve transformed their bodies with NomiTips
+              programs.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <CheckoutButton
-                type="product"
+              <CartProductButton
                 productId={bundle.id}
-                size="lg"
-                className="shadow-premium"
+                owned={ownedIds.has(bundle.id)}
+                disabledMessage={ownedCount > 0
+                  ? `You already own ${ownedCount} included program(s). Incremental bundle pricing is not available yet.`
+                  : undefined}
               />
               <Link
                 href="/quiz"

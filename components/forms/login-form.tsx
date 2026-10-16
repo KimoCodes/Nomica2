@@ -39,13 +39,6 @@ export function LoginForm() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
-    const plan = searchParams.get("plan");
-    if (registeredParam === "true" && plan) {
-      sessionStorage.setItem("selectedPlan", plan);
-    }
-  }, [searchParams, registeredParam]);
-
-  useEffect(() => {
     fetch("/api/auth/csrf")
       .then((r) => r.json())
       .then((data) => {
@@ -102,14 +95,15 @@ export function LoginForm() {
       return;
     }
 
-    const redirectTo = preCheck.data?.redirectTo ?? "/client";
-
-    const selectedPlan = sessionStorage.getItem("selectedPlan");
-    const callbackUrl = selectedPlan
-      ? `/client/subscription?plan=${selectedPlan}`
-      : redirectTo;
-
-    sessionStorage.removeItem("selectedPlan");
+    const requestedCallback = searchParams.get("callbackUrl");
+    const isSafeCallback =
+      requestedCallback !== null &&
+      requestedCallback.startsWith("/") &&
+      !requestedCallback.startsWith("//") &&
+      !requestedCallback.startsWith("/\\");
+    const callbackUrl = isSafeCallback
+      ? requestedCallback
+      : preCheck.data?.redirectTo ?? "/client";
 
     const callbackInput = formRef.current?.elements.namedItem("callbackUrl") as HTMLInputElement;
     if (callbackInput) callbackInput.value = callbackUrl;

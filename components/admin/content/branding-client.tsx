@@ -103,7 +103,10 @@ export default function BrandingClient() {
   };
 
   useEffect(() => {
-    loadAssets();
+    const initialLoad = async () => {
+      await loadAssets();
+    };
+    void initialLoad();
   }, []);
 
   const handleUpload = async (assetType: string) => {

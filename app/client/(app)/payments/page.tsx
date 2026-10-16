@@ -1,22 +1,12 @@
 import { Role } from "@prisma/client";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSubscriptionForClient } from "@/server/services/subscription.service";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { StripePortalButton } from "./stripe-portal-button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  CreditCard,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, CheckCircle2, Clock, CreditCard } from "lucide-react";
 
 export default async function ClientPaymentsPage() {
   const session = await requireRole([Role.CLIENT]);
@@ -40,8 +30,7 @@ export default async function ClientPaymentsPage() {
     }),
   ]);
 
-  const hasStripeCustomer =
-    fullSubscription?.stripeCustomerId &&
+  const hasStripeCustomer = fullSubscription?.stripeCustomerId &&
     !fullSubscription.stripeCustomerId.startsWith("manual_");
 
   return (
@@ -55,7 +44,8 @@ export default async function ClientPaymentsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Billing</h2>
           <p className="mt-1 text-muted-foreground">
-            Manage your subscription, payment method, and view invoices.
+            Review historical billing records and manage any legacy recurring
+            billing.
           </p>
         </div>
 
@@ -107,11 +97,11 @@ export default async function ClientPaymentsPage() {
                   <p className="text-2xl font-bold">
                     {fullSubscription?.currentPeriodEnd
                       ? new Date(
-                          fullSubscription.currentPeriodEnd,
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })
+                        fullSubscription.currentPeriodEnd,
+                      ).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
                       : "—"}
                   </p>
                 </div>
@@ -129,11 +119,14 @@ export default async function ClientPaymentsPage() {
             <CardContent className="flex items-center gap-3 p-4">
               <AlertTriangle className="size-5 text-warning" />
               <div>
-                <p className="font-medium">Subscription scheduled for cancellation</p>
+                <p className="font-medium">
+                  Subscription scheduled for cancellation
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Your subscription will end on{" "}
                   {fullSubscription.currentPeriodEnd
-                    ? new Date(fullSubscription.currentPeriodEnd).toLocaleDateString()
+                    ? new Date(fullSubscription.currentPeriodEnd)
+                      .toLocaleDateString()
                     : "the end of the billing period"}
                   . You can reactivate before then.
                 </p>
@@ -163,26 +156,33 @@ export default async function ClientPaymentsPage() {
             <CardTitle className="text-base">Manage Billing</CardTitle>
           </CardHeader>
           <CardContent>
-            {hasStripeCustomer ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Use Stripe&apos;s secure billing portal to update your payment
-                  method, view invoices, download receipts, and manage your
-                  subscription.
-                </p>
-                <StripePortalButton />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
-                <CreditCard className="mb-3 size-10 text-muted-foreground/30" />
-                <p className="text-sm font-medium">No billing account</p>
-                <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                  {fullSubscription?.status
-                    ? "Your subscription was granted by a coach or administrator. Contact them to make changes."
-                    : "Subscribe to a plan to manage your billing through Stripe."}
-                </p>
-              </div>
-            )}
+            {hasStripeCustomer
+              ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    New recurring plans are no longer available. You can cancel
+                    an existing recurring plan from its legacy subscription
+                    page.
+                  </p>
+                  <Link
+                    href="/client/subscription"
+                    className="inline-flex rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    Review or cancel legacy billing
+                  </Link>
+                </div>
+              )
+              : (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
+                  <CreditCard className="mb-3 size-10 text-muted-foreground/30" />
+                  <p className="text-sm font-medium">No billing account</p>
+                  <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                    {fullSubscription?.status
+                      ? "Your subscription was granted by a coach or administrator. Contact them to make changes."
+                      : "One-time program purchases appear in your order history."}
+                  </p>
+                </div>
+              )}
           </CardContent>
         </Card>
 
@@ -194,7 +194,8 @@ export default async function ClientPaymentsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                You have {paymentCount} recorded payment{paymentCount === 1 ? "" : "s"}.
+                You have {paymentCount}{" "}
+                recorded payment{paymentCount === 1 ? "" : "s"}.
                 {hasStripeCustomer && (
                   <>
                     {" "}

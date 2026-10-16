@@ -1,4 +1,5 @@
 import { Role } from "@prisma/client";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import {
   getUserSubscription,
@@ -7,9 +8,8 @@ import {
 import { getClientFreeTrial } from "@/server/services/free-trial.service";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { PLANS, formatPrice, formatPlanPrice, canUpgrade, canDowngrade } from "@/constants/subscriptions";
+import { PLANS, formatPrice, formatPlanPrice } from "@/constants/subscriptions";
 import { SubscriptionActions } from "./subscription-actions";
-import { CheckoutButton } from "@/components/checkout-button";
 import {
   Card,
   CardContent,
@@ -25,29 +25,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, CheckCircle2, Clock, AlertTriangle, Gift, ExternalLink } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, AlertTriangle, Gift } from "lucide-react";
 
-export default async function ClientSubscriptionPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ plan?: string }>;
-}) {
+export default async function ClientSubscriptionPage() {
   const session = await requireRole([Role.CLIENT]);
   const [subscription, freeTrial] = await Promise.all([
     getUserSubscription(session.user.id),
     getClientFreeTrial(session.user.id),
   ]);
-  const params = await searchParams;
-  const selectedPlan = params.plan;
-
   // Check for expiring subscriptions and notify (fire and forget)
   checkAndNotifyExpiringSubscriptions().catch(() => {});
 
   const planDef = subscription ? PLANS.find((p) => p.id === subscription.plan) : null;
-  const hasRealStripeSub = !!subscription?.stripeSubscriptionId && !subscription.stripeCustomerId.startsWith("manual_");
-  const upgradePlan = subscription && hasRealStripeSub ? canUpgrade(subscription.plan) : null;
-  const downgradePlan = subscription && hasRealStripeSub ? canDowngrade(subscription.plan) : null;
-
+  const hasRealStripeSub = Boolean(
+    subscription?.stripeSubscriptionId &&
+    !subscription.stripeCustomerId.startsWith("manual_"),
+  );
   const now = new Date();
   const trialDaysRemaining = freeTrial
     ? Math.max(0, Math.ceil((freeTrial.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
@@ -65,7 +58,8 @@ export default async function ClientSubscriptionPage({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Subscription</h2>
           <p className="mt-1 text-muted-foreground">
-            Manage your subscription plan and billing.
+            Read-only view of any legacy subscription. New access is purchased
+            as one-time programs in the catalog.
           </p>
         </div>
 
@@ -162,7 +156,7 @@ export default async function ClientSubscriptionPage({
                   {subscription.currentPeriodEnd
                     ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
                     : "the end of the billing period"}
-                  . You can reactivate it before then.
+                  . Contact support if you have questions about this legacy subscription.
                 </p>
               </div>
             </CardContent>
@@ -208,83 +202,24 @@ export default async function ClientSubscriptionPage({
             {planDef ? (
               <SubscriptionActions
                 currentPlan={subscription!.plan}
-                upgradePlan={upgradePlan}
-                downgradePlan={downgradePlan}
                 isCanceled={subscription!.cancelAtPeriodEnd}
                 subscriptionId={subscription!.id}
-                hasStripeId={!!subscription?.stripeCustomerId && !subscription.stripeCustomerId.startsWith("manual_")}
               />
             ) : (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
                 <CreditCard className="mb-3 size-10 text-muted-foreground/30" />
                 <p className="text-sm font-medium">No active subscription</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Choose a plan below to get started with NomiTips.
+                  Browse programs and pay once for the training you choose.
                 </p>
-                <a
-                  href="#available-plans"
+                <Link
+                  href="/programs"
                   className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  View Plans
-                </a>
+                  Explore Programs
+                </Link>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card id="available-plans" className="animate-slide-up stagger-5">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Available Plans</CardTitle>
-            <Badge variant="secondary">{PLANS.length}</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {PLANS.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 ${
-                    subscription?.plan === plan.id
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  {plan.highlighted && (
-                    <Badge className="absolute -top-2.5 left-4">{plan.badge}</Badge>
-                  )}
-                  {subscription?.plan === plan.id && (
-                    <Badge variant="secondary" className="absolute -top-2.5 right-4">
-                      Current
-                    </Badge>
-                  )}
-                  <p className="text-lg font-bold">{plan.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-                  <p className="mt-3 text-3xl font-bold">
-                    {formatPlanPrice(plan)}
-                  </p>
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-center gap-2 text-sm text-foreground"
-                      >
-                        <CheckCircle2 className="size-4 text-success" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  {!subscription || subscription.plan !== plan.id ? (
-                    <div className="mt-4">
-                      <CheckoutButton
-                        type="subscription"
-                        plan={plan.id === "ALL_ACCESS_MONTHLY" ? "monthly" : "annual"}
-                        variant={selectedPlan === plan.id ? "default" : "outline"}
-                        size="default"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
 

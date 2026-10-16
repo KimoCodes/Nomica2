@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import Link from "next/link";
 import { CLIENT_NAV } from "@/constants/navigation";
 import {
   MUSCLE_GROUP_LABELS,
@@ -44,11 +45,13 @@ type Exercise = {
 
 type ExerciseLibraryClientProps = {
   exercises: Exercise[];
+  libraryLocked?: boolean;
   userName: string | null;
 };
 
 export function ExerciseLibraryClient({
   exercises,
+  libraryLocked = false,
   userName,
 }: ExerciseLibraryClientProps) {
   const [search, setSearch] = useState("");
@@ -132,6 +135,21 @@ export function ExerciseLibraryClient({
             Search by name or muscle group.
           </p>
         </div>
+
+        {libraryLocked && (
+          <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              You&apos;re viewing a preview. Full instructions and video
+              demonstrations unlock with any purchased program.
+            </p>
+            <Link
+              href="/programs"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Explore programs
+            </Link>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -304,9 +322,15 @@ export function ExerciseLibraryClient({
                       {DIFFICULTY_LABELS[exercise.difficulty as keyof typeof DIFFICULTY_LABELS]}
                     </Badge>
                   </div>
-                  <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                    {exercise.instructions}
-                  </p>
+                  {exercise.instructions ? (
+                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                      {exercise.instructions}
+                    </p>
+                  ) : (
+                    <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted-foreground/70">
+                      Full instructions are included with a purchased program.
+                    </p>
+                  )}
                   {exercise.videoUrl && (
                     <button
                       type="button"

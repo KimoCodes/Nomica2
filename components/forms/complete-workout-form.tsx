@@ -12,11 +12,13 @@ import { Trophy, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 
 type CompleteWorkoutFormProps = {
+  clientProgramId: string;
   programDayId: string;
   disabled?: boolean;
 };
 
 export function CompleteWorkoutForm({
+  clientProgramId,
   programDayId,
   disabled,
 }: CompleteWorkoutFormProps) {
@@ -37,6 +39,7 @@ export function CompleteWorkoutForm({
       personalRecords?: { exerciseName: string; detail: string }[];
     }> = await trackLoading(() =>
       completeWorkout({
+        clientProgramId,
         programDayId,
         notes: (formData.get("notes") as string) || undefined,
       }),

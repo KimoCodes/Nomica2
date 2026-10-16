@@ -15,10 +15,6 @@ export default function LiveSessionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkActiveSession();
-  }, []);
-
   const checkActiveSession = async () => {
     try {
       const [sessionRes, authRes] = await Promise.all([
@@ -38,6 +34,13 @@ export default function LiveSessionPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await checkActiveSession();
+    };
+    void initialLoad();
+  }, []);
 
   const startSession = async () => {
     setError(null);

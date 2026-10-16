@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SubscriptionPlan } from "@prisma/client";
-import {
-  changePlanAction,
-  cancelSubscriptionAction,
-  reactivateSubscriptionAction,
-  createCustomerPortalAction,
-} from "@/actions/subscription.actions";
+import { cancelSubscriptionAction } from "@/actions/subscription.actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,22 +17,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  ArrowUpCircle,
-  ArrowDownCircle,
-  XCircle,
-  RotateCcw,
-  Loader2,
-  CreditCard,
-  ExternalLink,
-} from "lucide-react";
-
+import { Loader2, XCircle } from "lucide-react";
 import { trackLoading } from "@/components/ui/loading-bar";
 
 type SubscriptionActionsProps = {
   currentPlan: SubscriptionPlan;
-  upgradePlan: SubscriptionPlan | null;
-  downgradePlan: SubscriptionPlan | null;
   isCanceled: boolean;
   subscriptionId: string;
   hasStripeId?: boolean;
@@ -45,52 +29,11 @@ type SubscriptionActionsProps = {
 
 export function SubscriptionActions({
   currentPlan,
-  upgradePlan,
-  downgradePlan,
   isCanceled,
-  subscriptionId: _subscriptionId,
-  hasStripeId = false,
 }: SubscriptionActionsProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  async function handleUpgrade() {
-    if (!upgradePlan) return;
-    setError(null);
-    setIsPending(true);
-    try {
-      const result = await trackLoading(() => changePlanAction(upgradePlan));
-      if (result.success) {
-        router.refresh();
-      } else {
-        setError(result.error?.message ?? "Failed to upgrade plan");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setIsPending(false);
-    }
-  }
-
-  async function handleDowngrade() {
-    if (!downgradePlan) return;
-    setError(null);
-    setIsPending(true);
-    try {
-      const result = await trackLoading(() => changePlanAction(downgradePlan));
-      if (result.success) {
-        router.refresh();
-      } else {
-        setError(result.error?.message ?? "Failed to downgrade plan");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setIsPending(false);
-    }
-  }
 
   async function handleCancel() {
     setError(null);
@@ -100,178 +43,53 @@ export function SubscriptionActions({
       if (result.success) {
         router.refresh();
       } else {
-        setError(result.error?.message ?? "Failed to cancel subscription");
+        setError(result.error?.message ?? "Could not cancel billing. Please contact support.");
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Could not cancel billing. Please try again.");
     } finally {
       setIsPending(false);
-    }
-  }
-
-  async function handleReactivate() {
-    setError(null);
-    setIsPending(true);
-    try {
-      const result = await trackLoading(() => reactivateSubscriptionAction());
-      if (result.success) {
-        router.refresh();
-      } else {
-        setError(result.error?.message ?? "Failed to reactivate subscription");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setIsPending(false);
-    }
-  }
-
-  async function handleManageBilling() {
-    setPortalLoading(true);
-    try {
-      const result = await createCustomerPortalAction();
-      if (result.url) {
-        window.location.href = result.url;
-      } else if (result.error) {
-        setError(result.error.message);
-      }
-    } catch {
-      setError("Failed to open billing portal. Please try again.");
-    } finally {
-      setPortalLoading(false);
     }
   }
 
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div role="alert" className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
-
       <div className="flex items-center justify-between">
         <div>
           <p className="text-lg font-bold">{currentPlan.replace(/_/g, " ")}</p>
-          <p className="text-sm text-muted-foreground">Your current plan</p>
+          <p className="text-sm text-muted-foreground">Legacy billing record</p>
         </div>
-        <Badge variant="secondary">{isCanceled ? "Canceling" : "Active"}</Badge>
+        <Badge variant="secondary">{isCanceled ? "Cancellation scheduled" : "Active"}</Badge>
       </div>
-
-      <div className="flex flex-wrap gap-3">
-        {hasStripeId && (
-          <Button
-            variant="outline"
-            onClick={handleManageBilling}
-            disabled={portalLoading || isPending}
-          >
-            {portalLoading ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <CreditCard className="mr-2 size-4" />
-            )}
-            Manage Billing
-            <ExternalLink className="ml-1.5 size-3" />
-          </Button>
-        )}
-
-        {upgradePlan && !isCanceled && (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button variant="default" disabled={isPending}>
-                  {isPending ? (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  ) : (
-                    <ArrowUpCircle className="mr-2 size-4" />
-                  )}
-                  Upgrade to Annual
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Upgrade your plan?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  You will be upgraded to the Annual plan. A prorated payment will be
-                  processed immediately for the remainder of your billing period.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleUpgrade}>
-                  Confirm upgrade
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-
-        {downgradePlan && !isCanceled && (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button variant="outline" disabled={isPending}>
-                  <ArrowDownCircle className="mr-2 size-4" />
-                  Downgrade to Monthly
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Downgrade your plan?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  You will be downgraded to the Monthly plan at the end of your current
-                  billing period. You will lose access to the annual rate.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDowngrade}>
-                  Confirm downgrade
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-
-        {isCanceled ? (
-          <Button variant="outline" onClick={handleReactivate} disabled={isPending}>
-            {isPending ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <RotateCcw className="mr-2 size-4" />
-            )}
-            Reactivate
-          </Button>
-        ) : (
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button variant="destructive" disabled={isPending}>
-                  <XCircle className="mr-2 size-4" />
-                  Cancel subscription
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Your subscription will remain active until the end of the current
-                  billing period. You can reactivate it before then.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Keep subscription</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCancel}>
-                  Confirm cancellation
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
+      {!isCanceled && (
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button variant="destructive" disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <XCircle className="mr-2 size-4" />}
+                Cancel recurring billing
+              </Button>
+            }
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel recurring billing?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your current paid period remains active through its end date. No new renewals will be scheduled.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep current billing</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCancel}>Confirm cancellation</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

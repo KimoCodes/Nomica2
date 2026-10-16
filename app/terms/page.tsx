@@ -56,13 +56,15 @@ export default function TermsPage() {
 
             <section>
               <h2 className="mb-3 text-lg font-semibold text-foreground">
-                4. Purchases and Subscriptions
+                4. Purchases
               </h2>
               <p>
-                One-time purchases grant lifetime access to the purchased program or
-                bundle. Subscriptions (All-Access Monthly or Annual) provide access
-                to the full catalog for the duration of the billing period. Prices
-                are listed in USD and do not include applicable taxes.
+                Every program, challenge, and bundle is a one-time purchase that
+                grants lifetime access to the purchased content. There are no
+                recurring charges and no automatic renewals. Prices are listed
+                in USD and do not include applicable taxes. Legacy subscriptions
+                purchased before October 2026 remain governed by their original
+                terms and can be managed from your account&apos;s Billing page.
               </p>
             </section>
 

@@ -22,7 +22,9 @@ import {
   textBlock,
 } from "@/server/services/email-templates";
 import type Stripe from "stripe";
+import type { Prisma } from "@prisma/client";
 import logger from "@/lib/logger";
+import { resolveEntitledProductIds } from "@/server/services/order-pricing";
 
 export const runtime = "nodejs";
 
@@ -86,14 +88,28 @@ export async function POST(req: NextRequest) {
     create: {
       stripeEventId: event.id,
       type: event.type,
-      payload: JSON.parse(JSON.stringify(event.data.object)) as any,
+      payload: JSON.parse(
+        JSON.stringify(event.data.object),
+      ) as Prisma.InputJsonValue,
     },
   });
 
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.id);
+        break;
+
+      case "checkout.session.async_payment_succeeded":
+        await handleOrderCheckoutPaid(event.data.object as Stripe.Checkout.Session, event.id);
+        break;
+
+      case "checkout.session.async_payment_failed":
+        await handleOrderCheckoutFailed(event.data.object as Stripe.Checkout.Session);
+        break;
+
+      case "charge.refunded":
+        await handleOrderRefunded(event.data.object as Stripe.Charge);
         break;
 
       case "customer.subscription.created":
@@ -138,10 +154,29 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId: string) {
   const metadata = session.metadata;
 
+  if (metadata?.kind === "order") {
+    await handleOrderCheckoutPaid(session, eventId);
+    return;
+  }
+
   if (metadata?.kind === "one_time" && metadata.productId && metadata.userId) {
+    if (session.mode !== "payment" || session.payment_status !== "paid") {
+      return;
+    }
+    if (session.amount_total === null || session.amount_total < 0 || (session.currency ?? "").toLowerCase() !== "usd") {
+      throw new Error("INVALID_LEGACY_PURCHASE_PAYMENT");
+    }
+    const [user, product] = await Promise.all([
+      prisma.user.findUnique({ where: { id: metadata.userId }, select: { id: true } }),
+      prisma.product.findUnique({ where: { id: metadata.productId }, select: { id: true } }),
+    ]);
+    if (!user || !product) {
+      throw new Error("LEGACY_PURCHASE_REFERENCE_NOT_FOUND");
+    }
+
     await prisma.purchase.upsert({
       where: { providerSessionId: session.id },
       update: {
@@ -153,7 +188,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         userId: metadata.userId,
         productId: metadata.productId,
         status: "COMPLETED",
-        amountCents: session.amount_total ?? 0,
+        amountCents: session.amount_total,
         currency: session.currency ?? "usd",
         provider: "stripe",
         providerSessionId: session.id,
@@ -168,6 +203,207 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (metadata?.kind === "subscription") {
     await handleSubscriptionFromCheckout(session);
   }
+}
+
+async function handleOrderCheckoutPaid(
+  session: Stripe.Checkout.Session,
+  eventId: string,
+) {
+  const metadata = session.metadata;
+  if (metadata?.kind !== "order" || !metadata.orderId || !metadata.userId) {
+    throw new Error("INVALID_ORDER_CHECKOUT_METADATA");
+  }
+  if (session.mode !== "payment") {
+    throw new Error("ORDER_CHECKOUT_MODE_MISMATCH");
+  }
+  if (session.payment_status !== "paid") {
+    // Delayed payment methods are completed by async_payment_succeeded.
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+  const providerPaymentId = paymentIntentId ?? session.id;
+
+  await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: metadata.orderId },
+      include: { items: true },
+    });
+    if (!order || order.userId !== metadata.userId) {
+      throw new Error("ORDER_NOT_FOUND");
+    }
+    if (order.stripeCheckoutSessionId && order.stripeCheckoutSessionId !== session.id) {
+      throw new Error("CHECKOUT_SESSION_MISMATCH");
+    }
+    if (
+      session.amount_total === null ||
+      session.amount_total !== order.totalCents ||
+      (session.currency ?? "").toLowerCase() !== order.currency.toLowerCase()
+    ) {
+      throw new Error("ORDER_PAYMENT_AMOUNT_MISMATCH");
+    }
+    if (order.items.length === 0) {
+      throw new Error("ORDER_HAS_NO_ITEMS");
+    }
+
+    if (order.status !== "PAID") {
+      if (order.status !== "PENDING") {
+        throw new Error("ORDER_NOT_PAYABLE");
+      }
+
+      const transition = await tx.order.updateMany({
+        where: { id: order.id, status: "PENDING" },
+        data: {
+          status: "PAID",
+          paidAt: new Date(),
+          stripeCheckoutSessionId: session.id,
+          stripePaymentIntentId: paymentIntentId ?? null,
+        },
+      });
+      if (transition.count !== 1) {
+        const latest = await tx.order.findUnique({
+          where: { id: order.id },
+          select: { status: true },
+        });
+        if (latest?.status !== "PAID") {
+          throw new Error("ORDER_STATE_TRANSITION_FAILED");
+        }
+      }
+    }
+
+    await tx.orderPayment.upsert({
+      where: { providerPaymentId },
+      update: {
+        orderId: order.id,
+        amountCents: session.amount_total!,
+        currency: session.currency ?? order.currency,
+        status: "succeeded",
+        providerEventId: eventId,
+        metadata: { checkoutSessionId: session.id },
+      },
+      create: {
+        orderId: order.id,
+        provider: "stripe",
+        providerPaymentId,
+        amountCents: session.amount_total!,
+        currency: session.currency ?? order.currency,
+        status: "succeeded",
+        providerEventId: eventId,
+        metadata: { checkoutSessionId: session.id },
+      },
+    });
+
+    const entitlements = order.items.flatMap((item) => {
+      const productIds = resolveEntitledProductIds(item);
+      return productIds.map((productId) => ({
+        userId: order.userId,
+        productId,
+        orderItemId: item.id,
+        grantType: item.productKind === "BUNDLE" ? "BUNDLE" as const : "PURCHASE" as const,
+        status: "ACTIVE" as const,
+        idempotencyKey: `order-item:${item.id}:product:${productId}`,
+        metadata: { orderId: order.id, checkoutSessionId: session.id },
+      }));
+    });
+
+    await tx.entitlement.createMany({ data: entitlements, skipDuplicates: true });
+
+    const clientProfile = await tx.clientProfile.findUnique({
+      where: { userId: order.userId },
+      select: { id: true },
+    });
+    if (clientProfile) {
+      const entitlementRows = await tx.entitlement.findMany({
+        where: { idempotencyKey: { in: entitlements.map((item) => item.idempotencyKey) } },
+        select: { id: true, productId: true },
+      });
+      const contentProducts = await tx.product.findMany({
+        where: { id: { in: entitlementRows.map((item) => item.productId) } },
+        select: { id: true, programId: true },
+      });
+      const programIds = new Map(contentProducts.map((item) => [item.id, item.programId]));
+
+      for (const entitlement of entitlementRows) {
+        const programId = programIds.get(entitlement.productId);
+        if (!programId) continue;
+        await tx.clientProgram.upsert({
+          where: { entitlementId: entitlement.id },
+          update: {},
+          create: {
+            clientProfileId: clientProfile.id,
+            programId,
+            entitlementId: entitlement.id,
+          },
+        });
+      }
+    }
+  });
+
+  revalidatePath("/client");
+  revalidatePath("/client/programs");
+  logger.info(
+    { event: "order.paid", orderId: metadata.orderId, userId: metadata.userId, stripeEventId: eventId, route: "webhooks/stripe" },
+    "One-time order verified and product entitlements granted",
+  );
+}
+
+async function handleOrderCheckoutFailed(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata;
+  if (metadata?.kind !== "order" || !metadata.orderId) return;
+
+  await prisma.order.updateMany({
+    where: { id: metadata.orderId, status: "PENDING" },
+    data: { status: "PAYMENT_FAILED" },
+  });
+}
+
+async function handleOrderRefunded(charge: Stripe.Charge) {
+  const paymentIntentId = typeof charge.payment_intent === "string"
+    ? charge.payment_intent
+    : charge.payment_intent?.id;
+  if (!paymentIntentId) return;
+
+  const payment = await prisma.orderPayment.findUnique({
+    where: { providerPaymentId: paymentIntentId },
+    select: { id: true, orderId: true },
+  });
+  if (!payment) return;
+
+  const fullyRefunded = charge.amount_refunded >= charge.amount;
+  await prisma.$transaction(async (tx) => {
+    await tx.orderPayment.update({
+      where: { id: payment.id },
+      data: { status: fullyRefunded ? "refunded" : "partially_refunded" },
+    });
+
+    if (!fullyRefunded) {
+      await tx.order.updateMany({
+        where: { id: payment.orderId, status: "PAID" },
+        data: { status: "PARTIALLY_REFUNDED" },
+      });
+      return;
+    }
+
+    const items = await tx.orderItem.findMany({
+      where: { orderId: payment.orderId },
+      select: { id: true },
+    });
+    const orderItemIds = items.map((item) => item.id);
+    await tx.order.update({
+      where: { id: payment.orderId },
+      data: { status: "REFUNDED" },
+    });
+    await tx.entitlement.updateMany({
+      where: { orderItemId: { in: orderItemIds }, status: "ACTIVE" },
+      data: {
+        status: "REVOKED",
+        revokedAt: new Date(),
+        reason: "Order fully refunded",
+      },
+    });
+  });
 }
 
 async function handleSubscriptionFromCheckout(session: Stripe.Checkout.Session) {

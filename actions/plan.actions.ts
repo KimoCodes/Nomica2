@@ -1,6 +1,6 @@
 "use server";
 
-import { Role } from "@prisma/client";
+import { PlanStatus, Role } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -37,6 +37,12 @@ import {
 } from "@/server/validators/plan.schema";
 import type { ApiResponse } from "@/types";
 import logger from "@/lib/logger";
+
+const PLAN_STATUSES = new Set<string>(Object.values(PlanStatus));
+
+function parsePlanStatus(value: string | undefined): PlanStatus | undefined {
+  return value && PLAN_STATUSES.has(value) ? (value as PlanStatus) : undefined;
+}
 
 // ─── Create Exercise Plan ─────────────────────────────────────────────────────
 
@@ -177,7 +183,7 @@ export async function listCoachExercisePlansAction(filter?: {
     const coachProfile = await requireCoachProfile(session.user.id);
     const result = await listCoachExercisePlans(coachProfile.id, {
       ...filter,
-      status: filter?.status as any,
+      status: parsePlanStatus(filter?.status),
     });
 
     return createSuccessResponse(result);
@@ -383,7 +389,7 @@ export async function listCoachNutritionPlansAction(filter?: {
     const coachProfile = await requireCoachProfile(session.user.id);
     const result = await listCoachNutritionPlans(coachProfile.id, {
       ...filter,
-      status: filter?.status as any,
+      status: parsePlanStatus(filter?.status),
     });
 
     return createSuccessResponse(result);

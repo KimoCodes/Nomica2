@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
-import { ACTIVE_STATUSES } from "@/constants/subscriptions";
 import { getClientDashboardSummary } from "@/server/services/dashboard.service";
 import { getClientDashboardWorkoutSummary } from "@/server/services/workout.service";
 import { getUnreadMessageCount } from "@/server/services/message.service";
@@ -46,18 +45,11 @@ export default async function ClientDashboardPage() {
       ? "Reviewed"
       : "Submitted"
     : "Due this week";
-  const subStatus = dashboard.subscription?.status ?? null;
   const now = new Date();
   const trialDaysRemaining = freeTrial
     ? Math.max(0, Math.ceil((freeTrial.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
   const hasActiveTrial = trialDaysRemaining > 0;
-  const hasActiveSubscription = subStatus !== null && ACTIVE_STATUSES.includes(subStatus);
-  const subscriptionLabel = hasActiveSubscription
-    ? subStatus!.replaceAll("_", " ")
-    : hasActiveTrial
-      ? "Free Trial"
-      : "None";
 
   return (
     <DashboardLayout
@@ -75,25 +67,24 @@ export default async function ClientDashboardPage() {
                   <Gift className="size-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-semibold">Free Trial Active</p>
+                  <p className="font-semibold">Legacy trial access is active</p>
                   <p className="text-sm text-muted-foreground">
-                    You have {trialDaysRemaining} day{trialDaysRemaining === 1 ? "" : "s"} left.
-                    Subscribe to keep access after your trial expires.
+                    You have {trialDaysRemaining} day{trialDaysRemaining === 1 ? "" : "s"} of this existing access remaining. Purchased programs stay in My Programs.
                   </p>
                 </div>
               </div>
               <Link
-                href="/client/subscription"
+                href="/client/programs"
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:-translate-y-0.5"
               >
-                View plans
+                View My Programs
                 <ArrowRight className="size-4" />
               </Link>
             </CardContent>
           </Card>
         )}
 
-        {!hasActiveSubscription && !hasActiveTrial && (
+        {!hasActiveTrial && !dashboard.subscription && (
           <Card className="border-primary/20 bg-primary/5 animate-slide-up">
             <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
@@ -101,17 +92,17 @@ export default async function ClientDashboardPage() {
                   <Crown className="size-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-semibold">Unlock your full potential</p>
+                  <p className="font-semibold">Your free account is ready</p>
                   <p className="text-sm text-muted-foreground">
-                    Choose a plan to access workouts, progress tracking, nutrition, and more.
+                    Explore the full catalog, compare prices, and choose a program whenever you’re ready.
                   </p>
                 </div>
               </div>
               <Link
-                href="/client/subscription"
+                href="/programs"
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:-translate-y-0.5"
               >
-                Choose a plan
+                Explore Programs
                 <ArrowRight className="size-4" />
               </Link>
             </CardContent>
@@ -153,9 +144,13 @@ export default async function ClientDashboardPage() {
                     <ArrowRight className="size-3" />
                   </Link>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Your coach will assign a program soon
-                  </p>
+                  <Link
+                    href="/client/programs"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    Open My Programs
+                    <ArrowRight className="size-3" />
+                  </Link>
                 )}
               </div>
             </CardContent>
@@ -272,7 +267,7 @@ export default async function ClientDashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="grid grid-cols-2 gap-3 text-center">
                     <div className="rounded-xl bg-muted/50 p-3">
                       <p className="text-2xl font-bold">
                         {dashboard.weeklyCompletions}
@@ -285,21 +280,30 @@ export default async function ClientDashboardPage() {
                       </p>
                       <p className="text-xs text-muted-foreground">Weight (kg)</p>
                     </div>
-                    <div className="rounded-xl bg-muted/50 p-3">
-                      <p className="text-2xl font-bold capitalize">
-                        {subscriptionLabel}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Subscription</p>
-                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
                   <Dumbbell className="mb-3 size-10 text-muted-foreground/30" />
-                  <p className="text-sm font-medium">No program assigned yet</p>
+                  <p className="text-sm font-medium">No active program yet</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Your coach will assign your first training program soon.
+                    Open a program you own in My Programs, or explore the
+                    catalog to find your next training.
                   </p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    <Link
+                      href="/client/programs"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/50 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                    >
+                      My Programs
+                    </Link>
+                    <Link
+                      href="/programs"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border/50 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                    >
+                      Explore Programs
+                    </Link>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -310,6 +314,20 @@ export default async function ClientDashboardPage() {
               <CardTitle className="text-base">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              <Link
+                href="/client/programs"
+                className="flex items-center gap-3 rounded-xl border border-border/50 p-3 transition-all hover:bg-accent/30 hover:-translate-y-0.5"
+              >
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <Dumbbell className="size-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">My Programs</p>
+                  <p className="text-xs text-muted-foreground">
+                    Continue what you own
+                  </p>
+                </div>
+              </Link>
               <Link
                 href="/client/workouts"
                 className="flex items-center gap-3 rounded-xl border border-border/50 p-3 transition-all hover:bg-accent/30 hover:-translate-y-0.5"

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Role } from "@prisma/client";
 import { registerUser } from "@/actions/auth.actions";
 import { registerSchema } from "@/server/validators/auth.schema";
@@ -24,7 +24,6 @@ import {
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
-import { PLANS, formatPlanPrice } from "@/constants/subscriptions";
 
 type FieldErrors = {
   name?: string;
@@ -34,8 +33,6 @@ type FieldErrors = {
 
 export function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const defaultPlan = searchParams.get("plan") || "ALL_ACCESS_MONTHLY";
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -86,11 +83,7 @@ export function RegisterForm() {
       return;
     }
 
-    const plan = formData.get("plan") as string;
-    const redirectUrl = plan
-      ? `/login?registered=true&plan=${plan}`
-      : "/login?registered=true";
-    router.push(redirectUrl);
+    router.push("/login?registered=true");
   }
 
   return (
@@ -98,7 +91,7 @@ export function RegisterForm() {
       <CardHeader className="px-0 pb-6">
         <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Create your account and start training
+          Free to join. Browse every program and only pay for what you choose.
         </p>
       </CardHeader>
 
@@ -202,37 +195,10 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Choose your plan</Label>
-            <input type="hidden" name="plan" value={defaultPlan} />
-            <div className="grid gap-3">
-              {PLANS.map((plan) => (
-                <label
-                  key={plan.id}
-                  className={`relative flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all hover:border-primary/50 [&:has(input:checked)]:border-primary [&:has(input:checked)]:bg-primary/5`}
-                >
-                  <input
-                    type="radio"
-                    name="plan"
-                    value={plan.id}
-                    defaultChecked={plan.id === defaultPlan}
-                    className="mt-0.5 accent-primary"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{plan.name}</span>
-                      {plan.badge && (
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                          {plan.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {formatPlanPrice(plan)} — {plan.description}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
+            <p className="rounded-xl border border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
+              Creating an account is free. You will not be charged until you
+              choose to buy a program, and each purchase is a one-time payment.
+            </p>
           </div>
         </CardContent>
 

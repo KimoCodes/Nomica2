@@ -6,7 +6,10 @@ export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
+    const syncOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+    const rafId = requestAnimationFrame(syncOnlineStatus);
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -15,6 +18,7 @@ export default function OfflinePage() {
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };

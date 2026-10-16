@@ -1,12 +1,11 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requestCache, invalidateRequestCache } from "@/lib/request-cache";
-import { getStripe, getStripePriceIds } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import {
   notifySubscriptionApproved,
   notifySubscriptionRevoked,
   notifySubscriptionExpiring,
-  notifyPlanChanged,
   notifySubscriptionReactivated,
   notifyCancellationScheduled,
 } from "@/server/services/notification.service";
@@ -35,64 +34,6 @@ export async function getUserSubscription(userId: string) {
       },
     },
   });
-}
-
-export async function changePlan(userId: string, newPlan: SubscriptionPlan) {
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
-  });
-
-  if (!subscription) {
-    throw new Error("No active subscription found");
-  }
-
-  if (subscription.status === "canceled") {
-    throw new Error("Cannot change plan on a canceled subscription");
-  }
-
-  if (subscription.plan === newPlan) {
-    throw new Error("Already on this plan");
-  }
-
-  if (!subscription.stripeSubscriptionId) {
-    throw new Error("No Stripe subscription found. Please subscribe again.");
-  }
-
-  const priceIds = getStripePriceIds();
-  const newPriceId = newPlan === "ALL_ACCESS_MONTHLY" ? priceIds.monthly : priceIds.annual;
-
-  if (!newPriceId || !newPriceId.startsWith("price_")) {
-    throw new Error("Stripe Price IDs are not configured. Please set STRIPE_PRICE_MONTHLY and STRIPE_PRICE_ANNUAL to actual Stripe Price IDs (e.g. price_1ABC...).");
-  }
-
-  const stripe = getStripe();
-  const stripeSub = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
-  const existingItem = stripeSub.items.data[0];
-
-  if (!existingItem) {
-    throw new Error("No subscription item found");
-  }
-
-  await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
-    items: [{ id: existingItem.id, price: newPriceId }],
-    proration_behavior: "create_prorations",
-  });
-
-  const result = await prisma.subscription.update({
-    where: { userId },
-    data: {
-      plan: newPlan,
-      stripePriceId: newPriceId,
-    },
-  });
-
-  invalidateRequestCache(`sub:${userId}`);
-
-  try {
-    await notifyPlanChanged(userId, newPlan);
-  } catch {}
-
-  return result;
 }
 
 export async function cancelSubscription(userId: string) {

@@ -19,10 +19,6 @@ export default function VideoFeedbackPage() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchVideos();
-  }, []);
-
   const fetchVideos = async () => {
     try {
       const res = await fetch("/api/client/video-feedback");
@@ -34,6 +30,13 @@ export default function VideoFeedbackPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const initialLoad = async () => {
+      await fetchVideos();
+    };
+    void initialLoad();
+  }, []);
 
   const handleSubmit = async (exerciseName: string, file: File) => {
     // Upload to Cloudinary first

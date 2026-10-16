@@ -1,6 +1,6 @@
 "use server";
 
-import { Role, ProductKind, ProductFocus } from "@prisma/client";
+import { ProductFocus, ProductKind, ProductStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -26,7 +26,9 @@ type ProductInput = {
   focus?: ProductFocus;
   features: string[];
   imageUrl?: string;
-  isActive: boolean;
+  previewVideoUrl?: string;
+  equipment?: string[];
+  status: ProductStatus;
   sortOrder?: number;
   programId?: string;
 };
@@ -48,7 +50,10 @@ export async function createProductAction(
 
     const existing = await prisma.product.findUnique({ where: { slug } });
     if (existing) {
-      return createErrorResponse("A product with this slug already exists", "VALIDATION_ERROR");
+      return createErrorResponse(
+        "A product with this slug already exists",
+        "VALIDATION_ERROR",
+      );
     }
 
     const product = await prisma.product.create({
@@ -67,7 +72,9 @@ export async function createProductAction(
         focus: input.focus || null,
         features: input.features,
         imageUrl: input.imageUrl || null,
-        isActive: input.isActive,
+        previewVideoUrl: input.previewVideoUrl || null,
+        equipment: input.equipment ?? [],
+        status: input.status,
         sortOrder: input.sortOrder || 0,
         programId: input.programId || null,
       },
@@ -78,7 +85,10 @@ export async function createProductAction(
     revalidatePath("/pricing");
     return createSuccessResponse({ id: product.id });
   } catch (error) {
-    logger.error({ err: error, action: "createProductAction" }, "Failed to create product");
+    logger.error(
+      { err: error, action: "createProductAction" },
+      "Failed to create product",
+    );
     return createErrorResponse("Failed to create product", "INTERNAL_ERROR");
   }
 }
@@ -96,7 +106,10 @@ export async function updateProductAction(
       where: { slug, id: { not: productId } },
     });
     if (existing) {
-      return createErrorResponse("A product with this slug already exists", "VALIDATION_ERROR");
+      return createErrorResponse(
+        "A product with this slug already exists",
+        "VALIDATION_ERROR",
+      );
     }
 
     const product = await prisma.product.update({
@@ -116,7 +129,9 @@ export async function updateProductAction(
         focus: input.focus || null,
         features: input.features,
         imageUrl: input.imageUrl || null,
-        isActive: input.isActive,
+        previewVideoUrl: input.previewVideoUrl || null,
+        equipment: input.equipment ?? [],
+        status: input.status,
         sortOrder: input.sortOrder || 0,
         programId: input.programId || null,
       },
@@ -128,7 +143,10 @@ export async function updateProductAction(
     revalidatePath("/pricing");
     return createSuccessResponse({ id: product.id });
   } catch (error) {
-    logger.error({ err: error, action: "updateProductAction" }, "Failed to update product");
+    logger.error(
+      { err: error, action: "updateProductAction" },
+      "Failed to update product",
+    );
     return createErrorResponse("Failed to update product", "INTERNAL_ERROR");
   }
 }
@@ -141,16 +159,24 @@ export async function deleteProductAction(
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { purchases: { take: 1 } },
+      include: {
+        purchases: { take: 1 },
+        orderItems: { take: 1 },
+        entitlements: { take: 1 },
+      },
     });
 
     if (!product) {
       return createErrorResponse("Product not found", "NOT_FOUND");
     }
 
-    if (product.purchases.length > 0) {
+    if (
+      product.purchases.length > 0 ||
+      product.orderItems.length > 0 ||
+      product.entitlements.length > 0
+    ) {
       return createErrorResponse(
-        "Cannot delete a product with existing purchases. Deactivate it instead.",
+        "Cannot delete a product with purchase history or ownership records. Archive it instead to preserve customer access.",
         "VALIDATION_ERROR",
       );
     }
@@ -162,34 +188,58 @@ export async function deleteProductAction(
     revalidatePath("/pricing");
     return createSuccessResponse({ id: productId });
   } catch (error) {
-    logger.error({ err: error, action: "deleteProductAction" }, "Failed to delete product");
+    logger.error(
+      { err: error, action: "deleteProductAction" },
+      "Failed to delete product",
+    );
     return createErrorResponse("Failed to delete product", "INTERNAL_ERROR");
   }
 }
 
-export async function toggleProductActiveAction(
+export async function setProductStatusAction(
   productId: string,
-): Promise<ApiResponse<{ id: string; isActive: boolean }>> {
+  status: ProductStatus,
+): Promise<ApiResponse<{ id: string; status: ProductStatus }>> {
   try {
     const session = await requireRole([Role.ADMIN]);
 
-    const product = await prisma.product.findUnique({ where: { id: productId } });
+    const allowed: ProductStatus[] = [
+      ProductStatus.DRAFT,
+      ProductStatus.PUBLISHED,
+      ProductStatus.ARCHIVED,
+    ];
+    if (!allowed.includes(status)) {
+      return createErrorResponse("Invalid publication status", "VALIDATION_ERROR");
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
     if (!product) {
       return createErrorResponse("Product not found", "NOT_FOUND");
     }
 
     const updated = await prisma.product.update({
       where: { id: productId },
-      data: { isActive: !product.isActive },
+      data: { status },
     });
 
     revalidatePath("/admin/products");
     revalidatePath("/programs");
+    revalidatePath(`/programs/${product.slug}`);
+    revalidatePath("/bundles");
+    revalidatePath(`/bundles/${product.slug}`);
     revalidatePath("/pricing");
-    return createSuccessResponse({ id: updated.id, isActive: updated.isActive });
+    return createSuccessResponse({
+      id: updated.id,
+      status: updated.status,
+    });
   } catch (error) {
-    logger.error({ err: error, action: "toggleProductActiveAction" }, "Failed to toggle product");
-    return createErrorResponse("Failed to toggle product", "INTERNAL_ERROR");
+    logger.error(
+      { err: error, action: "setProductStatusAction" },
+      "Failed to set product status",
+    );
+    return createErrorResponse("Failed to update product status", "INTERNAL_ERROR");
   }
 }
 
@@ -211,8 +261,12 @@ export async function getAdminProductById(productId: string) {
   return prisma.product.findUnique({
     where: { id: productId },
     include: {
-      bundleItems: { include: { item: { select: { id: true, name: true, slug: true } } } },
-      includedIn: { include: { bundle: { select: { id: true, name: true, slug: true } } } },
+      bundleItems: {
+        include: { item: { select: { id: true, name: true, slug: true } } },
+      },
+      includedIn: {
+        include: { bundle: { select: { id: true, name: true, slug: true } } },
+      },
       program: { select: { id: true, title: true } },
     },
   });

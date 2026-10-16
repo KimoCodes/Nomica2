@@ -90,11 +90,41 @@ enum ProductFocus {
   CLIMB
 }
 
+/// Catalog publication state. Only PUBLISHED products are purchasable or
+/// visible on public storefront pages; DRAFT is admin-only; ARCHIVED hides a
+/// product from sale while preserving ownership for existing customers.
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum PurchaseStatus {
   PENDING
   COMPLETED
   REFUNDED
   CANCELED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PAYMENT_FAILED
+  CANCELED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum EntitlementGrantType {
+  PURCHASE
+  BUNDLE
+  MIGRATION
+  MANUAL
 }
 
 enum PhotoView {
@@ -225,6 +255,8 @@ model User {
   uploadedMedia           Media[]
   coachedProgressLogs     ProgressLog[]
   purchases               Purchase[]
+  orders                  Order[]
+  entitlements            Entitlement[]
   reviews                 Review[]
   habits                  Habit[]
   aiConversations         AiConversation[]
@@ -353,8 +385,10 @@ model Product {
   daysPerWeek    Int?
   focus          ProductFocus?
   features       String[]
+  equipment      String[]
   imageUrl       String?
-  isActive       Boolean       @default(true)
+  previewVideoUrl String?
+  status         ProductStatus  @default(DRAFT)
   sortOrder      Int           @default(0)
 
   programId String?  @unique
@@ -363,12 +397,14 @@ model Product {
   bundleItems BundleItem[] @relation("BundleParent")
   includedIn  BundleItem[] @relation("BundleChild")
   purchases   Purchase[]
+  orderItems  OrderItem[]
+  entitlements Entitlement[]
   reviews     Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([kind, isActive, sortOrder])
+  @@index([kind, status, sortOrder])
 }
 
 model BundleItem {
@@ -407,6 +443,100 @@ model Purchase {
 
   @@index([userId, status])
   @@index([productId, status])
+}
+
+/// A multi-product, one-time order. Legacy subscription Payment rows remain
+/// separate and untouched so their financial history stays auditable.
+model Order {
+  id                     String      @id @default(cuid())
+  userId                 String
+  user                   User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status                 OrderStatus @default(PENDING)
+  currency               String      @default("usd")
+  subtotalCents          Int
+  discountCents          Int         @default(0)
+  totalCents             Int
+  idempotencyKey         String      @unique
+  stripeCheckoutSessionId String?     @unique
+  stripePaymentIntentId  String?     @unique
+  paidAt                 DateTime?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  items    OrderItem[]
+  payments OrderPayment[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// Immutable checkout snapshot. Product metadata and prices can change later
+/// without changing what the customer agreed to pay for this order.
+model OrderItem {
+  id                 String   @id @default(cuid())
+  orderId            String
+  order              Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productId          String
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName        String
+  productSlug        String
+  productKind        ProductKind
+  unitAmountCents    Int
+  quantity           Int      @default(1)
+  lineTotalCents     Int
+  bundleProductIds   String[] @default([])
+  createdAt          DateTime @default(now())
+
+  entitlements Entitlement[]
+
+  @@unique([orderId, productId])
+  @@index([productId])
+}
+
+/// Payment attempt/confirmation for a one-time order. Subscription payments
+/// continue to use the historical Payment model.
+model OrderPayment {
+  id                    String   @id @default(cuid())
+  orderId               String
+  order                 Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  provider              String   @default("stripe")
+  providerPaymentId     String   @unique
+  amountCents           Int
+  currency              String   @default("usd")
+  status                String
+  providerEventId       String?  @unique
+  metadata              Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([orderId, status])
+}
+
+/// Durable product ownership. Bundle purchases create one row for each
+/// included program so access remains stable if a bundle is later edited.
+model Entitlement {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  productId      String
+  product        Product               @relation(fields: [productId], references: [id], onDelete: Restrict)
+  orderItemId    String?
+  orderItem      OrderItem?            @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  grantType      EntitlementGrantType
+  status         EntitlementStatus     @default(ACTIVE)
+  idempotencyKey String                @unique
+  grantedAt      DateTime              @default(now())
+  revokedAt      DateTime?
+  reason         String?
+  metadata       Json?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  clientProgram ClientProgram?
+
+  @@index([userId, status])
+  @@index([productId, status])
+  @@index([orderItemId])
 }
 
 model Review {
@@ -508,6 +638,8 @@ model ClientProgram {
   clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   programId       String
   program         Program       @relation(fields: [programId], references: [id], onDelete: Restrict)
+  entitlementId   String?       @unique
+  entitlement     Entitlement?  @relation(fields: [entitlementId], references: [id], onDelete: SetNull)
   startDate       DateTime      @default(now())
   endDate         DateTime?
   isActive        Boolean       @default(true)

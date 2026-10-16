@@ -8,9 +8,10 @@ import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
 export default async function AdminAnalyticsPage() {
   const session = await requireRole([Role.ADMIN]);
 
+  const now = new Date();
   const range = {
-    from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    to: new Date(),
+    from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+    to: now,
   };
 
   const data = await getAnalyticsDashboard(range);

@@ -255,10 +255,29 @@ export async function completeWorkout(
   input: CompleteWorkoutInput,
 ) {
   const client = await requireClientProfile(clientUserId);
-  const assignment = await getActiveClientProgram(clientUserId);
+  const assignment = await prisma.clientProgram.findFirst({
+    where: {
+      id: input.clientProgramId,
+      clientProfileId: client.id,
+      isActive: true,
+    },
+    include: activeProgramInclude,
+  });
 
   if (!assignment) {
     throw new Error("NO_ACTIVE_PROGRAM");
+  }
+
+  if (assignment.entitlementId) {
+    const entitlement = await prisma.entitlement.findFirst({
+      where: {
+        id: assignment.entitlementId,
+        userId: clientUserId,
+        status: "ACTIVE",
+      },
+      select: { id: true },
+    });
+    if (!entitlement) throw new Error("FORBIDDEN");
   }
 
   const dayBelongsToProgram = assignment.program.weeks.some((week) =>

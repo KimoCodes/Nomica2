@@ -4,6 +4,7 @@ import {
   PrismaClient,
   ProductFocus,
   ProductKind,
+  ProductStatus,
   Role,
 } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -53,6 +54,7 @@ type ProgramProduct = {
   focus?: ProductFocus;
   difficulty: Difficulty;
   features: string[];
+  equipment?: string[];
   sortOrder: number;
 };
 
@@ -83,6 +85,7 @@ const PROGRAMS: ProgramProduct[] = [
     daysPerWeek: 5,
     difficulty: Difficulty.INTERMEDIATE,
     features: SIGNATURE_FEATURES,
+    equipment: ["Barbell", "Dumbbells", "Bench", "Cable machine"],
     sortOrder: 1,
   },
   {
@@ -96,6 +99,7 @@ const PROGRAMS: ProgramProduct[] = [
     daysPerWeek: 5,
     difficulty: Difficulty.INTERMEDIATE,
     features: SIGNATURE_FEATURES,
+    equipment: ["Dumbbells", "Resistance band", "Cable machine"],
     sortOrder: 2,
   },
   {
@@ -109,6 +113,7 @@ const PROGRAMS: ProgramProduct[] = [
     daysPerWeek: 5,
     difficulty: Difficulty.BEGINNER,
     features: SIGNATURE_FEATURES,
+    equipment: ["Dumbbells", "Leg curl machine", "Resistance band"],
     sortOrder: 3,
   },
   {
@@ -122,6 +127,7 @@ const PROGRAMS: ProgramProduct[] = [
     daysPerWeek: 5,
     difficulty: Difficulty.INTERMEDIATE,
     features: SIGNATURE_FEATURES,
+    equipment: ["Barbell", "Dumbbells", "Pull-up bar"],
     sortOrder: 4,
   },
   {
@@ -138,6 +144,7 @@ const PROGRAMS: ProgramProduct[] = [
       "Step-by-step guidance for every machine and movement",
       ...SIGNATURE_FEATURES.slice(1),
     ],
+    equipment: ["Gym machines", "Dumbbells", "Exercise mat"],
     sortOrder: 5,
   },
   {
@@ -151,6 +158,7 @@ const PROGRAMS: ProgramProduct[] = [
     daysPerWeek: 5,
     difficulty: Difficulty.ADVANCED,
     features: SIGNATURE_FEATURES,
+    equipment: ["Barbell", "Dumbbells", "Kettlebell", "Bench"],
     sortOrder: 6,
   },
   // Focused Series
@@ -165,6 +173,7 @@ const PROGRAMS: ProgramProduct[] = [
     focus: ProductFocus.SWEAT,
     difficulty: Difficulty.BEGINNER,
     features: CHALLENGE_FEATURES,
+    equipment: ["Exercise mat"],
     sortOrder: 10,
   },
   {
@@ -178,6 +187,7 @@ const PROGRAMS: ProgramProduct[] = [
     focus: ProductFocus.SCULPT,
     difficulty: Difficulty.BEGINNER,
     features: CHALLENGE_FEATURES,
+    equipment: ["Exercise mat"],
     sortOrder: 11,
   },
   {
@@ -191,6 +201,7 @@ const PROGRAMS: ProgramProduct[] = [
     focus: ProductFocus.SCULPT,
     difficulty: Difficulty.INTERMEDIATE,
     features: CHALLENGE_FEATURES,
+    equipment: ["Resistance band", "Dumbbells"],
     sortOrder: 12,
   },
   {
@@ -204,6 +215,7 @@ const PROGRAMS: ProgramProduct[] = [
     focus: ProductFocus.SCULPT,
     difficulty: Difficulty.INTERMEDIATE,
     features: CHALLENGE_FEATURES,
+    equipment: ["Dumbbells", "Leg press machine"],
     sortOrder: 13,
   },
   {
@@ -217,6 +229,7 @@ const PROGRAMS: ProgramProduct[] = [
     focus: ProductFocus.CLIMB,
     difficulty: Difficulty.BEGINNER,
     features: CHALLENGE_FEATURES,
+    equipment: ["StairMill machine"],
     sortOrder: 14,
   },
 ];
@@ -285,7 +298,15 @@ async function main() {
   // 2. Programs + Products
   for (const def of PROGRAMS) {
     const existingProduct = await prisma.product.findUnique({ where: { slug: def.slug } });
-    if (existingProduct) continue;
+    if (existingProduct) {
+      if (def.equipment && existingProduct.equipment.length === 0) {
+        await prisma.product.update({
+          where: { id: existingProduct.id },
+          data: { equipment: def.equipment },
+        });
+      }
+      continue;
+    }
 
     const totalWeeks = def.durationWeeks ?? Math.ceil((def.durationDays ?? 21) / 7);
     const program = await prisma.program.create({
@@ -316,6 +337,8 @@ async function main() {
         daysPerWeek: def.daysPerWeek ?? null,
         focus: def.focus ?? null,
         features: def.features,
+        equipment: def.equipment ?? [],
+        status: ProductStatus.PUBLISHED,
         sortOrder: def.sortOrder,
         programId: program.id,
       },
@@ -352,6 +375,7 @@ async function main() {
           "One purchase, lifetime access to all items",
           `Save ${Math.round(((compareAt - def.priceCents) / compareAt) * 100)}% vs buying separately`,
         ],
+        status: ProductStatus.PUBLISHED,
         sortOrder: def.sortOrder,
         bundleItems: {
           create: items.map((item) => ({ itemId: item.id })),

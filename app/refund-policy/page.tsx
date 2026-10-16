@@ -39,8 +39,8 @@ export default function RefundPolicyPage() {
               </p>
               <ul className="list-inside list-disc space-y-1">
                 <li>
-                  <strong>Dashboard:</strong> Go to your subscription or purchase
-                  history and click &quot;Request Refund&quot;
+                  <strong>Dashboard:</strong> Go to your account&apos;s Orders
+                  page and contact support, or use the email option below
                 </li>
                 <li>
                   <strong>Email:</strong> Send a request to{" "}
@@ -63,11 +63,14 @@ export default function RefundPolicyPage() {
                 Our 30-day guarantee covers:
               </p>
               <ul className="list-inside list-disc space-y-1">
-                <li>One-time program purchases</li>
+                <li>One-time program and challenge purchases</li>
                 <li>Bundle purchases</li>
-                <li>Monthly subscriptions (first month only)</li>
-                <li>Annual subscriptions (pro-rated within first 30 days)</li>
               </ul>
+              <p className="mt-3">
+                NomiTips no longer sells subscriptions. Legacy subscriptions
+                (purchased before October 2026) keep their original terms and
+                are described under Legacy Subscriptions below.
+              </p>
             </section>
 
             <section>
@@ -98,14 +101,16 @@ export default function RefundPolicyPage() {
 
             <section>
               <h2 className="mb-3 text-lg font-semibold text-foreground">
-                Subscription Cancellations
+                Legacy Subscriptions
               </h2>
               <p>
-                You can cancel your subscription at any time from your account
-                dashboard. Cancellation takes effect at the end of your current
-                billing period. You will retain access until that date. No partial
-                refunds are issued for mid-period cancellations after the initial
-                30-day period.
+                Subscriptions are no longer sold — every program is a one-time
+                purchase with lifetime access. If you still have a legacy
+                subscription, you can manage or cancel it from the Billing page
+                in your account. Cancellation takes effect at the end of the
+                current billing period, and you keep access until then. No
+                partial refunds are issued for mid-period cancellations after
+                the initial 30-day period.
               </p>
             </section>
 

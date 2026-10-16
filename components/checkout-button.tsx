@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  createProductCheckout,
-  createSubscriptionCheckout,
-} from "@/actions/checkout.actions";
+import { createOrderCheckout } from "@/actions/checkout.actions";
 import { trackLoading } from "@/components/ui/loading-bar";
 import { Loader2 } from "lucide-react";
 
@@ -16,18 +13,14 @@ type CheckoutButtonProps = {
   size?: "default" | "lg";
   className?: string;
   onError?: (message: string) => void;
-} & (
-  | { type: "product"; productId: string }
-  | { type: "subscription"; plan: "monthly" | "annual" }
-);
+} & { type: "product"; productId: string };
 
 export function CheckoutButton({
-  type,
   variant = "default",
   size = "lg",
   className,
   onError,
-  ...props
+  productId,
 }: CheckoutButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -38,16 +31,9 @@ export function CheckoutButton({
     setError(null);
 
     try {
-      let result;
-      if (type === "product") {
-        result = await trackLoading(() =>
-          createProductCheckout((props as { productId: string }).productId),
-        );
-      } else {
-        result = await trackLoading(() =>
-          createSubscriptionCheckout((props as { plan: "monthly" | "annual" }).plan),
-        );
-      }
+      const result = await trackLoading(() =>
+        createOrderCheckout([productId]),
+      );
 
       if (result.success && result.data?.url) {
         router.push(result.data.url);
@@ -90,7 +76,7 @@ export function CheckoutButton({
         {loading ? (
           <Loader2 className="mr-2 size-4 animate-spin" />
         ) : null}
-        {loading ? "Redirecting..." : "Get started"}
+        {loading ? "Opening secure checkout..." : "Continue to one-time checkout"}
       </button>
       {error && (
         <p role="alert" className="mt-2 text-center text-xs text-destructive">{error}</p>

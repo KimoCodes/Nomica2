@@ -1,31 +1,74 @@
-import { ProductKind, ProductFocus } from "@prisma/client";
+import { ProductFocus, ProductKind, ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 type ProductFilter = {
   kind?: ProductKind;
   focus?: ProductFocus;
-  isActive?: boolean;
+  status?: ProductStatus;
   take?: number;
 };
 
 export async function getProducts(filter: ProductFilter = {}) {
   return prisma.product.findMany({
     where: {
-      isActive: filter.isActive ?? true,
+      status: filter.status ?? ProductStatus.PUBLISHED,
       ...(filter.kind && { kind: filter.kind }),
       ...(filter.focus && { focus: filter.focus }),
     },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     ...(filter.take && { take: filter.take }),
     include: {
+      bundleItems: { select: { itemId: true } },
       _count: {
-        select: { purchases: { where: { status: "COMPLETED" } }, reviews: true },
+        select: {
+          purchases: { where: { status: "COMPLETED" } },
+          reviews: true,
+        },
       },
     },
   });
 }
 
 export async function getProductBySlug(slug: string) {
+  return prisma.product.findUnique({
+    where: { slug },
+    include: {
+      program: {
+        include: {
+          weeks: {
+            orderBy: { weekNumber: "asc" },
+            include: {
+              days: {
+                orderBy: { dayNumber: "asc" },
+                select: { id: true, dayNumber: true, title: true },
+              },
+            },
+          },
+        },
+      },
+      bundleItems: {
+        include: {
+          item: true,
+        },
+      },
+      reviews: {
+        where: { isPublished: true },
+        include: { user: { select: { name: true, avatar: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
+      _count: {
+        select: {
+          purchases: { where: { status: "COMPLETED" } },
+          reviews: true,
+        },
+      },
+    },
+  });
+}
+
+/** Full workout structure is only loaded after the caller verifies access. */
+export async function getProtectedProductProgram(slug: string) {
   return prisma.product.findUnique({
     where: { slug },
     include: {
@@ -47,20 +90,6 @@ export async function getProductBySlug(slug: string) {
           },
         },
       },
-      bundleItems: {
-        include: {
-          item: true,
-        },
-      },
-      reviews: {
-        where: { isPublished: true },
-        include: { user: { select: { name: true, avatar: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      },
-      _count: {
-        select: { purchases: { where: { status: "COMPLETED" } }, reviews: true },
-      },
     },
   });
 }
@@ -72,7 +101,10 @@ export async function getProductById(id: string) {
       program: true,
       bundleItems: { include: { item: true } },
       _count: {
-        select: { purchases: { where: { status: "COMPLETED" } }, reviews: true },
+        select: {
+          purchases: { where: { status: "COMPLETED" } },
+          reviews: true,
+        },
       },
     },
   });
@@ -80,7 +112,7 @@ export async function getProductById(id: string) {
 
 export async function getBundleProducts() {
   return prisma.product.findMany({
-    where: { kind: "BUNDLE", isActive: true },
+    where: { kind: "BUNDLE", status: ProductStatus.PUBLISHED },
     orderBy: { sortOrder: "asc" },
     include: {
       bundleItems: {

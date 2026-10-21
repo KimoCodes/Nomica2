@@ -20,6 +20,7 @@ type Exercise = {
   videoUrl: string | null;
   sets: number;
   reps: number;
+  duration: number | null;
   restSeconds: number;
   notes: string | null;
   order: number;
@@ -64,7 +65,7 @@ export function WorkoutTracker({
         initial[ex.id].push({
           programExerciseId: ex.id,
           setNumber: s,
-          actualReps: existing?.actualReps ?? ex.reps,
+          actualReps: existing?.actualReps ?? ex.duration ?? ex.reps,
           actualWeight: existing?.actualWeight ?? null,
           completed: existing?.completed ?? false,
         });
@@ -154,6 +155,11 @@ export function WorkoutTracker({
                   <Badge variant="outline" className="text-xs">
                     {ex.difficulty}
                   </Badge>
+                  {ex.duration != null && (
+                    <Badge variant="outline" className="text-xs">
+                      {ex.duration}s
+                    </Badge>
+                  )}
                   {ex.restSeconds > 0 && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="size-3" />
@@ -177,7 +183,7 @@ export function WorkoutTracker({
           <CardContent className="space-y-3">
             <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 text-xs font-medium text-muted-foreground">
               <span className="w-12">Set</span>
-              <span>Reps</span>
+              <span>{ex.duration != null ? "Seconds" : "Reps"}</span>
               <span>Weight (kg)</span>
               <span className="w-10 text-center">Done</span>
             </div>
@@ -203,7 +209,7 @@ export function WorkoutTracker({
                   }
                   disabled={isCompleted}
                   className="h-9"
-                  placeholder={String(ex.reps)}
+                  placeholder={String(ex.duration ?? ex.reps)}
                 />
                 <Input
                   type="number"

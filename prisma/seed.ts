@@ -9,6 +9,7 @@ import {
 } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { hashSync } from "bcrypt";
+import { ensureProgramContent } from "./program-content";
 
 /**
  * Seed data source of truth: clean_workout_programs_catalog.pdf
@@ -389,6 +390,17 @@ async function main() {
     } else {
       await prisma.product.create({ data: { slug: def.slug, ...productData } });
     }
+
+    // Workout content (weeks/days/exercises) — skips if already generated
+    // unless REBUILD_CONTENT=1 is set in the environment.
+    const content = await ensureProgramContent(prisma, program.id, def.slug, {
+      rebuild: process.env.REBUILD_CONTENT === "1",
+    });
+    if (content) {
+      console.log(
+        `  ↳ content: ${content.weeks} wks / ${content.days} days / ${content.entries} entries`,
+      );
+    }
     console.log(`✓ ${def.kind.toLowerCase()}: ${def.name}`);
   }
 
@@ -491,6 +503,9 @@ async function main() {
     products: await prisma.product.count({ where: { status: ProductStatus.PUBLISHED } }),
     archived: await prisma.product.count({ where: { status: ProductStatus.ARCHIVED } }),
     programs: await prisma.program.count(),
+    weeks: await prisma.programWeek.count(),
+    days: await prisma.programDay.count(),
+    exercises: await prisma.programExercise.count(),
     users: await prisma.user.count(),
   };
   console.log("Seed complete:", counts);

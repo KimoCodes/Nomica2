@@ -93,7 +93,7 @@ export default async function OwnedProgramPage({
                           <div>
                             <p className="font-medium">{entry.exercise.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {entry.sets ? `${entry.sets} sets` : ""}{entry.reps ? ` · ${entry.reps} reps` : ""}{entry.restSeconds ? ` · ${entry.restSeconds}s rest` : ""}
+                              {entry.sets ? `${entry.sets} sets` : ""}{entry.duration ? ` · ${entry.duration}s` : entry.reps ? ` · ${entry.reps} reps` : ""}{entry.restSeconds ? ` · ${entry.restSeconds}s rest` : ""}
                             </p>
                             {entry.notes && <p className="mt-1 text-sm">{entry.notes}</p>}
                             <p className="mt-1 text-sm text-muted-foreground">{entry.exercise.instructions}</p>

@@ -151,6 +151,7 @@ export default async function WorkoutDetailPage({
               : null,
             sets: pe.sets ?? 3,
             reps: pe.reps ?? 10,
+            duration: pe.duration,
             restSeconds: pe.restSeconds ?? 60,
             notes: pe.notes,
             order: pe.order,

@@ -172,7 +172,15 @@ export default async function ClientWorkoutsPage() {
                             <strong className="font-semibold text-foreground">{item.sets ?? "—"}</strong> sets
                           </span>
                           <span>
-                            <strong className="font-semibold text-foreground">{item.reps ?? "—"}</strong> reps
+                            {item.duration != null ? (
+                              <>
+                                <strong className="font-semibold text-foreground">{item.duration}</strong>s
+                              </>
+                            ) : (
+                              <>
+                                <strong className="font-semibold text-foreground">{item.reps ?? "—"}</strong> reps
+                              </>
+                            )}
                           </span>
                           {item.restSeconds && (
                             <span>

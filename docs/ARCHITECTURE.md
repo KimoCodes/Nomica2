@@ -4,22 +4,22 @@ _Last updated: 2026-08-04 (M0 consolidation)._
 
 ## Source of truth
 
-- **`NOMICA_Fitness_Catalog.pdf` is canonical for all fitness content and pricing.**
-  - Signature Collection (one-time purchase, lifetime access):
-    - Glute Builder — 8 wk, 5 d/wk — $34.99
-    - Hourglass Sculpt — 8 wk, 5 d/wk — $34.99
-    - Toned Legs — 6 wk, 5 d/wk — $24.99
-    - Full-Body Sculpt — 8 wk, 5 d/wk — $34.99
-    - Beginner Gym Confidence — 6 wk, 5 d/wk — $24.99
-    - Strong & Toned — 8 wk, 5 d/wk — $39.99
-  - Focused Series (challenges): Cardio Burn (21 d, $12.99), Core & Abs (21 d, $12.99),
-    Glute Growth (21 d, $12.99), Quad Sculpt (21 d, $12.99), StairMaster (30 d, $14.99).
-    Focus categories: SWEAT (Cardio Burn), SCULPT (Core/Glutes/Quads), CLIMB (StairMaster).
-  - Bundles: Lower-Body $54.99, Sculpt & Sweat $59.99, Complete NomiTips $119.99.
+- **`clean_workout_programs_catalog.pdf` is canonical for all fitness content and pricing.**
+  - Programs (one-time purchase, lifetime access):
+    - 6-Week Dumbbell Glute Growth — 6 wk, 5 d/wk — $19.99
+    - 8-Week Glute Growth Blueprint — 8 wk, 5 d/wk — $29.99 (most popular)
+    - 6-Week Glutes & Quads Builder — 6 wk, 5 d/wk — $19.99
+    - 6-Week Full Body Dumbbell Sculpt — 6 wk, 5 d/wk — $19.99
+    - 4-Week Resistance Band Full Body Sculpt — 4 wk, 5 d/wk — $14.99
+    - 4-Week Upper Body Dumbbell Sculpt — 4 wk, 4 d/wk — $14.99
+  - Challenges: 21-Day Booty Band (21 d, $9.99), 21-Day Strong Abs & Core (21 d, $9.99),
+    30-Day Low-Impact Cardio Burn (30 d, $12.99), 14-Day Tabata & Cardio (14 d, $9.99).
+    Focus categories: SCULPT (Booty Band, Abs & Core), SWEAT (Cardio Burn, Tabata).
+  - Bundles: Lower-Body $34.99, Sculpt & Sweat $54.99, Complete NomiTips $99.99 (39% off).
   - All-Access membership: **$14.99/mo, $149.99/yr** (two months free).
-- Where `NOMICA_BLUEPRINT.md` or `constants/*` conflict with the PDF (e.g. Sculpt Club
-  $39/$79, STARTER/PREMIUM/ELITE plans), **the PDF wins**. Blueprint remains useful for
-  page structure/copy direction only.
+- Where `NOMICA_BLUEPRINT.md` or `constants/*` conflict with the PDF, **the PDF wins**.
+  Blueprint remains useful for page structure/copy direction only. The superseded
+  `NOMICA_Fitness_Catalog.pdf` (Glute Builder/Hourglass/etc.) rows were deleted from the DB.
 
 ## Reference model (solin.stream)
 

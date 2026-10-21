@@ -21,7 +21,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Programs",
   description:
-    "Browse NomiTips fitness programs — glute sculpt, beginner guides, stairmaster routines, and more. Science-backed progressive overload programming.",
+    "Browse NomiTips fitness programs — dumbbell glute growth, full body sculpt, resistance band plans, and short challenges. Science-backed progressive overload programming.",
 };
 
 const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {

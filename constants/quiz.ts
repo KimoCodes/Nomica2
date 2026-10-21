@@ -184,15 +184,15 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
   const scheduleAnswer = answers.find((a) => a.stepId === "schedule")?.value;
   const budgetAnswer = answers.find((a) => a.stepId === "budget")?.value;
 
-  // Best-value answer gets the largest bundle (54% off the full catalog).
+  // Best-value answer gets the complete catalog bundle (39% off).
   if (budgetAnswer === "best-value") {
     return {
       type: "bundle",
       id: "complete-nomitips-bundle",
       name: "Complete NomiTips Bundle",
       reason:
-        "The best value in the catalog. This one-time bundle includes all 6 signature programs and all 5 focused challenges — everything we make — at 54% off, and you keep it forever.",
-      price: 119.99,
+        "The best value in the catalog. This one-time bundle includes all 6 programs and all 4 challenges — everything we make — at 39% off, and you keep it forever.",
+      price: 99.99,
       cta: "Get the Bundle",
       href: "/bundles/complete-nomitips-bundle",
     };
@@ -205,21 +205,21 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
         id: "lower-body-bundle",
         name: "Lower-Body Bundle",
         reason:
-          "Perfect for starting your glute journey. You'll build a solid foundation with Glute Builder, Toned Legs, and two focused challenges.",
-        price: 54.99,
+          "Perfect for starting your glute journey. You'll build a solid foundation with the 21-Day Booty Band Challenge, 6-Week Dumbbell Glute Growth, and the 6-Week Glutes & Quads Builder.",
+        price: 34.99,
         cta: "Get the Bundle",
         href: "/bundles/lower-body-bundle",
       };
     }
     return {
       type: "product",
-      id: "beginner-gym-confidence",
-      name: "Beginner Gym Confidence",
+      id: "4-week-resistance-band-full-body-sculpt",
+      name: "4-Week Resistance Band Full Body Sculpt",
       reason:
-        "As a beginner, this program will teach you proper form, help you feel confident in the gym, and build a strong foundation with simple guided sessions.",
-      price: 24.99,
-      cta: "Get the Program",
-      href: "/programs/beginner-gym-confidence",
+        "As a beginner, this program meets you where you are — minimal equipment, beginner-friendly modifications, and simple guided sessions that build full-body strength and confidence.",
+      price: 14.99,
+      cta: "Start Sculpting",
+      href: "/programs/4-week-resistance-band-full-body-sculpt",
     };
   }
 
@@ -227,13 +227,13 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
     if (scheduleAnswer === "2-3") {
       return {
         type: "product",
-        id: "glute-builder",
-        name: "Glute Builder",
+        id: "6-week-dumbbell-glute-growth",
+        name: "6-Week Dumbbell Glute Growth",
         reason:
-          "Designed for 3 days per week, this progressive program will grow your glutes with structured overload and proper programming.",
-        price: 34.99,
+          "A progressive dumbbell plan you can run at home or in the gym — structured overload week by week to grow your glutes without living at the gym.",
+        price: 19.99,
         cta: "Start Building",
-        href: "/programs/glute-builder",
+        href: "/programs/6-week-dumbbell-glute-growth",
       };
     }
     return {
@@ -241,8 +241,8 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
       id: "lower-body-bundle",
       name: "Lower-Body Bundle",
       reason:
-        "The ultimate glute-building collection. Glute Builder, Toned Legs, and two focused challenges — progressive training to maximize your results.",
-      price: 54.99,
+        "The ultimate glute-building collection — band work, dumbbell growth, and glutes & quads — progressive training to maximize your results.",
+      price: 34.99,
       cta: "Get the Bundle",
       href: "/bundles/lower-body-bundle",
     };
@@ -251,37 +251,37 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
   if (goalAnswer === "strength") {
     return {
       type: "product",
-      id: "strong-and-toned",
-      name: "Strong & Toned",
+      id: "6-week-full-body-dumbbell-sculpt",
+      name: "6-Week Full Body Dumbbell Sculpt",
       reason:
-        "Our most complete strength program. Progressive full-body training combining strength, sculpting, and conditioning.",
-      price: 39.99,
+        "A full-body dumbbell program with progressive overload built into each week — the most complete strength option in the catalog.",
+      price: 19.99,
       cta: "Start Training",
-      href: "/programs/strong-and-toned",
+      href: "/programs/6-week-full-body-dumbbell-sculpt",
     };
   }
 
   if (goalAnswer === "tone") {
     return {
       type: "product",
-      id: "hourglass-sculpt",
-      name: "Hourglass Sculpt",
+      id: "4-week-resistance-band-full-body-sculpt",
+      name: "4-Week Resistance Band Full Body Sculpt",
       reason:
-        "A balanced plan emphasizing glutes, shoulders, back, and core strength — ideal for getting lean and defined.",
-      price: 34.99,
+        "A resistance-band program to tone your full body and build strength with minimal equipment — short sessions, real results.",
+      price: 14.99,
       cta: "Start Sculpting",
-      href: "/programs/hourglass-sculpt",
+      href: "/programs/4-week-resistance-band-full-body-sculpt",
     };
   }
 
   return {
     type: "product",
-    id: "glute-builder",
-    name: "Glute Builder",
+    id: "8-week-glute-growth-blueprint",
+    name: "8-Week Glute Growth Blueprint",
     reason:
-      "Our most popular program. Progressive, structured training designed to sculpt your glutes and build confidence.",
-    price: 34.99,
+      "Our most popular program. A complete glute-building blueprint focused on shape, strength, and long-term results.",
+    price: 29.99,
     cta: "Start Building",
-    href: "/programs/glute-builder",
+    href: "/programs/8-week-glute-growth-blueprint",
   };
 }

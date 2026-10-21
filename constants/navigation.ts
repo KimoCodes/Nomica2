@@ -50,6 +50,7 @@ export const ADMIN_NAV = [
   { label: "Pages", href: "/admin/content/pages", icon: "programs" },
   { label: "Theme", href: "/admin/content/theme", icon: "settings" },
   { label: "Branding", href: "/admin/content/branding", icon: "settings" },
+  { label: "Settings", href: "/admin/content/settings", icon: "settings" },
   { label: "Analytics", href: "/admin/analytics", icon: "progress" },
   { label: "Users", href: "/admin/users", icon: "clients" },
   { label: "Coaches", href: "/admin/coaches", icon: "clients" },

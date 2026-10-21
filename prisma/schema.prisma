@@ -1029,6 +1029,7 @@ model SiteSettings {
   facebookUrl     String?
   heroTagline     String?  @default("Stop Scrolling. Start Sculpting.")
   heroSubtext     String?
+  videoGuidedWorkouts Boolean @default(true)
   updatedAt       DateTime @updatedAt
 }
 

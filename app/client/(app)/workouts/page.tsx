@@ -7,6 +7,7 @@ import {
   MUSCLE_GROUP_LABELS,
 } from "@/constants/exercises";
 import { getClientWorkoutOverview } from "@/server/services/workout.service";
+import { isVideoGuidedWorkoutsEnabled } from "@/server/services/admin.service";
 import { CompleteWorkoutForm } from "@/components/forms/complete-workout-form";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,10 @@ import {
 
 export default async function ClientWorkoutsPage() {
   const session = await requireRole([Role.CLIENT]);
-  const overview = await getClientWorkoutOverview(session.user.id);
+  const [overview, videosEnabled] = await Promise.all([
+    getClientWorkoutOverview(session.user.id),
+    isVideoGuidedWorkoutsEnabled(),
+  ]);
   const todaysWorkout = overview?.todaysWorkout;
 
   if (!overview) {
@@ -191,7 +195,7 @@ export default async function ClientWorkoutsPage() {
                         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                           {item.exercise.instructions}
                         </p>
-                        {item.exercise.videoUrl && (
+                        {videosEnabled && item.exercise.videoUrl && (
                           <Link
                             href={`/api/media/videos/${item.exercise.id}`}
                             target="_blank"

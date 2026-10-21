@@ -41,6 +41,7 @@ type Props = {
   isCompleted: boolean;
   existingSetLogs: SetLog[];
   existingNotes: string;
+  videosEnabled: boolean;
 };
 
 export function WorkoutTracker({
@@ -50,6 +51,7 @@ export function WorkoutTracker({
   isCompleted,
   existingSetLogs,
   existingNotes,
+  videosEnabled,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -168,7 +170,7 @@ export function WorkoutTracker({
                   )}
                 </div>
               </div>
-              {ex.videoUrl && (
+              {videosEnabled && ex.videoUrl && (
                 <a
                   href={ex.videoUrl}
                   target="_blank"

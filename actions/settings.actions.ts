@@ -213,6 +213,7 @@ export async function updateSiteSettingsAction(
     facebookUrl?: string;
     heroTagline?: string;
     heroSubtext?: string;
+    videoGuidedWorkouts?: boolean;
   },
 ): Promise<ApiResponse<{ id: string }>> {
   try {
@@ -222,6 +223,8 @@ export async function updateSiteSettingsAction(
 
     revalidatePath("/admin/brand");
     revalidatePath("/");
+    revalidatePath("/client/workouts");
+    revalidatePath("/client/exercise-library");
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {

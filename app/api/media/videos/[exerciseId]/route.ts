@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import { buildVideoDeliveryUrl } from "@/server/services/video-delivery.service";
+import { isVideoGuidedWorkoutsEnabled } from "@/server/services/admin.service";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,11 @@ export async function GET(
   }
 
   if (!isStaff) {
+    // Admin switch: when video-guided workouts are off, delivery is off
+    // for clients (videos are an optional convenience, never required).
+    if (!(await isVideoGuidedWorkoutsEnabled())) {
+      return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    }
     // Same access rule as the entitled exercise library: any lifetime
     // catalog ownership or an active coach-assigned program.
     const [ownedIds, assignment] = await Promise.all([

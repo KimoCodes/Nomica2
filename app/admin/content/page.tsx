@@ -14,6 +14,7 @@ import {
   Star,
   TrendingUp,
   Clock,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -180,6 +181,20 @@ export default async function AdminContentDashboard() {
                     <p className="text-sm font-medium">Branding</p>
                     <p className="text-xs text-muted-foreground">
                       Logos, favicon, brand assets
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/admin/content/settings"
+                  className="flex items-center gap-3 rounded-xl border border-border/50 p-4 transition-colors hover:bg-accent/30"
+                >
+                  <div className="rounded-lg bg-cyan-500/10 p-2">
+                    <SlidersHorizontal className="size-5 text-cyan-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Settings</p>
+                    <p className="text-xs text-muted-foreground">
+                      Feature switches (video demos, etc.)
                     </p>
                   </div>
                 </Link>

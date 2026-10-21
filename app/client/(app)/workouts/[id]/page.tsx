@@ -4,6 +4,7 @@ import { CLIENT_NAV } from "@/constants/navigation";
 import { prisma } from "@/lib/prisma";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { WorkoutTracker } from "./workout-tracker";
+import { isVideoGuidedWorkoutsEnabled } from "@/server/services/admin.service";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
@@ -93,6 +94,8 @@ export default async function WorkoutDetailPage({
     },
   });
 
+  const videosEnabled = await isVideoGuidedWorkoutsEnabled();
+
   return (
     <DashboardLayout
       title="Workout"
@@ -157,6 +160,7 @@ export default async function WorkoutDetailPage({
             order: pe.order,
           }))}
           isCompleted={!!existingCompletion}
+          videosEnabled={videosEnabled}
           existingSetLogs={existingCompletion?.setLogs.map((sl) => ({
             programExerciseId: sl.programExerciseId,
             setNumber: sl.setNumber,

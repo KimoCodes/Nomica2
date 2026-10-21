@@ -420,6 +420,18 @@ export async function getSiteSettings() {
   return prisma.siteSettings.findFirst();
 }
 
+/**
+ * Video-guided workouts are an optional convenience, never a requirement.
+ * When the admin toggle is off, all video affordances are hidden from
+ * clients; workout completion never depends on videos either way.
+ */
+export async function isVideoGuidedWorkoutsEnabled() {
+  const settings = await prisma.siteSettings.findFirst({
+    select: { videoGuidedWorkouts: true },
+  });
+  return settings?.videoGuidedWorkouts ?? true;
+}
+
 export async function updateSiteSettings(data: {
   siteName?: string;
   siteDescription?: string;
@@ -435,6 +447,7 @@ export async function updateSiteSettings(data: {
   facebookUrl?: string;
   heroTagline?: string;
   heroSubtext?: string;
+  videoGuidedWorkouts?: boolean;
 }) {
   const existing = await prisma.siteSettings.findFirst();
 

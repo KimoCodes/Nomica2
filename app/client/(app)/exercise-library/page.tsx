@@ -3,11 +3,12 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ExerciseLibraryClient } from "@/components/exercise-library-client";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
+import { isVideoGuidedWorkoutsEnabled } from "@/server/services/admin.service";
 
 export default async function ExerciseLibraryPage() {
   const session = await requireRole([Role.CLIENT]);
 
-  const [ownedProductIds, assignment, exercises] = await Promise.all([
+  const [ownedProductIds, assignment, exercises, videosEnabled] = await Promise.all([
     getOwnedCatalogProductIds(session.user.id),
     prisma.clientProgram.findFirst({
       where: { clientProfile: { userId: session.user.id }, isActive: true },
@@ -25,6 +26,7 @@ export default async function ExerciseLibraryPage() {
       orderBy: { name: "asc" },
       take: 200,
     }),
+    isVideoGuidedWorkoutsEnabled(),
   ]);
 
   const hasFullAccess = ownedProductIds.length > 0 || assignment !== null;
@@ -45,6 +47,7 @@ export default async function ExerciseLibraryPage() {
         }))}
       libraryLocked={!hasFullAccess}
       userName={session.user.name}
+      videosEnabled={videosEnabled}
     />
   );
 }

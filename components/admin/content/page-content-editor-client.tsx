@@ -89,7 +89,7 @@ const SECTION_PRESETS: Record<string, { key: string; title: string }[]> = {
     { key: "hero_preview", title: "Hero Preview Card" },
     { key: "pain_points", title: "Problem/Agitation" },
     { key: "how_it_works", title: "How It Works" },
-    { key: "video_showcase", title: "Video Showcase" },
+    { key: "coach_welcome", title: "Coach Welcome Video" },
     { key: "why_it_works", title: "Why It Works" },
     { key: "pricing_comparison", title: "Pricing Comparison" },
     { key: "lead_magnet", title: "Lead Magnet" },

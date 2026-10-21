@@ -48,12 +48,14 @@ type ExerciseLibraryClientProps = {
   exercises: Exercise[];
   libraryLocked?: boolean;
   userName: string | null;
+  videosEnabled?: boolean;
 };
 
 export function ExerciseLibraryClient({
   exercises,
   libraryLocked = false,
   userName,
+  videosEnabled = true,
 }: ExerciseLibraryClientProps) {
   const [search, setSearch] = useState("");
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
@@ -277,7 +279,7 @@ export function ExerciseLibraryClient({
                 key={exercise.id}
                 className={`animate-slide-up stagger-${(index % 6) + 1} group overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-premium`}
               >
-                {exercise.videoUrl ? (
+                {exercise.videoUrl && videosEnabled ? (
                   <div className="relative aspect-video bg-muted overflow-hidden">
                     <Image
                       src="/media/hero/hero-gym-workout.jpg"
@@ -334,7 +336,7 @@ export function ExerciseLibraryClient({
                       Full instructions are included with a purchased program.
                     </p>
                   )}
-                  {exercise.videoUrl && (
+                  {videosEnabled && exercise.videoUrl && (
                     <button
                       type="button"
                       onClick={() => setPreviewVideo({ url: exercise.videoUrl!, name: exercise.name })}

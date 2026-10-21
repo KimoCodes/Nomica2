@@ -169,6 +169,16 @@ export default async function HomePage() {
   const heroVideo = heroMedia?.mimeType?.startsWith("video/") ? heroMedia.url : null;
   const heroImage = heroMedia && !heroMedia.mimeType?.startsWith("video/") ? heroMedia.url : (heroMedia?.thumbnailUrl || null);
 
+  const coachWelcomeMedia = getSectionMedia(homeContent, "coach_welcome");
+  const coachWelcomeVideo =
+    coachWelcomeMedia?.mimeType?.startsWith("video/")
+      ? coachWelcomeMedia.url
+      : "/media/coach-welcome.mp4";
+  const coachWelcomePoster =
+    (coachWelcomeMedia && !coachWelcomeMedia.mimeType?.startsWith("video/")
+      ? coachWelcomeMedia.url
+      : coachWelcomeMedia?.thumbnailUrl) || "/media/coach-profile-1.jpg";
+
   return (
     <PublicLayout>
       <main className="flex flex-1 flex-col">
@@ -399,61 +409,95 @@ export default async function HomePage() {
         </section>
 
         {/* ═══════════════════════════════════════════
-            SECTION 3.5: WORKOUT VIDEO SHOWCASE
+            SECTION 3.5: COACH WELCOME VIDEO
             ═══════════════════════════════════════════ */}
         <section className="relative overflow-hidden border-t border-border/50 px-4 py-24 md:py-32">
           <div className="absolute inset-0 -z-10 bg-black" />
+          <div className="absolute left-1/2 top-1/2 -z-10 size-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[120px]" />
+
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
               <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">
-                See It In Action
+                {getSectionText(homeContent, "coach_welcome", "badge", "A Message From Your Coach")}
               </p>
               <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-                Real Workouts. Real Results.
+                {getSectionText(homeContent, "coach_welcome", "heading", "Welcome to NomiTips — Let's Build Your Strongest Self")}
               </h2>
-              <p className="mt-4 text-lg text-neutral-400">
-                Every program includes video-guided workouts with form cues and progressive overload tracking.
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-neutral-400">
+                {getSectionText(homeContent, "coach_welcome", "description", "Before your first workout, hear from the coach behind the programs — who we are, what to expect on day one, and how we'll train together.")}
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                { src: "/media/workout-glutes-quads-hamstrings.mp4", poster: "/media/coach-profile-1.jpg", title: "Glute & Quad Burner", tag: "Lower Body" },
-                { src: "/media/workout-glutes-burner.mp4", poster: "/media/coach-profile-2.jpg", title: "Progressive Glute Isolation", tag: "Glutes" },
-                { src: "/media/workout-glutes-quads-inner-thighs.mp4", poster: "/media/coach-profile-3.jpg", title: "Full Leg Sculpt", tag: "Legs" },
-                { src: "/media/workout-stretch-glutes.mp4", poster: "/media/coach-profile-4.jpg", title: "Active Recovery & Mobility", tag: "Recovery" },
-                { src: "/media/workout-combo-lower-body.mp4", poster: "/media/coach-profile-1.jpg", title: "Compound Power Combo", tag: "Full Body" },
-                { src: "/media/workout-leg-elevation.mp4", poster: "/media/coach-profile-2.jpg", title: "Elevated Leg Series", tag: "Advanced" },
-              ].map((video, i) => (
-                <div
-                  key={i}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10"
-                >
-                  <div className="aspect-[4/5] relative">
-                    <video
-                      muted
-                      loop
-                      playsInline
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      poster={video.poster}
-                    >
-                      <source src={video.src} type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute top-3 left-3">
-                      <span className="rounded-full bg-primary/90 px-2.5 py-1 text-xs font-semibold text-primary-foreground backdrop-blur-sm">
-                        {video.tag}
-                      </span>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                      <div className="flex size-14 items-center justify-center rounded-full bg-primary/30 backdrop-blur-md">
-                        <Play className="size-6 text-white ml-0.5" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="font-semibold text-white drop-shadow-lg">{video.title}</p>
+            <div className="relative mx-auto max-w-4xl">
+              <div className="absolute inset-0 -z-10 rounded-[2.5rem] bg-gradient-to-br from-primary/30 via-primary/10 to-transparent blur-2xl" />
+
+              <div className="group relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/50 ring-1 ring-white/10">
+                <div className="aspect-video relative bg-neutral-900">
+                  <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 h-full w-full object-cover"
+                    poster={coachWelcomePoster}
+                  >
+                    <source src={coachWelcomeVideo} type="video/mp4" />
+                  </video>
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
+                  <div className="absolute inset-0 ring-1 ring-inset ring-white/5" />
+
+                  <div className="absolute left-5 top-5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1 text-xs font-semibold text-primary-foreground backdrop-blur-sm">
+                      <Sparkles className="size-3" />
+                      Welcome Message
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex size-20 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
+                      <Play className="ml-1 size-8 text-white" />
                     </div>
                   </div>
+
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-12 shrink-0 overflow-hidden rounded-full border-2 border-white/70">
+                        <Image
+                          src="/media/coach-profile-1.jpg"
+                          alt="NomiTips head coach"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white drop-shadow-lg">NomiTips Coaching</p>
+                        <p className="text-sm text-white/70 drop-shadow-lg">
+                          Head Coach &middot; Your first day starts here
+                        </p>
+                      </div>
+                    </div>
+                    <span className="hidden rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-sm sm:inline-flex">
+                      Hello &amp; what to expect
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              {[
+                { title: "Meet your coach", text: "The person behind every program, saying hello before you begin." },
+                { title: "Your first day", text: "Exactly what to do, what to bring, and how to start strong." },
+                { title: "How we train", text: "Progressive overload, real support, zero guesswork — from day one." },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center backdrop-blur-sm"
+                >
+                  <p className="font-semibold text-white">{item.title}</p>
+                  <p className="mt-1 text-sm text-neutral-400">{item.text}</p>
                 </div>
               ))}
             </div>

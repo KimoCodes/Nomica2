@@ -15,6 +15,7 @@ const {
   entitlementFindManyMock,
   purchaseFindFirstMock,
   purchaseFindManyMock,
+  siteSettingsFindFirstMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
   productFindManyMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
   entitlementFindManyMock: vi.fn(),
   purchaseFindFirstMock: vi.fn(),
   purchaseFindManyMock: vi.fn(),
+  siteSettingsFindFirstMock: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -43,6 +45,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: purchaseFindFirstMock,
       findMany: purchaseFindManyMock,
     },
+    siteSettings: { findFirst: siteSettingsFindFirstMock },
   },
 }));
 
@@ -52,6 +55,8 @@ vi.mock("@/lib/logger", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  // Admin toggle defaults to enabled unless a test overrides it.
+  siteSettingsFindFirstMock.mockResolvedValue({ videoGuidedWorkouts: true });
 });
 
 describe("Journey A — free account sees only published catalog", () => {
@@ -200,6 +205,40 @@ describe("Journey C — protected video delivery endpoint", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(EXERCISE_URL);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it("returns 404 for clients when admin disabled video-guided workouts", async () => {
+    authMock.mockResolvedValue({
+      user: { id: "user-1", role: "CLIENT" },
+    });
+    exerciseFindUniqueMock.mockResolvedValue({ videoUrl: EXERCISE_URL });
+    clientProgramFindFirstMock.mockResolvedValue({ id: "cp-1" });
+    entitlementFindManyMock.mockResolvedValue([]);
+    purchaseFindManyMock.mockResolvedValue([]);
+    siteSettingsFindFirstMock.mockResolvedValue({ videoGuidedWorkouts: false });
+
+    const response = await getVideo(
+      new Request("http://localhost/api/media/videos/ex-1"),
+      mockRequest(),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("still serves staff previews when video-guided workouts are disabled", async () => {
+    authMock.mockResolvedValue({
+      user: { id: "coach-1", role: "COACH" },
+    });
+    exerciseFindUniqueMock.mockResolvedValue({ videoUrl: EXERCISE_URL });
+    siteSettingsFindFirstMock.mockResolvedValue({ videoGuidedWorkouts: false });
+
+    const response = await getVideo(
+      new Request("http://localhost/api/media/videos/ex-1"),
+      mockRequest(),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(EXERCISE_URL);
   });
 
   it("allows coaches without a personal entitlement", async () => {

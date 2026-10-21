@@ -24,7 +24,7 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/client/(app)/subscription/subscription-actions.tsx": 95,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/actions/subscription.actions.ts": 191,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/client/(app)/page.tsx": 395,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/product.service.ts": 190,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/product.service.ts": 255,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/programs/[slug]/page.tsx": 524,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/constants/navigation.ts": 63,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/client/(app)/programs/[slug]/page.tsx": 113,
@@ -64,7 +64,7 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/exercise-library-client.tsx": 428,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/constants/subscriptions.ts": 79,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/__tests__/constants/subscriptions.test.ts": 77,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/proxy.ts": 154,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/proxy.ts": 170,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/admin.service.ts": 467,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/products/page.tsx": 188,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/products/product-actions.tsx": 475,
@@ -165,5 +165,13 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/admin/content/site-settings-client.tsx": 126,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/content/settings/page.tsx": 31,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/scripts/tmp-toggle.ts": 21,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/scripts/tmp-dcheck.ts": 63
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/scripts/tmp-dcheck.ts": 63,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/.vscode/settings.json": 3,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/ui/loading-bar.tsx": 137,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/package.json": 77,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/auth.ts": 72,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/prisma.ts": 35,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server.ts": 50,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prodactivate": 0,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prodactivatebash": 0
 }

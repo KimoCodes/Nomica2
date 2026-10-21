@@ -38,6 +38,71 @@ export async function getProducts(filter: ProductFilter = {}) {
   });
 }
 
+/**
+ * Catalog payload for /programs. The page only needs the fields selected here.
+ * Fetch bundle membership alongside products so the relation read does not
+ * have to wait for the product query to return its parent IDs.
+ */
+export async function getCatalogProducts(
+  filter: Pick<ProductFilter, "kind" | "q"> = {},
+) {
+  const query = filter.q?.trim();
+  const where = {
+    status: ProductStatus.PUBLISHED,
+    ...(filter.kind && { kind: filter.kind }),
+    ...(query && {
+      OR: [
+        { name: { contains: query, mode: "insensitive" as const } },
+        { tagline: { contains: query, mode: "insensitive" as const } },
+        { description: { contains: query, mode: "insensitive" as const } },
+      ],
+    }),
+  };
+
+  const [products, bundleItems] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        slug: true,
+        kind: true,
+        name: true,
+        tagline: true,
+        description: true,
+        priceCents: true,
+        compareAtCents: true,
+        durationLabel: true,
+        daysPerWeek: true,
+        focus: true,
+        features: true,
+        _count: {
+          select: {
+            purchases: { where: { status: "COMPLETED" } },
+            reviews: true,
+          },
+        },
+      },
+    }),
+    prisma.bundleItem.findMany({
+      where: { bundle: { is: where } },
+      select: { bundleId: true, itemId: true },
+    }),
+  ]);
+
+  const bundleItemsByProduct = new Map<string, { itemId: string }[]>();
+  for (const item of bundleItems) {
+    const items = bundleItemsByProduct.get(item.bundleId) ?? [];
+    items.push({ itemId: item.itemId });
+    bundleItemsByProduct.set(item.bundleId, items);
+  }
+
+  return products.map((product) => ({
+    ...product,
+    bundleItems: bundleItemsByProduct.get(product.id) ?? [],
+  }));
+}
+
 export async function getProductBySlug(slug: string) {
   return prisma.product.findUnique({
     where: { slug },

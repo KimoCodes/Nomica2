@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
-import { getProducts } from "@/server/services/product.service";
+import { getCatalogProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
@@ -49,7 +49,7 @@ export default async function ProgramsPage({
     | undefined;
   const isMissingProgram = params.missing === "1";
   const query = typeof params.q === "string" ? params.q.trim().slice(0, 50) : "";
-  const products = await getProducts({
+  const products = await getCatalogProducts({
     ...(kindFilter && { kind: kindFilter }),
     ...(query && { q: query }),
   });

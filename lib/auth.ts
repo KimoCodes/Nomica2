@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { Role } from "@prisma/client";
 import { authConfig } from "@/lib/auth.config";
+import logger from "@/lib/logger";
 import { loginSchema } from "@/server/validators/auth.schema";
 import { validateUserCredentials } from "@/server/services/user.service";
 
@@ -43,7 +44,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 });
 
 export async function requireAuth() {
+  const startedAt = performance.now();
   const session = await auth();
+
+  if (process.env.PERFORMANCE_TIMING === "1") {
+    logger.info(
+      { durationMs: Number((performance.now() - startedAt).toFixed(1)), authenticated: Boolean(session?.user) },
+      "auth.resolve",
+    );
+  }
 
   if (!session?.user) {
     throw new Error("UNAUTHORIZED");

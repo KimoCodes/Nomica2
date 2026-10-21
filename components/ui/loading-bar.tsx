@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -110,66 +109,10 @@ function CenterSpinner() {
   );
 }
 
-function RouteLoadingDetector() {
-  const pathname = usePathname();
-  const prevPath = useRef(pathname);
-  const initial = useRef(true);
-
-  useEffect(() => {
-    if (initial.current) {
-      initial.current = false;
-      prevPath.current = pathname;
-      return;
-    }
-    if (prevPath.current !== pathname) {
-      prevPath.current = pathname;
-      stopLoading();
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      const anchor = (e.target as HTMLElement).closest("a[href]");
-      if (!anchor) return;
-      const href = anchor.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) return;
-      if ((anchor as HTMLAnchorElement).target === "_blank") return;
-      try {
-        const url = new URL(href, window.location.origin);
-        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-        startLoading();
-      } catch { /* ignore */ }
-    }
-    document.addEventListener("click", onClick, { capture: true, passive: true });
-    return () => document.removeEventListener("click", onClick, { capture: true });
-  }, []);
-
-  return null;
-}
-
-function useFetchInterceptor() {
-  useEffect(() => {
-    const original = window.fetch;
-    window.fetch = async (...args) => {
-      startLoading();
-      try {
-        return await original.apply(window, args);
-      } finally {
-        stopLoading();
-      }
-    };
-    return () => { window.fetch = original; };
-  }, []);
-}
-
 export function LoadingBarProvider({ children }: { children: React.ReactNode }) {
-  useFetchInterceptor();
   return (
     <>
       <CenterSpinner />
-      <Suspense fallback={null}>
-        <RouteLoadingDetector />
-      </Suspense>
       {children}
     </>
   );

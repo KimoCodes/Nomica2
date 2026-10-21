@@ -1,0 +1,9 @@
+#!bin/bash
+
+npm ci
+npx prisma generate
+npx prisma migrate status
+npm run build
+systemctl restart nomitips.service
+systemctl status nomitips.service --no-pager -l
+nginx -t

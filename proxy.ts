@@ -55,18 +55,34 @@ function getSecret() {
 }
 
 async function getRoleFromToken(request: NextRequest): Promise<string | null> {
+  const startedAt = performance.now();
   const token = request.cookies.get("authjs.session-token")?.value
     ?? request.cookies.get("__Secure-authjs.session-token")?.value;
 
-  if (!token) return null;
+  if (!token) {
+    logProxyAuthTiming(startedAt, "missing");
+    return null;
+  }
 
   try {
     const { payload } = await jwtVerify(token, getSecret(), {
       algorithms: ["HS256"],
     });
+    logProxyAuthTiming(startedAt, "valid");
     return (payload.role as string) ?? null;
   } catch {
+    logProxyAuthTiming(startedAt, "invalid");
     return null;
+  }
+}
+
+function logProxyAuthTiming(startedAt: number, outcome: "missing" | "valid" | "invalid") {
+  if (process.env.PERFORMANCE_TIMING === "1") {
+    console.info(JSON.stringify({
+      event: "auth.proxy",
+      durationMs: Number((performance.now() - startedAt).toFixed(1)),
+      outcome,
+    }));
   }
 }
 

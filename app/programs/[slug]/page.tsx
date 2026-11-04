@@ -11,12 +11,14 @@ import { CartProductButton } from "@/components/cart/cart-product-button";
 import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
+import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
 import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
   CheckCircle2,
   Clock,
+  CreditCard,
   Dumbbell,
   Play,
   Star,
@@ -72,6 +74,7 @@ export default async function ProductPage({
     (acc, week) => acc + week.days.length,
     0,
   ) ?? 0;
+  const isPaymentTest = product.slug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG;
 
   const containingBundles = !isOwned && product.kind === "PROGRAM"
     ? await getPublishedBundlesContaining(product.id)
@@ -107,45 +110,61 @@ export default async function ProductPage({
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
             {/* Left: Media Preview */}
             <div className="relative">
-              <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border/50">
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="h-full w-full object-cover"
-                  poster="/media/hero/hero-gym-workout.jpg"
-                >
-                  <source
-                    src={product.previewVideoUrl ?? "/media/workout-glutes-quads-inner-thighs.mp4"}
-                    type="video/mp4"
-                  />
-                </video>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
-                  <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
-                    <Play className="size-8 text-white ml-1" />
+              {isPaymentTest
+                ? (
+                  <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-3xl border border-border/50 bg-muted/40 p-8 text-center">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+                      <CreditCard className="size-8 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Payment test only</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        No workouts or training materials are included.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-white drop-shadow-lg">
-                      Preview Workouts
-                    </p>
-                    <p className="text-sm text-white/80 drop-shadow-lg">
-                      {totalWorkouts || "Sample"} exercises
-                    </p>
+                )
+                : (
+                  <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border/50">
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="h-full w-full object-cover"
+                      poster="/media/hero/hero-gym-workout.jpg"
+                    >
+                      <source
+                        src={product.previewVideoUrl ?? "/media/workout-glutes-quads-inner-thighs.mp4"}
+                        type="video/mp4"
+                      />
+                    </video>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
+                      <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
+                        <Play className="size-8 text-white ml-1" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white drop-shadow-lg">
+                          Preview Workouts
+                        </p>
+                        <p className="text-sm text-white/80 drop-shadow-lg">
+                          {totalWorkouts || "Sample"} exercises
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                )}
             </div>
 
             {/* Right: Product Info */}
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  {product.kind}
+                  {isPaymentTest ? "PAYMENT TEST" : product.kind}
                 </span>
-                {product.focus && (
+                {(product.focus || !isPaymentTest) && (
                   <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                    {product.focus}
+                    {product.focus ?? "All levels"}
                   </span>
                 )}
               </div>
@@ -210,7 +229,13 @@ export default async function ProductPage({
               )}
 
               <div className="mt-8">
-                {isOwned && product.kind !== "BUNDLE"
+                {isOwned && isPaymentTest
+                  ? (
+                    <p className="rounded-xl border border-border/50 bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                      Payment test already completed. No workout access is included.
+                    </p>
+                  )
+                  : isOwned && product.kind !== "BUNDLE"
                   ? (
                     <Link
                       href={`/client/programs/${product.slug}`}
@@ -335,11 +360,12 @@ export default async function ProductPage({
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  Everything You Need
+                  {isPaymentTest ? "Payment Test Details" : "Everything You Need"}
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  This isn&apos;t just a workout PDF. It&apos;s a complete
-                  system designed to deliver results.
+                  {isPaymentTest
+                    ? "This product is only for verifying payment processing. It includes no workouts or training materials."
+                    : "This isn't just a workout PDF. It's a complete system designed to deliver results."}
                 </p>
                 <ul className="mt-8 space-y-4">
                   {product.features.map((feature) => (
@@ -356,7 +382,9 @@ export default async function ProductPage({
                 <div className="relative rounded-3xl border border-border/50 bg-card p-8 shadow-premium-lg">
                   <div className="flex items-center gap-4">
                     <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10">
-                      <Dumbbell className="size-6 text-primary" />
+                      {isPaymentTest
+                        ? <CreditCard className="size-6 text-primary" />
+                        : <Dumbbell className="size-6 text-primary" />}
                     </div>
                     <div>
                       <p className="font-semibold">{product.name}</p>
@@ -368,22 +396,43 @@ export default async function ProductPage({
                     </div>
                   </div>
                   <div className="mt-6 grid grid-cols-3 gap-4">
-                    <div className="rounded-xl bg-muted/50 p-4 text-center">
-                      <p className="text-2xl font-bold">
-                        {totalWorkouts || "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Workouts</p>
-                    </div>
-                    <div className="rounded-xl bg-muted/50 p-4 text-center">
-                      <p className="text-2xl font-bold">
-                        {product.program?.weeks?.length ?? "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Weeks</p>
-                    </div>
-                    <div className="rounded-xl bg-muted/50 p-4 text-center">
-                      <p className="text-2xl font-bold">100%</p>
-                      <p className="text-xs text-muted-foreground">Guided</p>
-                    </div>
+                    {isPaymentTest
+                      ? (
+                        <>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">$0.50</p>
+                            <p className="text-xs text-muted-foreground">Charge</p>
+                          </div>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">Once</p>
+                            <p className="text-xs text-muted-foreground">Payment</p>
+                          </div>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">None</p>
+                            <p className="text-xs text-muted-foreground">Content</p>
+                          </div>
+                        </>
+                      )
+                      : (
+                        <>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">
+                              {totalWorkouts || "—"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Workouts</p>
+                          </div>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">
+                              {product.program?.weeks?.length ?? "—"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Weeks</p>
+                          </div>
+                          <div className="rounded-xl bg-muted/50 p-4 text-center">
+                            <p className="text-2xl font-bold">100%</p>
+                            <p className="text-xs text-muted-foreground">Guided</p>
+                          </div>
+                        </>
+                      )}
                   </div>
                 </div>
               </div>
@@ -451,13 +500,21 @@ export default async function ProductPage({
         <section className="px-4 py-16 md:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Ready to Start?
+              {isPaymentTest ? "Run a Payment Test" : "Ready to Start?"}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join women who transformed their bodies with this program.
+              {isPaymentTest
+                ? "Complete the one-time $0.50 checkout to test payment processing. No workouts or training materials are provided."
+                : "Join women who transformed their bodies with this program."}
             </p>
             <div className="mt-8">
-              {isOwned && product.kind !== "BUNDLE"
+              {isOwned && isPaymentTest
+                ? (
+                  <p className="rounded-xl border border-border/50 bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                    Payment test already completed. No workout access is included.
+                  </p>
+                )
+                : isOwned && product.kind !== "BUNDLE"
                 ? (
                   <Link
                     href={`/client/programs/${product.slug}`}

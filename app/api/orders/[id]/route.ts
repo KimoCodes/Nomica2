@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import logger from "@/lib/logger";
+import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
 
 export const runtime = "nodejs";
 
@@ -100,6 +101,9 @@ export async function GET(
     }
 
     const crossSellBundles = order.status === "PAID"
+      && !order.items.some((item) =>
+        item.productSlug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG
+      )
       ? await getCrossSellBundles(
         session.user.id,
         order.items.map((item) => item.productId),

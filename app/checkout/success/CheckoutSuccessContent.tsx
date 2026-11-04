@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { readCartIds, writeCartIds } from "@/components/cart/cart-storage";
+import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
 
 type OrderSummary = {
   id: string;
@@ -17,7 +18,12 @@ type OrderSummary = {
     | "CANCELED"
     | "PARTIALLY_REFUNDED"
     | "REFUNDED";
-  items: Array<{ id: string; productId: string; productName: string }>;
+  items: Array<{
+    id: string;
+    productId: string;
+    productName: string;
+    productSlug: string;
+  }>;
   crossSellBundles?: Array<{
     id: string;
     name: string;
@@ -130,6 +136,9 @@ export default function CheckoutSuccessContent() {
   }, [orderId, legacySubscriptionReturn, searchParams]);
 
   const isChecking = state === "checking";
+  const isPaymentTestOrder = order?.items.some(
+    (item) => item.productSlug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG,
+  ) ?? false;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -154,11 +163,15 @@ export default function CheckoutSuccessContent() {
                 <h1 className="text-xl font-bold">
                   {legacySubscriptionReturn
                     ? "Your existing subscription is confirmed"
+                    : isPaymentTestOrder
+                    ? "Payment test completed"
                     : "Your purchase is complete"}
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {legacySubscriptionReturn
                     ? "Your payment confirmation was received. Manage its legacy billing in your account."
+                    : isPaymentTestOrder
+                    ? "The $0.50 payment was processed successfully. This test product includes no workouts or training materials."
                     : `${
                       order?.items.map((item) => item.productName).join(", ")
                     } is now in My Programs.`}
@@ -167,17 +180,22 @@ export default function CheckoutSuccessContent() {
                   <Link
                     href={legacySubscriptionReturn
                       ? "/client/subscription"
+                      : isPaymentTestOrder
+                      ? "/programs"
                       : "/client/programs"}
                   >
                     <Button>
                       {legacySubscriptionReturn
                         ? "View account billing"
+                        : isPaymentTestOrder
+                        ? "Back to Programs"
                         : "Open My Programs"}
                       <ArrowRight className="ml-2 size-4" />
                     </Button>
                   </Link>
                 </div>
-                {!legacySubscriptionReturn && (order?.crossSellBundles?.length ?? 0) > 0 && (
+                {!legacySubscriptionReturn && !isPaymentTestOrder &&
+                  (order?.crossSellBundles?.length ?? 0) > 0 && (
                   <div className="mt-6 w-full space-y-2 border-t pt-6 text-left">
                     <p className="text-sm font-semibold">Complete your library</p>
                     {order?.crossSellBundles?.map((bundle) => (

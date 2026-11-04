@@ -9,6 +9,9 @@ npm ci
 echo "==> Generating Prisma Client"
 npx prisma generate
 
+echo "==> Applying pending database migrations"
+npx prisma migrate deploy
+
 echo "==> Checking migration status"
 npx prisma migrate status
 
@@ -26,4 +29,3 @@ sudo systemctl is-active --quiet nomitips.service
 sudo systemctl status nomitips.service --no-pager -l
 
 echo "==> Deployment commands completed"
-

@@ -69,6 +69,7 @@ export async function markOrderRefundedAction(
       });
     });
 
+    revalidatePath("/admin/payments");
     revalidatePath("/admin/orders");
     revalidatePath("/admin/entitlements");
     return createSuccessResponse({ id: orderId, status: "REFUNDED" });
@@ -78,6 +79,108 @@ export async function markOrderRefundedAction(
       "Failed to mark order refunded",
     );
     return createErrorResponse("Failed to refund order", "INTERNAL_ERROR");
+  }
+}
+
+export async function archivePaidOrdersAction(
+  orderIds: string[],
+): Promise<ApiResponse<{ archivedCount: number }>> {
+  try {
+    const session = await requireRole([Role.ADMIN, Role.COACH]);
+    if (!Array.isArray(orderIds)) {
+      return createErrorResponse("Select orders to archive", "VALIDATION_ERROR");
+    }
+    const uniqueIds = [...new Set(orderIds.filter((id) => typeof id === "string" && id.trim()))];
+    if (uniqueIds.length === 0 || uniqueIds.length > 100) {
+      return createErrorResponse(
+        "Select between 1 and 100 orders to archive",
+        "VALIDATION_ERROR",
+      );
+    }
+
+    const coachScope = session.user.role === Role.COACH
+      ? {
+        user: {
+          clientProfile: {
+            is: { coachId: session.user.id },
+          },
+        },
+      }
+      : {};
+    const result = await prisma.order.updateMany({
+      where: {
+        id: { in: uniqueIds },
+        status: "PAID",
+        archivedAt: null,
+        ...coachScope,
+      },
+      data: {
+        archivedAt: new Date(),
+        archivedById: session.user.id,
+      },
+    });
+
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/orders");
+    revalidatePath("/coach/payments");
+    return createSuccessResponse({ archivedCount: result.count });
+  } catch (error) {
+    logger.error(
+      { err: error, action: "archivePaidOrdersAction" },
+      "Failed to archive paid orders",
+    );
+    return createErrorResponse("Failed to archive paid orders", "INTERNAL_ERROR");
+  }
+}
+
+export async function restorePaidOrdersAction(
+  orderIds: string[],
+): Promise<ApiResponse<{ restoredCount: number }>> {
+  try {
+    const session = await requireRole([Role.ADMIN, Role.COACH]);
+    if (!Array.isArray(orderIds)) {
+      return createErrorResponse("Select orders to restore", "VALIDATION_ERROR");
+    }
+    const uniqueIds = [...new Set(orderIds.filter((id) => typeof id === "string" && id.trim()))];
+    if (uniqueIds.length === 0 || uniqueIds.length > 100) {
+      return createErrorResponse(
+        "Select between 1 and 100 orders to restore",
+        "VALIDATION_ERROR",
+      );
+    }
+
+    const coachScope = session.user.role === Role.COACH
+      ? {
+        user: {
+          clientProfile: {
+            is: { coachId: session.user.id },
+          },
+        },
+      }
+      : {};
+    const result = await prisma.order.updateMany({
+      where: {
+        id: { in: uniqueIds },
+        status: "PAID",
+        archivedAt: { not: null },
+        ...coachScope,
+      },
+      data: {
+        archivedAt: null,
+        archivedById: null,
+      },
+    });
+
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/orders");
+    revalidatePath("/coach/payments");
+    return createSuccessResponse({ restoredCount: result.count });
+  } catch (error) {
+    logger.error(
+      { err: error, action: "restorePaidOrdersAction" },
+      "Failed to restore paid orders",
+    );
+    return createErrorResponse("Failed to restore paid orders", "INTERNAL_ERROR");
   }
 }
 

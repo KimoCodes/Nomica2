@@ -265,6 +265,7 @@ model User {
   coachedProgressLogs     ProgressLog[]
   purchases               Purchase[]
   orders                  Order[]
+  archivedOrders          Order[]                  @relation("OrderArchivedBy")
   entitlements            Entitlement[]
   reviews                 Review[]
   habits                  Habit[]
@@ -460,6 +461,9 @@ model Order {
   id                     String      @id @default(cuid())
   userId                 String
   user                   User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  archivedAt             DateTime?
+  archivedById           String?
+  archivedBy             User?       @relation("OrderArchivedBy", fields: [archivedById], references: [id], onDelete: SetNull)
   status                 OrderStatus @default(PENDING)
   currency               String      @default("usd")
   subtotalCents          Int
@@ -477,6 +481,7 @@ model Order {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([status, archivedAt, createdAt])
 }
 
 /// Immutable checkout snapshot. Product metadata and prices can change later

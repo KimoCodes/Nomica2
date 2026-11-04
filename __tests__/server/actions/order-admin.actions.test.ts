@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  archivePaidOrdersAction,
   grantEntitlementAction,
   markOrderRefundedAction,
   revokeEntitlementAction,
+  restorePaidOrdersAction,
 } from "@/actions/order-admin.actions";
 
 const {
   requireRoleMock,
   orderFindUniqueMock,
   orderUpdateMock,
+  orderUpdateManyMock,
   orderPaymentUpdateManyMock,
   entitlementFindUniqueMock,
   entitlementUpdateManyMock,
@@ -24,6 +27,7 @@ const {
   requireRoleMock: vi.fn(async () => ({ user: { id: "admin-1", role: "ADMIN" } })),
   orderFindUniqueMock: vi.fn(),
   orderUpdateMock: vi.fn(),
+  orderUpdateManyMock: vi.fn(),
   orderPaymentUpdateManyMock: vi.fn(),
   entitlementFindUniqueMock: vi.fn(),
   entitlementUpdateManyMock: vi.fn(),
@@ -42,23 +46,13 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/prisma", () => {
-  const tx = {
-    order: { update: orderUpdateMock },
-    orderPayment: { updateMany: orderPaymentUpdateManyMock },
-    orderItem: { findMany: orderItemFindManyMock },
-    entitlement: {
-      findUnique: entitlementFindUniqueMock,
-      update: entitlementUpdateMock,
-      updateMany: entitlementUpdateManyMock,
-      create: entitlementCreateMock,
-    },
-    clientProfile: { findUnique: clientProfileFindUniqueMock },
-    clientProgram: { upsert: clientProgramUpsertMock },
-  };
   return {
     prisma: {
       $transaction: transactionMock,
-      order: { findUnique: orderFindUniqueMock },
+      order: {
+        findUnique: orderFindUniqueMock,
+        updateMany: orderUpdateManyMock,
+      },
       entitlement: {
         findUnique: entitlementFindUniqueMock,
         update: entitlementUpdateMock,
@@ -155,6 +149,108 @@ describe("markOrderRefundedAction", () => {
 
     expect(result.success).toBe(false);
     expect(orderFindUniqueMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("archivePaidOrdersAction", () => {
+  it("archives only eligible paid orders and records the admin", async () => {
+    orderUpdateManyMock.mockResolvedValue({ count: 2 });
+
+    const result = await archivePaidOrdersAction(["order-1", "order-1", "order-2"]);
+
+    expect(result).toEqual({ success: true, data: { archivedCount: 2 } });
+    expect(orderUpdateManyMock).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["order-1", "order-2"] },
+        status: "PAID",
+        archivedAt: null,
+      },
+      data: {
+        archivedAt: expect.any(Date),
+        archivedById: "admin-1",
+      },
+    });
+  });
+
+  it("rejects empty or oversized archive selections", async () => {
+    const emptyResult = await archivePaidOrdersAction([]);
+    const oversizedResult = await archivePaidOrdersAction(
+      Array.from({ length: 101 }, (_, index) => `order-${index}`),
+    );
+
+    expect(emptyResult.success).toBe(false);
+    expect(oversizedResult.success).toBe(false);
+    expect(orderUpdateManyMock).not.toHaveBeenCalled();
+  });
+
+  it("requires an admin", async () => {
+    requireRoleMock.mockRejectedValue(new Error("Forbidden"));
+
+    const result = await archivePaidOrdersAction(["order-1"]);
+
+    expect(result.success).toBe(false);
+    expect(orderUpdateManyMock).not.toHaveBeenCalled();
+  });
+
+  it("allows a coach to archive only assigned clients' paid orders", async () => {
+    requireRoleMock.mockResolvedValue({
+      user: { id: "coach-1", role: "COACH" },
+    });
+    orderUpdateManyMock.mockResolvedValue({ count: 1 });
+
+    const result = await archivePaidOrdersAction(["order-1"]);
+
+    expect(result).toEqual({ success: true, data: { archivedCount: 1 } });
+    expect(orderUpdateManyMock).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["order-1"] },
+        status: "PAID",
+        archivedAt: null,
+        user: { clientProfile: { is: { coachId: "coach-1" } } },
+      },
+      data: {
+        archivedAt: expect.any(Date),
+        archivedById: "coach-1",
+      },
+    });
+  });
+});
+
+describe("restorePaidOrdersAction", () => {
+  it("restores archived paid orders without changing their payment records", async () => {
+    orderUpdateManyMock.mockResolvedValue({ count: 1 });
+
+    const result = await restorePaidOrdersAction(["order-1"]);
+
+    expect(result).toEqual({ success: true, data: { restoredCount: 1 } });
+    expect(orderUpdateManyMock).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["order-1"] },
+        status: "PAID",
+        archivedAt: { not: null },
+      },
+      data: { archivedAt: null, archivedById: null },
+    });
+  });
+
+  it("allows a coach to restore only assigned clients' archived orders", async () => {
+    requireRoleMock.mockResolvedValue({
+      user: { id: "coach-1", role: "COACH" },
+    });
+    orderUpdateManyMock.mockResolvedValue({ count: 1 });
+
+    const result = await restorePaidOrdersAction(["order-1"]);
+
+    expect(result).toEqual({ success: true, data: { restoredCount: 1 } });
+    expect(orderUpdateManyMock).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["order-1"] },
+        status: "PAID",
+        archivedAt: { not: null },
+        user: { clientProfile: { is: { coachId: "coach-1" } } },
+      },
+      data: { archivedAt: null, archivedById: null },
+    });
   });
 });
 

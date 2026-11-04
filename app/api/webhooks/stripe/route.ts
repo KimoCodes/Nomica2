@@ -499,6 +499,8 @@ async function handleOrderCheckoutPaid(
 
   revalidatePath("/client");
   revalidatePath("/client/programs");
+  revalidatePath("/admin/payments");
+  revalidatePath("/coach/payments");
   logger.info(
     { event: "order.paid", orderId: metadata.orderId, userId: metadata.userId, stripeEventId: eventId, route: "webhooks/stripe" },
     "One-time order verified and product entitlements granted",
@@ -740,6 +742,9 @@ async function handleOrderRefunded(charge: Stripe.Charge) {
       },
     });
   });
+
+  revalidatePath("/admin/payments");
+  revalidatePath("/coach/payments");
 
   const order = payment.order;
   const notice: PaymentEmailNotice = {

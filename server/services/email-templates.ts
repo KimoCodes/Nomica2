@@ -39,10 +39,18 @@ export function renderEmailTemplate(options: EmailTemplateOptions): string {
 
           <!-- Logo -->
           <tr>
-            <td align="center" style="padding-bottom:32px;">
+            <td align="center" style="padding:8px 0 28px;">
               <a href="${APP_URL}" style="text-decoration:none;">
-                <span style="font-family:Georgia,serif;font-size:28px;font-style:italic;color:#ffffff;letter-spacing:-0.5px;">N</span><span style="font-family:Georgia,serif;font-size:28px;color:#ffffff;letter-spacing:-0.5px;">omi</span><span style="font-family:Georgia,serif;font-size:28px;color:#28b968;letter-spacing:-0.5px;">Tips</span>
+                <img
+                  src="${APP_URL}/logo-email.png"
+                  width="214"
+                  alt="NomiTips"
+                  style="display:block;width:214px;max-width:100%;height:auto;border:0;"
+                >
               </a>
+              <p style="margin:10px 0 0;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#a8c4b8;">
+                Stop Scrolling. Start Sculpting.
+              </p>
             </td>
           </tr>
 
@@ -50,6 +58,9 @@ export function renderEmailTemplate(options: EmailTemplateOptions): string {
           <tr>
             <td>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#111a14;border:1px solid #1e2e24;border-radius:16px;overflow:hidden;">
+                <tr>
+                  <td style="height:4px;background-color:#28b968;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
                 <tr>
                   <td style="padding:40px 32px;">
 
@@ -108,13 +119,13 @@ export function renderEmailTemplate(options: EmailTemplateOptions): string {
           <!-- Footer -->
           <tr>
             <td style="padding:32px 16px;text-align:center;">
-              <p style="margin:0 0 8px 0;font-size:13px;color:#4a6356;">
-                ${footer || `${SITE_NAME} &mdash; Stop Scrolling. Start Sculpting.`}
+              <p style="margin:0 0 8px 0;font-size:13px;color:#a8c4b8;">
+                ${footer || `${SITE_NAME} &mdash; built for your strongest self.`}
               </p>
-              <p style="margin:0;font-size:12px;color:#4a6356;">
-                <a href="${APP_URL}/settings" style="color:#4a6356;text-decoration:underline;">Notification settings</a>
+              <p style="margin:0;font-size:12px;color:#789083;">
+                <a href="${APP_URL}/settings" style="color:#a8c4b8;text-decoration:underline;">Notification settings</a>
                 &nbsp;&bull;&nbsp;
-                <a href="mailto:${SUPPORT_EMAIL}" style="color:#4a6356;text-decoration:underline;">Contact support</a>
+                <a href="mailto:${SUPPORT_EMAIL}" style="color:#a8c4b8;text-decoration:underline;">Contact support</a>
               </p>
             </td>
           </tr>

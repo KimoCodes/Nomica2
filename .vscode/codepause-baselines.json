@@ -6,7 +6,7 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/actions/checkout.actions.ts": 218,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/stripe.ts": 147,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/checkout-button.tsx": 86,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/api/webhooks/stripe/route.ts": 814,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/api/webhooks/stripe/route.ts": 1188,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/api/orders/[id]/route.ts": 120,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/checkout/success/CheckoutSuccessContent.tsx": 299,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/entitlement.service.ts": 78,
@@ -101,7 +101,7 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/admin/content/branding-client.tsx": 336,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/admin/content/media-library-client.tsx": 670,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/admin/content/theme-manager-client.tsx": 576,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/email.service.ts": 514,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/email.service.ts": 610,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/content/page.tsx": 279,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/content/pages/page.tsx": 84,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/content/pages/[slug]/page.tsx": 50,
@@ -153,5 +153,6 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/prisma.ts": 35,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server.ts": 50,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prodactivatebash": 9,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/constants/product-catalog.ts": 1
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/constants/product-catalog.ts": 1,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/email-templates.ts": 197
 }

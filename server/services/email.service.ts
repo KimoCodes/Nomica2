@@ -2,8 +2,120 @@ import { getAppUrl, getEmailFrom, getResendClient } from "@/lib/resend";
 import { sendSmtpEmail } from "@/lib/smtp";
 import { prisma } from "@/lib/prisma";
 import logger from "@/lib/logger";
+import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
+import { infoCard, renderEmailTemplate, textBlock } from "./email-templates";
 
 type EmailProvider = "resend" | "smtp" | "none";
+
+export type PaymentEmailStatus =
+  | "succeeded"
+  | "failed"
+  | "partially_refunded"
+  | "refunded";
+
+export type PaymentEmailNotice = {
+  status: PaymentEmailStatus;
+  customerName: string;
+  customerEmail: string;
+  amountCents: number;
+  currency: string;
+  reference: string;
+  items: { name: string; amountCents?: number }[];
+};
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]!);
+}
+
+export async function sendPaymentStatusEmail(
+  email: string,
+  notice: PaymentEmailNotice,
+  audience: "customer" | "team",
+  teamDashboardPath = "/admin/orders",
+): Promise<{ sent: boolean }> {
+  const statusLabels: Record<PaymentEmailStatus, string> = {
+    succeeded: "Payment received",
+    failed: "Payment failed",
+    partially_refunded: "Payment partially refunded",
+    refunded: "Payment refunded",
+  };
+  const title = statusLabels[notice.status];
+  const amount = (notice.amountCents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: notice.currency.toUpperCase(),
+  });
+  const badgeColors: Record<PaymentEmailStatus, { background: string; color: string }> = {
+    succeeded: { background: "#0d2818", color: "#28b968" },
+    failed: { background: "#2b1113", color: "#ff7c84" },
+    partially_refunded: { background: "#2a210c", color: "#f2c45c" },
+    refunded: { background: "#20242a", color: "#c5ced8" },
+  };
+  const badgeColor = badgeColors[notice.status];
+  const itemRows = notice.items.map((item) => `
+    <tr>
+      <td style="padding:12px 14px;border-bottom:1px solid #1e2e24;color:#e8f0eb;font-size:14px;line-height:1.5;">
+        ${escapeHtml(item.name)}
+      </td>
+      ${item.amountCents === undefined
+        ? ""
+        : `<td align="right" style="padding:12px 14px;border-bottom:1px solid #1e2e24;color:#e8f0eb;font-size:14px;white-space:nowrap;">${(item.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: notice.currency.toUpperCase() })}</td>`}
+    </tr>
+  `).join("");
+  const customerDetails = audience === "team"
+    ? textBlock(
+      `<strong style="color:#ffffff;">Customer</strong><br>${escapeHtml(notice.customerName)} · <a href="mailto:${encodeURIComponent(notice.customerEmail)}" style="color:#28b968;text-decoration:none;">${escapeHtml(notice.customerEmail)}</a>`,
+    )
+    : textBlock(
+      notice.status === "succeeded"
+        ? "Your payment has been securely processed. Here is your transaction summary."
+        : "There has been an update to your payment. Here are the details for your records.",
+    );
+  const paymentTable = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background-color:#0d1610;border:1px solid #1e2e24;border-radius:12px;overflow:hidden;">
+      ${itemRows}
+    </table>
+  `;
+  const actionUrl = audience === "team"
+    ? `${getAppUrl()}${teamDashboardPath}`
+    : `${getAppUrl()}/client/orders`;
+  const actionLabel = audience === "team" ? "View Orders" : "View Order";
+  const paymentVerb = notice.status === "partially_refunded" || notice.status === "refunded"
+    ? "Refunded"
+    : "Total";
+  const subtitle = audience === "team"
+    ? `A customer payment was ${notice.status.replaceAll("_", " ")}.`
+    : statusLabels[notice.status];
+
+  return sendEmail(
+    email,
+    `${title} — NomiTips`,
+    renderEmailTemplate({
+      preheader: `${title}: ${amount}`,
+      title,
+      subtitle,
+      content: [
+        customerDetails,
+        paymentTable,
+        infoCard("Payment summary", [
+          {
+            label: "Status",
+            value: `<span style="display:inline-block;padding:4px 10px;background-color:${badgeColor.background};color:${badgeColor.color};border-radius:20px;font-size:12px;font-weight:700;text-transform:capitalize;">${notice.status.replaceAll("_", " ")}</span>`,
+          },
+          { label: paymentVerb, value: amount },
+          { label: "Reference", value: escapeHtml(notice.reference) },
+        ]),
+      ].join(""),
+      action: { label: actionLabel, url: actionUrl },
+      footer: "Questions about this payment? Reply to this email or contact support@nomitips.com.",
+    }),
+  );
+}
 
 function getEmailProvider(): EmailProvider {
   if (getResendClient()) return "resend";
@@ -206,7 +318,7 @@ export async function sendOrderConfirmationEmail(
     id: string;
     totalCents: number;
     currency: string;
-    items: { productName: string; lineTotalCents: number }[];
+    items: { productName: string; productSlug?: string; lineTotalCents: number }[];
   },
 ): Promise<{ sent: boolean }> {
   const ordersUrl = `${getAppUrl()}/client/orders`;
@@ -219,47 +331,43 @@ export async function sendOrderConfirmationEmail(
     .map(
       (item) => `
         <tr>
-          <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${item.productName}</td>
-          <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">
+          <td style="padding:12px 14px;border-bottom:1px solid #1e2e24;color:#e8f0eb;font-size:14px;">${escapeHtml(item.productName)}</td>
+          <td style="padding:12px 14px;border-bottom:1px solid #1e2e24;text-align:right;color:#e8f0eb;font-size:14px;white-space:nowrap;">
             ${(item.lineTotalCents / 100).toLocaleString("en-US", { style: "currency", currency: order.currency.toUpperCase() })}
           </td>
         </tr>`,
     )
     .join("");
+  const paymentTestOnly = order.items.some(
+    (item) => item.productSlug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG,
+  );
 
   return sendEmail(
     email,
     "Your NomiTips purchase is confirmed",
-    `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 24px; margin-bottom: 16px;">Thanks, ${name}!</h1>
-        <p style="color: #444; line-height: 1.6;">
-          Your purchase is confirmed and your programs are ready in your library.
-        </p>
-        <table style="width: 100%; margin: 24px 0; border-collapse: collapse;">
-          ${itemRows}
-          <tr>
-            <td style="padding: 12px 0 0; font-weight: 600;">Total</td>
-            <td style="padding: 12px 0 0; text-align: right; font-weight: 600;">${total}</td>
-          </tr>
-        </table>
-        <a href="${programsUrl}"
-           style="display: inline-block; margin: 8px 16px 8px 0; padding: 12px 24px;
-                  background: #171717; color: #fff; text-decoration: none;
-                  border-radius: 8px; font-weight: 500;">
-          Open My Programs
-        </a>
-        <a href="${ordersUrl}"
-           style="display: inline-block; padding: 12px 24px;
-                  background: #fff; color: #171717; text-decoration: none;
-                  border: 1px solid #ddd; border-radius: 8px; font-weight: 500;">
-          View Order
-        </a>
-        <p style="color: #888; font-size: 14px; margin-top: 24px;">
-          Order ${order.id} · One-time purchase — no recurring charges.
-        </p>
-      </div>
-    `,
+    renderEmailTemplate({
+      preheader: `Purchase confirmed — ${total}`,
+      title: `Thank you, ${escapeHtml(name)}!`,
+      subtitle: paymentTestOnly
+        ? "Your payment test is confirmed."
+        : "Your purchase is confirmed and your programs are ready.",
+      content: [
+        textBlock(paymentTestOnly
+          ? "This test product does not include workouts or training materials."
+          : "Your one-time payment is complete. Your purchased programs are ready in your library."),
+        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background-color:#0d1610;border:1px solid #1e2e24;border-radius:12px;overflow:hidden;">${itemRows}</table>`,
+        infoCard("Order summary", [
+          { label: "Payment status", value: '<span style="color:#28b968;font-weight:700;">Confirmed</span>' },
+          { label: "Total paid", value: total },
+          { label: "Order reference", value: escapeHtml(order.id) },
+        ]),
+        textBlock("One-time purchase · No recurring charges."),
+      ].join(""),
+      action: paymentTestOnly
+        ? { label: "View Order", url: ordersUrl }
+        : { label: "Open My Programs", url: programsUrl },
+      footer: "Need help with your order? Contact support@nomitips.com.",
+    }),
   );
 }
 

@@ -15,7 +15,12 @@ import {
   notifyCoachClientCancelled,
   notifyCoachClientPlanChanged,
 } from "@/server/services/notification.service";
-import { sendEmail, sendOrderConfirmationEmail } from "@/server/services/email.service";
+import {
+  sendEmail,
+  sendOrderConfirmationEmail,
+  sendPaymentStatusEmail,
+  type PaymentEmailNotice,
+} from "@/server/services/email.service";
 import {
   renderEmailTemplate,
   infoCard,
@@ -52,6 +57,138 @@ async function findCoachForUser(userId: string) {
     select: { coachId: true },
   });
   return profile?.coachId ?? null;
+}
+
+type PaymentEmailRecipient = {
+  email: string;
+  role: "admin" | "coach";
+};
+
+async function getPaymentEmailRecipients({
+  productIds = [],
+  clientUserId,
+}: {
+  productIds?: string[];
+  clientUserId?: string;
+} = {}): Promise<PaymentEmailRecipient[]> {
+  const [admins, products, clientProfile] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { email: true },
+    }),
+    prisma.product.findMany({
+      where: { id: { in: [...new Set(productIds)] } },
+      select: {
+        program: {
+          select: {
+            coach: { select: { user: { select: { email: true } } } },
+          },
+        },
+      },
+    }),
+    clientUserId
+      ? prisma.clientProfile.findUnique({
+        where: { userId: clientUserId },
+        select: { coach: { select: { email: true } } },
+      })
+      : Promise.resolve(null),
+  ]);
+
+  const recipients = new Map<string, PaymentEmailRecipient>();
+  const addRecipient = (email: string | null | undefined, role: "admin" | "coach") => {
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail) return;
+    const existing = recipients.get(normalizedEmail);
+    recipients.set(normalizedEmail, {
+      email: normalizedEmail,
+      role: existing?.role === "admin" || role === "admin" ? "admin" : "coach",
+    });
+  };
+
+  admins.forEach(({ email }) => addRecipient(email, "admin"));
+  addRecipient(process.env.ADMIN_EMAIL, "admin");
+  (process.env.COACH_NOTIFICATION_EMAILS ?? "")
+    .split(",")
+    .forEach((email) => addRecipient(email, "coach"));
+  products.forEach((product) =>
+    addRecipient(product.program?.coach.user.email, "coach")
+  );
+  addRecipient(clientProfile?.coach?.email, "coach");
+
+  return [...recipients.values()];
+}
+
+async function sendPaymentTeamEmails(
+  notice: PaymentEmailNotice,
+  recipients: PaymentEmailRecipient[],
+) {
+  const results = await Promise.allSettled(
+    recipients.map(async ({ email, role }) => {
+      const { sent } = await sendPaymentStatusEmail(
+        email,
+        notice,
+        "team",
+        role === "coach" ? "/coach/clients" : "/admin/orders",
+      );
+      if (!sent) throw new Error("PAYMENT_NOTIFICATION_EMAIL_NOT_SENT");
+    }),
+  );
+  const failedCount = results.filter((result) => result.status === "rejected").length;
+  if (failedCount > 0) {
+    logger.error(
+      {
+        event: "payment.team_email_failed",
+        reference: notice.reference,
+        failedCount,
+        recipientCount: recipients.length,
+      },
+      "One or more payment notification emails failed",
+    );
+  } else if (recipients.length > 0) {
+    logger.info(
+      {
+        event: "payment.team_email_sent",
+        reference: notice.reference,
+        recipientCount: recipients.length,
+      },
+      "Payment notification emails sent to the team",
+    );
+  }
+}
+
+async function notifyPaymentTeam(
+  notice: PaymentEmailNotice,
+  recipientQuery: { productIds?: string[]; clientUserId?: string },
+) {
+  try {
+    const recipients = await getPaymentEmailRecipients(recipientQuery);
+    await sendPaymentTeamEmails(notice, recipients);
+  } catch (error) {
+    logger.error(
+      { err: error, event: "payment.team_email_failed", reference: notice.reference },
+      "Unable to prepare payment notification emails for the team",
+    );
+  }
+}
+
+async function sendPaymentCustomerEmail(
+  email: string,
+  notice: PaymentEmailNotice,
+) {
+  try {
+    const { sent } = await sendPaymentStatusEmail(email, notice, "customer");
+    if (!sent) {
+      logger.error(
+        { event: "payment.customer_email_failed", reference: notice.reference },
+        "Payment status email was not sent to the customer",
+      );
+    }
+  } catch (error) {
+    logger.error(
+      { err: error, event: "payment.customer_email_failed", reference: notice.reference },
+      "Payment status email failed for the customer",
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -170,8 +307,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId
       throw new Error("INVALID_LEGACY_PURCHASE_PAYMENT");
     }
     const [user, product] = await Promise.all([
-      prisma.user.findUnique({ where: { id: metadata.userId }, select: { id: true } }),
-      prisma.product.findUnique({ where: { id: metadata.productId }, select: { id: true } }),
+      prisma.user.findUnique({
+        where: { id: metadata.userId },
+        select: { id: true, email: true, name: true },
+      }),
+      prisma.product.findUnique({
+        where: { id: metadata.productId },
+        select: { id: true, name: true },
+      }),
     ]);
     if (!user || !product) {
       throw new Error("LEGACY_PURCHASE_REFERENCE_NOT_FOUND");
@@ -198,6 +341,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, eventId
     });
 
     logger.info({ event: "purchase.completed", productId: metadata.productId, userId: metadata.userId, route: "webhooks/stripe" }, "Purchase completed");
+    const notice: PaymentEmailNotice = {
+      status: "succeeded",
+      customerName: user.name ?? "Client",
+      customerEmail: user.email,
+      amountCents: session.amount_total,
+      currency: session.currency ?? "usd",
+      reference: session.id,
+      items: [{ name: product.name, amountCents: session.amount_total }],
+    };
+    await Promise.all([
+      sendPaymentCustomerEmail(user.email, notice),
+      notifyPaymentTeam(notice, { productIds: [product.id] }),
+    ]);
   }
 
   if (metadata?.kind === "subscription") {
@@ -359,20 +515,57 @@ async function handleOrderCheckoutPaid(
           id: true,
           totalCents: true,
           currency: true,
-          items: { select: { productName: true, lineTotalCents: true } },
+          items: {
+            select: {
+              productId: true,
+              productName: true,
+              productSlug: true,
+              lineTotalCents: true,
+              bundleProductIds: true,
+            },
+          },
         },
       },
     },
   });
   const paidOrder = purchaser?.orders[0];
   if (purchaser && paidOrder) {
-    sendOrderConfirmationEmail(purchaser.email, purchaser.name ?? "there", paidOrder)
-      .catch((error) => {
-        logger.warn(
-          { event: "order.confirmation_email_failed", orderId: metadata.orderId, error },
-          "Order confirmation email failed to send",
+    try {
+      const { sent } = await sendOrderConfirmationEmail(
+        purchaser.email,
+        purchaser.name ?? "there",
+        paidOrder,
+      );
+      if (!sent) {
+        logger.error(
+          { event: "order.confirmation_email_failed", orderId: metadata.orderId },
+          "Order confirmation email was not sent",
         );
-      });
+      }
+    } catch (error) {
+      logger.error(
+        { err: error, event: "order.confirmation_email_failed", orderId: metadata.orderId },
+        "Order confirmation email failed to send",
+      );
+    }
+
+    const notice: PaymentEmailNotice = {
+      status: "succeeded",
+      customerName: purchaser.name ?? "Client",
+      customerEmail: purchaser.email,
+      amountCents: paidOrder.totalCents,
+      currency: paidOrder.currency,
+      reference: paidOrder.id,
+      items: paidOrder.items.map((item) => ({
+        name: item.productName,
+        amountCents: item.lineTotalCents,
+      })),
+    };
+    const productIds = paidOrder.items.flatMap((item) => [
+      item.productId,
+      ...item.bundleProductIds,
+    ]);
+    await notifyPaymentTeam(notice, { productIds });
   }
 }
 
@@ -380,10 +573,49 @@ async function handleOrderCheckoutFailed(session: Stripe.Checkout.Session) {
   const metadata = session.metadata;
   if (metadata?.kind !== "order" || !metadata.orderId) return;
 
-  await prisma.order.updateMany({
+  const order = await prisma.order.findUnique({
+    where: { id: metadata.orderId },
+    include: {
+      user: { select: { email: true, name: true } },
+      items: {
+        select: {
+          productId: true,
+          productName: true,
+          lineTotalCents: true,
+          bundleProductIds: true,
+        },
+      },
+    },
+  });
+  if (!order) return;
+
+  const updated = await prisma.order.updateMany({
     where: { id: metadata.orderId, status: "PENDING" },
     data: { status: "PAYMENT_FAILED" },
   });
+  if (updated.count === 0) return;
+
+  const notice: PaymentEmailNotice = {
+    status: "failed",
+    customerName: order.user.name ?? "Client",
+    customerEmail: order.user.email,
+    amountCents: order.totalCents,
+    currency: order.currency,
+    reference: order.id,
+    items: order.items.map((item) => ({
+      name: item.productName,
+      amountCents: item.lineTotalCents,
+    })),
+  };
+  await Promise.all([
+    notifyPaymentTeam(notice, {
+      productIds: order.items.flatMap((item) => [
+        item.productId,
+        ...item.bundleProductIds,
+      ]),
+    }),
+    sendPaymentCustomerEmail(order.user.email, notice),
+  ]);
 }
 
 async function handleOrderRefunded(charge: Stripe.Charge) {
@@ -394,11 +626,88 @@ async function handleOrderRefunded(charge: Stripe.Charge) {
 
   const payment = await prisma.orderPayment.findUnique({
     where: { providerPaymentId: paymentIntentId },
-    select: { id: true, orderId: true },
+    select: {
+      id: true,
+      orderId: true,
+      order: {
+        include: {
+          user: { select: { email: true, name: true } },
+          items: {
+            select: {
+              productId: true,
+              productName: true,
+              lineTotalCents: true,
+              bundleProductIds: true,
+            },
+          },
+        },
+      },
+    },
   });
-  if (!payment) return;
-
   const fullyRefunded = charge.amount_refunded >= charge.amount;
+  if (!payment) {
+    const stripePaymentIntentId = typeof charge.payment_intent === "string"
+      ? charge.payment_intent
+      : charge.payment_intent?.id;
+    if (!stripePaymentIntentId) return;
+
+    let invoiceId: string | undefined;
+    try {
+      const stripe = (await import("@/lib/stripe")).getStripe();
+      const invoicePayments = await stripe.invoicePayments.list({
+        payment: {
+          type: "payment_intent",
+          payment_intent: stripePaymentIntentId,
+        },
+        limit: 1,
+      });
+      const invoice = invoicePayments.data[0]?.invoice;
+      invoiceId = typeof invoice === "string" ? invoice : invoice?.id;
+    } catch (error) {
+      logger.error(
+        { err: error, paymentIntentId: stripePaymentIntentId, route: "webhooks/stripe" },
+        "Failed to look up invoice for refunded subscription payment",
+      );
+      return;
+    }
+    if (!invoiceId) return;
+
+    const subscriptionPayment = await prisma.payment.findUnique({
+      where: { stripePaymentId: `inv_${invoiceId}` },
+      include: { subscription: { select: { id: true, userId: true, plan: true } } },
+    });
+    if (!subscriptionPayment) return;
+
+    await prisma.payment.update({
+      where: { id: subscriptionPayment.id },
+      data: { status: fullyRefunded ? "refunded" : "partially_refunded" },
+    });
+    const user = await prisma.user.findUnique({
+      where: { id: subscriptionPayment.subscription.userId },
+      select: { email: true, name: true },
+    });
+    if (!user) return;
+
+    const notice: PaymentEmailNotice = {
+      status: fullyRefunded ? "refunded" : "partially_refunded",
+      customerName: user.name ?? "Client",
+      customerEmail: user.email,
+      amountCents: charge.amount_refunded,
+      currency: charge.currency,
+      reference: invoiceId,
+      items: [{
+        name: `${subscriptionPayment.subscription.plan.replace(/_/g, " ")} subscription`,
+      }],
+    };
+    await Promise.all([
+      sendPaymentCustomerEmail(user.email, notice),
+      notifyPaymentTeam(notice, {
+        clientUserId: subscriptionPayment.subscription.userId,
+      }),
+    ]);
+    return;
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.orderPayment.update({
       where: { id: payment.id },
@@ -431,6 +740,29 @@ async function handleOrderRefunded(charge: Stripe.Charge) {
       },
     });
   });
+
+  const order = payment.order;
+  const notice: PaymentEmailNotice = {
+    status: fullyRefunded ? "refunded" : "partially_refunded",
+    customerName: order.user.name ?? "Client",
+    customerEmail: order.user.email,
+    amountCents: charge.amount_refunded,
+    currency: charge.currency,
+    reference: order.id,
+    items: order.items.map((item) => ({
+      name: item.productName,
+      amountCents: item.lineTotalCents,
+    })),
+  };
+  await Promise.all([
+    sendPaymentCustomerEmail(order.user.email, notice),
+    notifyPaymentTeam(notice, {
+      productIds: order.items.flatMap((item) => [
+        item.productId,
+        ...item.bundleProductIds,
+      ]),
+    }),
+  ]);
 }
 
 async function handleSubscriptionFromCheckout(session: Stripe.Checkout.Session) {
@@ -669,17 +1001,27 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     where: { stripePaymentId },
   });
 
-  if (existing) return;
-
-  await prisma.payment.create({
-    data: {
-      subscriptionId: subscription.id,
-      stripePaymentId,
-      amount: invoice.amount_paid,
-      currency: invoice.currency,
-      status: "succeeded",
-    },
-  });
+  if (existing) {
+    const transitioned = await prisma.payment.updateMany({
+      where: { id: existing.id, status: { not: "succeeded" } },
+      data: {
+        amount: invoice.amount_paid,
+        currency: invoice.currency,
+        status: "succeeded",
+      },
+    });
+    if (transitioned.count === 0) return;
+  } else {
+    await prisma.payment.create({
+      data: {
+        subscriptionId: subscription.id,
+        stripePaymentId,
+        amount: invoice.amount_paid,
+        currency: invoice.currency,
+        status: "succeeded",
+      },
+    });
+  }
 
   const wasPastDue = subscription.status === "past_due";
 
@@ -704,15 +1046,35 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     } catch {}
   }
 
-  // Notify coach of payment
-  try {
-    const coachId = await findCoachForUser(subscription.userId);
-    if (coachId) {
-      const user = await prisma.user.findUnique({ where: { id: subscription.userId }, select: { name: true } });
-      await notifyCoachClientSubscribed(coachId, user?.name ?? "A client", subscription.plan);
-      invalidateCoachCaches(coachId);
+  const paymentUser = await prisma.user.findUnique({
+      where: { id: subscription.userId },
+      select: { email: true, name: true },
+    });
+  if (paymentUser && invoice.amount_paid > 0) {
+    const notice: PaymentEmailNotice = {
+      status: "succeeded",
+      customerName: paymentUser.name ?? "Client",
+      customerEmail: paymentUser.email,
+      amountCents: invoice.amount_paid,
+      currency: invoice.currency,
+      reference: invoice.id,
+      items: [{ name: `${subscription.plan.replace(/_/g, " ")} subscription` }],
+    };
+    await Promise.all([
+      sendPaymentCustomerEmail(paymentUser.email, notice),
+      notifyPaymentTeam(notice, { clientUserId: subscription.userId }),
+    ]);
+  }
+
+  const coachId = await findCoachForUser(subscription.userId);
+  if (coachId) {
+    try {
+      await notifyCoachClientSubscribed(coachId, paymentUser?.name ?? "A client", subscription.plan);
+    } catch (error) {
+      logger.error({ err: error, coachId, subscriptionId: subscription.id }, "Failed to notify coach about subscription payment");
     }
-  } catch {}
+    invalidateCoachCaches(coachId);
+  }
 
   invalidateSubscriptionCaches(subscription.userId);
 
@@ -724,7 +1086,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   const existing = await prisma.subscription.findFirst({
     where: { stripeCustomerId },
-    select: { userId: true },
+    select: { id: true, userId: true, plan: true },
   });
 
   await prisma.subscription.updateMany({
@@ -735,15 +1097,19 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (existing) {
     invalidateSubscriptionCaches(existing.userId);
 
+    const paymentUser = await prisma.user.findUnique({
+      where: { id: existing.userId },
+      select: { email: true, name: true },
+    });
+
     // Notify user of failed payment
-    try {
-      const user = await prisma.user.findUnique({ where: { id: existing.userId }, select: { email: true, name: true } });
-      if (user?.email) {
+    if (paymentUser?.email) {
+      try {
         const html = renderEmailTemplate({
           title: "Payment Failed",
           subtitle: "Your latest payment could not be processed.",
           content: [
-            textBlock(`Hi ${user.name ?? "there"},`),
+            textBlock(`Hi ${paymentUser.name ?? "there"},`),
             textBlock("Your most recent subscription payment failed. Please update your payment method in your billing settings to avoid losing access."),
             infoCard("What happens next", [
               { label: "Status", value: "Past Due" },
@@ -752,9 +1118,37 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
           ].join(""),
           action: { label: "Update Payment Method", url: "/client/subscription" },
         });
-        await sendEmail(user.email, "Payment failed - action required", html);
+        const { sent } = await sendEmail(
+          paymentUser.email,
+          "Payment failed - action required",
+          html,
+        );
+        if (!sent) {
+          logger.error(
+            { event: "subscription.payment_failed_email_failed", subscriptionId: existing.id },
+            "Subscription payment failure email was not sent to the customer",
+          );
+        }
+      } catch (error) {
+        logger.error(
+          { err: error, event: "subscription.payment_failed_email_failed", subscriptionId: existing.id },
+          "Subscription payment failure email failed for the customer",
+        );
       }
-    } catch {}
+    }
+
+    if (paymentUser) {
+      const notice: PaymentEmailNotice = {
+        status: "failed",
+        customerName: paymentUser.name ?? "Client",
+        customerEmail: paymentUser.email,
+        amountCents: invoice.amount_due,
+        currency: invoice.currency,
+        reference: invoice.id,
+        items: [{ name: `${existing.plan.replace(/_/g, " ")} subscription` }],
+      };
+      await notifyPaymentTeam(notice, { clientUserId: existing.userId });
+    }
 
     // Send in-app notification
     try {
@@ -769,15 +1163,16 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       });
     } catch {}
 
-    // Notify coach
-    try {
-      const coachId = await findCoachForUser(existing.userId);
-      if (coachId) {
-        const user = await prisma.user.findUnique({ where: { id: existing.userId }, select: { name: true } });
+    const coachId = await findCoachForUser(existing.userId);
+    if (coachId) {
+      const user = await prisma.user.findUnique({ where: { id: existing.userId }, select: { name: true } });
+      try {
         await notifyCoachClientPaymentFailed(coachId, user?.name ?? "A client");
-        invalidateCoachCaches(coachId);
+      } catch (error) {
+        logger.error({ err: error, coachId, subscriptionId: existing.id }, "Failed to notify coach about failed payment");
       }
-    } catch {}
+      invalidateCoachCaches(coachId);
+    }
   }
 
   logger.info({ event: "payment.failed", stripeCustomerId, route: "webhooks/stripe" }, "Payment failed");

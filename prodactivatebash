@@ -1,9 +1,29 @@
-#!bin/bash
 
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+
+echo "==> Installing dependencies"
 npm ci
+
+echo "==> Generating Prisma Client"
 npx prisma generate
+
+echo "==> Checking migration status"
 npx prisma migrate status
+
+echo "==> Building application"
 npm run build
-systemctl restart nomitips.service
-systemctl status nomitips.service --no-pager -l
-nginx -t
+
+echo "==> Validating Nginx configuration"
+sudo nginx -t
+
+echo "==> Restarting NomiTips"
+sudo systemctl restart nomitips.service
+
+echo "==> Checking service status"
+sudo systemctl is-active --quiet nomitips.service
+sudo systemctl status nomitips.service --no-pager -l
+
+echo "==> Deployment commands completed"
+

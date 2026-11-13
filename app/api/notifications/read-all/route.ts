@@ -6,7 +6,7 @@ import logger from "@/lib/logger";
 export async function POST() {
   return traceApiRoute("POST /api/notifications/read-all", async () => {
     try {
-      const session = await requireAuth();
+      await requireAuth();
 
       return NextResponse.json({ success: true });
     } catch (error) {

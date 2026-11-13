@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Upload,
@@ -39,13 +37,10 @@ import {
   Filter,
   Grid,
   List,
-  MoreVertical,
-  X,
 } from "lucide-react";
 import {
   uploadWebsiteMediaAction,
   getWebsiteMediaAction,
-  updateWebsiteMediaAction,
   publishWebsiteMediaAction,
   archiveWebsiteMediaAction,
   deleteWebsiteMediaAction,
@@ -90,7 +85,6 @@ interface MediaItem {
 }
 
 export default function MediaLibraryClient() {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [media, setMedia] = useState<MediaItem[]>([]);
@@ -139,6 +133,7 @@ export default function MediaLibraryClient() {
       await loadMedia(1);
     };
     void initialLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: load once on mount only; search/filter/pagination changes call loadMedia explicitly
   }, []);
 
   const handleUpload = async () => {

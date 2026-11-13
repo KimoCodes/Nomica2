@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +27,6 @@ import {
   Plus,
   Trash2,
   Eye,
-  ArrowUpDown,
   Loader2,
   Undo,
   GripVertical,
@@ -125,7 +123,6 @@ export default function PageContentEditorClient({
 }: {
   pageSlug: string;
 }) {
-  const router = useRouter();
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [mediaOptions, setMediaOptions] = useState<MediaOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +138,6 @@ export default function PageContentEditorClient({
     createdAt: Date | string;
     createdBy: { name: string | null };
   }>>([]);
-  const [mediaDialogSection, setMediaDialogSection] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -164,6 +160,7 @@ export default function PageContentEditorClient({
       await loadData();
     };
     void initialLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: reload only when pageSlug changes; loadData is recreated each render and its callers invoke it explicitly
   }, [pageSlug]);
 
   const handleSaveSection = async (section: ContentSection) => {

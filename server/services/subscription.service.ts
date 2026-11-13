@@ -203,6 +203,7 @@ export async function approveSubscription(
 
 export async function revokeSubscription(
   targetUserId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentionally unused: kept so existing callers' 2-arg signature still typechecks
   _revokedById: string,
 ) {
   const subscription = await prisma.subscription.findUnique({

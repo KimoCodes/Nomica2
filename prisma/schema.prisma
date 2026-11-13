@@ -195,6 +195,12 @@ enum NotificationType {
   PLAN_PROGRESS_UPDATE
 }
 
+enum WebsiteAccessMode {
+  NORMAL
+  COMING_SOON
+  MAINTENANCE
+}
+
 enum SessionStatus {
   PENDING
   CONFIRMED
@@ -281,6 +287,9 @@ model User {
   uploadedBrandAssets     BrandAsset[]
   createdSiteThemes       SiteTheme[]
   createdContentVersions  ContentVersion[]
+  updatedSiteAccessSettings SiteSettings[] @relation("SiteSettingsUpdatedBy")
+  createdApprovedIpAddresses ApprovedIpAddress[] @relation("ApprovedIpAddressCreatedBy")
+  performedAccessAuditLogs SiteAccessAuditLog[] @relation("SiteAccessAuditPerformedBy")
 
   @@index([email])
   @@index([role])
@@ -1019,23 +1028,69 @@ model MediaTag {
 }
 
 model SiteSettings {
-  id              String   @id @default(cuid())
-  siteName        String   @default("NOMICA")
-  siteDescription String?  @default("Premium Feminine Transformation Fitness")
-  contactEmail    String?
-  contactPhone    String?
-  address         String?
-  logoUrl         String?
-  faviconUrl      String?
-  instagramUrl    String?
-  tiktokUrl       String?
-  youtubeUrl      String?
-  twitterUrl      String?
-  facebookUrl     String?
-  heroTagline     String?  @default("Stop Scrolling. Start Sculpting.")
-  heroSubtext     String?
-  videoGuidedWorkouts Boolean @default(true)
-  updatedAt       DateTime @updatedAt
+  id                           String              @id @default(cuid())
+  siteName                     String              @default("NOMICA")
+  siteDescription              String?             @default("Premium Feminine Transformation Fitness")
+  contactEmail                 String?
+  contactPhone                 String?
+  address                      String?
+  logoUrl                      String?
+  faviconUrl                   String?
+  instagramUrl                 String?
+  tiktokUrl                    String?
+  youtubeUrl                   String?
+  twitterUrl                   String?
+  facebookUrl                  String?
+  heroTagline                  String?             @default("Stop Scrolling. Start Sculpting.")
+  heroSubtext                  String?
+  videoGuidedWorkouts          Boolean             @default(true)
+  websiteAccessMode            WebsiteAccessMode   @default(NORMAL)
+  publicAccessRestrictionEnabled Boolean            @default(false)
+  comingSoonHeadline           String?             @default("NomiTips is launching soon")
+  comingSoonMessage            String?             @default("We’re building a premium experience to help you transform with confidence.")
+  comingSoonLaunchAt          DateTime?
+  comingSoonTimezone          String?             @default("UTC")
+  comingSoonAutoSwitch        Boolean             @default(false)
+  maintenanceHeadline         String?             @default("We’re making updates")
+  maintenanceMessage          String?             @default("NomiTips is temporarily unavailable while we improve the experience.")
+  maintenanceReturnAt         DateTime?
+  maintenanceTimezone         String?             @default("UTC")
+  lastAccessConfigUpdatedAt   DateTime?
+  lastAccessConfigUpdatedById String?
+  lastAccessConfigUpdatedBy   User?               @relation("SiteSettingsUpdatedBy", fields: [lastAccessConfigUpdatedById], references: [id], onDelete: SetNull)
+  approvedIpAddresses         ApprovedIpAddress[]
+  accessAuditLogs             SiteAccessAuditLog[]
+  updatedAt                   DateTime            @updatedAt
+}
+
+model ApprovedIpAddress {
+  id             String       @id @default(cuid())
+  siteSettingsId String
+  siteSettings   SiteSettings @relation(fields: [siteSettingsId], references: [id], onDelete: Cascade)
+  value          String
+  label          String?
+  createdById    String
+  createdBy      User         @relation("ApprovedIpAddressCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([siteSettingsId, value])
+  @@index([siteSettingsId])
+  @@index([value])
+}
+
+model SiteAccessAuditLog {
+  id             String       @id @default(cuid())
+  siteSettingsId String
+  siteSettings   SiteSettings @relation(fields: [siteSettingsId], references: [id], onDelete: Cascade)
+  action         String
+  details        String?
+  performedById  String?
+  performedBy    User?        @relation("SiteAccessAuditPerformedBy", fields: [performedById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+
+  @@index([siteSettingsId])
+  @@index([action])
 }
 
 model LandingContent {

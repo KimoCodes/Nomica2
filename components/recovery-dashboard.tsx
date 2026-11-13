@@ -10,9 +10,6 @@ import {
   CheckCircle2,
   Info,
   TrendingUp,
-  TrendingDown,
-  Minus,
-  Bed,
   Activity,
   Flame,
 } from "lucide-react";

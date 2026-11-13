@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -23,7 +21,6 @@ import {
   Clock,
   MapPin,
   Video,
-  User,
   MoreHorizontal,
   X,
   CheckCircle2,

@@ -1,6 +1,5 @@
 import { MealType, MuscleGroup, PlanStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireClientProfile, requireCoachProfile } from "./coach.service";
 
 type CreateExercisePlanInput = {
   clientProfileId: string;

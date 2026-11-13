@@ -1,5 +1,10 @@
 -- CreateEnum
-CREATE TYPE "DeviceType" AS ENUM ('DESKTOP', 'MOBILE', 'TABLET', 'UNKNOWN');
+-- DeviceType is also created by 20260829000000_add_analytics_tables; guard so a
+-- fresh database can apply this migration after that one has run.
+DO $$ BEGIN
+  CREATE TYPE "DeviceType" AS ENUM ('DESKTOP', 'MOBILE', 'TABLET', 'UNKNOWN');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateEnum
 CREATE TYPE "MealType" AS ENUM ('BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'OTHER');
@@ -14,7 +19,7 @@ CREATE TABLE "EarlyAccessSubscriber" (
 );
 
 -- CreateTable
-CREATE TABLE "PageVisit" (
+CREATE TABLE IF NOT EXISTS "PageVisit" (
     "id" TEXT NOT NULL,
     "path" TEXT NOT NULL,
     "userId" TEXT,
@@ -33,7 +38,7 @@ CREATE TABLE "PageVisit" (
 );
 
 -- CreateTable
-CREATE TABLE "ActivityLog" (
+CREATE TABLE IF NOT EXISTS "ActivityLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT,
     "action" TEXT NOT NULL,
@@ -129,31 +134,31 @@ CREATE UNIQUE INDEX "EarlyAccessSubscriber_email_key" ON "EarlyAccessSubscriber"
 CREATE INDEX "EarlyAccessSubscriber_email_idx" ON "EarlyAccessSubscriber"("email");
 
 -- CreateIndex
-CREATE INDEX "PageVisit_path_createdAt_idx" ON "PageVisit"("path", "createdAt");
+CREATE INDEX IF NOT EXISTS "PageVisit_path_createdAt_idx" ON "PageVisit"("path", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "PageVisit_userId_createdAt_idx" ON "PageVisit"("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "PageVisit_userId_createdAt_idx" ON "PageVisit"("userId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "PageVisit_createdAt_idx" ON "PageVisit"("createdAt");
+CREATE INDEX IF NOT EXISTS "PageVisit_createdAt_idx" ON "PageVisit"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "PageVisit_sessionId_idx" ON "PageVisit"("sessionId");
+CREATE INDEX IF NOT EXISTS "PageVisit_sessionId_idx" ON "PageVisit"("sessionId");
 
 -- CreateIndex
-CREATE INDEX "ActivityLog_userId_createdAt_idx" ON "ActivityLog"("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "ActivityLog_userId_createdAt_idx" ON "ActivityLog"("userId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "ActivityLog_action_createdAt_idx" ON "ActivityLog"("action", "createdAt");
+CREATE INDEX IF NOT EXISTS "ActivityLog_action_createdAt_idx" ON "ActivityLog"("action", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "ActivityLog_category_createdAt_idx" ON "ActivityLog"("category", "createdAt");
+CREATE INDEX IF NOT EXISTS "ActivityLog_category_createdAt_idx" ON "ActivityLog"("category", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "ActivityLog_resourceType_resourceId_idx" ON "ActivityLog"("resourceType", "resourceId");
+CREATE INDEX IF NOT EXISTS "ActivityLog_resourceType_resourceId_idx" ON "ActivityLog"("resourceType", "resourceId");
 
 -- CreateIndex
-CREATE INDEX "ActivityLog_createdAt_idx" ON "ActivityLog"("createdAt");
+CREATE INDEX IF NOT EXISTS "ActivityLog_createdAt_idx" ON "ActivityLog"("createdAt");
 
 -- CreateIndex
 CREATE INDEX "MealLog_clientProfileId_idx" ON "MealLog"("clientProfileId");
@@ -192,10 +197,16 @@ CREATE INDEX "CoachBooking_scheduledAt_idx" ON "CoachBooking"("scheduledAt");
 CREATE INDEX "WorkoutCompletion_completedAt_idx" ON "WorkoutCompletion"("completedAt");
 
 -- AddForeignKey
-ALTER TABLE "PageVisit" ADD CONSTRAINT "PageVisit_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "PageVisit" ADD CONSTRAINT "PageVisit_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ActivityLog" ADD CONSTRAINT "ActivityLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ActivityLog" ADD CONSTRAINT "ActivityLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
 ALTER TABLE "MealLog" ADD CONSTRAINT "MealLog_clientProfileId_fkey" FOREIGN KEY ("clientProfileId") REFERENCES "ClientProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;

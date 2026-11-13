@@ -6,12 +6,12 @@ import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { LiveSession } from "@/components/live-session";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Video, Phone, PhoneOff } from "lucide-react";
+import { Video, Phone } from "lucide-react";
 
 export default function LiveSessionPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("");
-  const [status, setStatus] = useState<"none" | "waiting" | "active" | "ended">("none");
+  const [, setStatus] = useState<"none" | "waiting" | "active" | "ended">("none");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

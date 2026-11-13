@@ -5,7 +5,6 @@ import {
 } from "@/server/services/fitness-engine/progressive-overload";
 import type {
   ExercisePerformance,
-  WorkoutHistoryEntry,
   SetLog,
 } from "@/server/services/fitness-engine/types";
 
@@ -32,23 +31,6 @@ function makePerformance(
     sets,
     completedAt,
   };
-}
-
-function makeHistory(...performances: ExercisePerformance[]): WorkoutHistoryEntry[] {
-  const byDay = new Map<string, ExercisePerformance[]>();
-  for (const p of performances) {
-    const key = p.completedAt.toISOString().slice(0, 10);
-    const existing = byDay.get(key) ?? [];
-    existing.push(p);
-    byDay.set(key, existing);
-  }
-  return Array.from(byDay.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, exercises]) => ({
-      completedAt: exercises[0].completedAt,
-      dayTitle: "Day 1",
-      exercises,
-    }));
 }
 
 describe("calculateExerciseProgression", () => {

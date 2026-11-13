@@ -21,7 +21,6 @@ import { requireClientProfile, requireCoachProfile } from "@/server/services/coa
 import {
   notifyExercisePlanAssigned,
   notifyNutritionPlanAssigned,
-  notifyPlanUpdated,
   notifyPlanProgressUpdate,
 } from "@/server/services/notification.service";
 import {

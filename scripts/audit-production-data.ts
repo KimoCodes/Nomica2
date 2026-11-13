@@ -35,7 +35,7 @@ const TEST_EMAIL_PATTERNS = [
 
 type Classification = "SYSTEM" | "SEED_CATALOG" | "PRODUCTION" | "LIKELY_TEST" | "UNCERTAIN";
 
-function classifyUser(email: string, role: Role, createdAt: Date): Classification {
+function classifyUser(email: string, role: Role): Classification {
   if (email === SEED_COACH_EMAIL) return "SEED_CATALOG";
   if (role === Role.ADMIN) return "PRODUCTION"; // Admin accounts are always production
 
@@ -73,7 +73,7 @@ async function main() {
   };
 
   for (const user of users) {
-    const cls = classifyUser(user.email, user.role, user.createdAt);
+    const cls = classifyUser(user.email, user.role);
     userClassifications[cls].push(user);
   }
 

@@ -6,13 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import {
-  FileText,
-  ChevronRight,
-  Layout,
-  Type,
-  Image as ImageIcon,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 const PAGE_SECTIONS = [
   { slug: "home", label: "Homepage", description: "Hero section, features, CTAs, FAQ" },

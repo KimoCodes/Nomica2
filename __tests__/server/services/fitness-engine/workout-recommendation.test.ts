@@ -5,10 +5,6 @@ import {
 } from "@/server/services/fitness-engine/workout-recommendation";
 import type { ReadinessScore } from "@/server/services/fitness-engine/types";
 
-function makeHistory(muscleGroups: string[]): never[] {
-  return [] as never[];
-}
-
 function makeReadiness(score: number): ReadinessScore {
   return {
     score,

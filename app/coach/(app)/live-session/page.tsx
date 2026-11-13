@@ -17,7 +17,7 @@ type Client = {
 export default function CoachLiveSessionPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("");
-  const [status, setStatus] = useState<"none" | "waiting" | "active" | "ended">("none");
+  const [, setStatus] = useState<"none" | "waiting" | "active" | "ended">("none");
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);

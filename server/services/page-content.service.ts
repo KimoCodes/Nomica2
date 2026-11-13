@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { WebsiteMediaStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export const pageContentSchema = z.object({
   pageSlug: z.string().min(1).max(100),

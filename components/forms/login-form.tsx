@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { preCheckLogin } from "@/actions/auth.actions";
+import { signIn } from "next-auth/react";
+import { preCheckLogin, preCheckStaffLogin } from "@/actions/auth.actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,16 +22,39 @@ type FieldErrors = {
   password?: string;
 };
 
-export function LoginForm() {
+function describeAuthError(error?: string | null, code?: string | null): string {
+  const key = (code || error || "").toLowerCase();
+  if (key === "credentialssignin" || key === "credentials") {
+    return "Invalid email or password";
+  }
+  if (key === "missingcsrf") {
+    return "Security check failed. Please try again.";
+  }
+  if (key === "accessdenied") {
+    return "You don't have access to this account.";
+  }
+  if (key === "configuration") {
+    return "Sign-in is temporarily unavailable. Please try again later.";
+  }
+  if (key === "sessionexpired") {
+    return "Your session has expired. Please sign in again.";
+  }
+  return "Sign-in failed. Please try again.";
+}
+
+export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
   const searchParams = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
   const csrfRef = useRef<HTMLInputElement>(null);
 
   const authErrorParam = searchParams.get("error");
+  const authCodeParam = searchParams.get("code");
   const registeredParam = searchParams.get("registered");
 
   const [error, setError] = useState<string | null>(
-    authErrorParam === "CredentialsSignin" ? "Invalid email or password" : null
+    authErrorParam || authCodeParam
+      ? describeAuthError(authErrorParam, authCodeParam)
+      : null
   );
   const [success] = useState<string | null>(
     registeredParam === "true" ? "Account created successfully! Sign in to continue." : null
@@ -42,8 +66,11 @@ export function LoginForm() {
     fetch("/api/auth/csrf")
       .then((r) => r.json())
       .then((data) => {
-        if (csrfRef.current) csrfRef.current.value = data.csrfToken;
-      });
+        if (csrfRef.current && data.csrfToken) {
+          csrfRef.current.value = data.csrfToken;
+        }
+      })
+      .catch(() => {});
   }, []);
 
   function validateField(name: string, value: string) {
@@ -87,28 +114,49 @@ export function LoginForm() {
 
     setFieldErrors({});
 
-    const preCheck = await trackLoading(() => preCheckLogin(email));
+    try {
+      const preCheck = await trackLoading(() =>
+        staffLogin ? preCheckStaffLogin(email) : preCheckLogin(email),
+      );
 
-    if (!preCheck.success) {
-      setError(preCheck.error?.message ?? "Failed to sign in");
+      if (!preCheck.success) {
+        setError(preCheck.error?.message ?? "Failed to sign in");
+        setIsPending(false);
+        return;
+      }
+
+      const requestedCallback = staffLogin ? null : searchParams.get("callbackUrl");
+      const isSafeCallback =
+        requestedCallback !== null &&
+        requestedCallback.startsWith("/") &&
+        !requestedCallback.startsWith("//") &&
+        !requestedCallback.startsWith("/\\");
+      const callbackUrl = isSafeCallback
+        ? requestedCallback
+        : preCheck.data?.redirectTo ?? "/client";
+
+      const result = await trackLoading(() =>
+        signIn("credentials", {
+          email,
+          password,
+          redirectTo: callbackUrl,
+          redirect: false,
+        }),
+      );
+
+      if (result?.error) {
+        setError(describeAuthError(result.error, result.code));
+        setIsPending(false);
+        return;
+      }
+
+      const target = result?.url || callbackUrl;
+      window.location.href = target;
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
       setIsPending(false);
-      return;
     }
-
-    const requestedCallback = searchParams.get("callbackUrl");
-    const isSafeCallback =
-      requestedCallback !== null &&
-      requestedCallback.startsWith("/") &&
-      !requestedCallback.startsWith("//") &&
-      !requestedCallback.startsWith("/\\");
-    const callbackUrl = isSafeCallback
-      ? requestedCallback
-      : preCheck.data?.redirectTo ?? "/client";
-
-    const callbackInput = formRef.current?.elements.namedItem("callbackUrl") as HTMLInputElement;
-    if (callbackInput) callbackInput.value = callbackUrl;
-
-    formRef.current?.submit();
   }
 
   return (
@@ -124,9 +172,13 @@ export function LoginForm() {
       </a>
 
       <CardHeader className="px-0 pb-6">
-        <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          {staffLogin ? "Admin & Coach Login" : "Welcome back"}
+        </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Sign in to your account to continue
+          {staffLogin
+            ? "Sign in with an administrator account or nomitipscoaching@gmail.com."
+            : "Sign in to your account to continue"}
         </p>
       </CardHeader>
 
@@ -212,15 +264,17 @@ export function LoginForm() {
             <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
           </LoadingButton>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
-              Create one
-            </Link>
-          </p>
+          {!staffLogin && (
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-primary hover:underline"
+              >
+                Create one
+              </Link>
+            </p>
+          )}
         </CardFooter>
       </form>
     </div>

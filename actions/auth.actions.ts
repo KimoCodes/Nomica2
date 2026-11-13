@@ -30,6 +30,7 @@ import {
 import { logActivity } from "@/server/services/analytics.service";
 import type { ApiResponse } from "@/types";
 import logger from "@/lib/logger";
+import { STAFF_COACH_EMAIL } from "@/lib/site-access";
 
 const AUTH_RATE_LIMIT = { limit: 5, windowMs: 15 * 60 * 1000 };
 
@@ -167,6 +168,34 @@ export async function preCheckLogin(
 
     logger.error({ err: error, action: "preCheckLogin" }, "Failed to sign in");
     return createErrorResponse("Failed to sign in", "INTERNAL_ERROR");
+  }
+}
+
+export async function preCheckStaffLogin(
+  email: string,
+): Promise<ApiResponse<{ redirectTo: string }>> {
+  try {
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await preCheckLogin(normalizedEmail);
+    if (!result.success) {
+      return result;
+    }
+
+    const user = await getUserByEmail(normalizedEmail);
+    const isAuthorizedStaff = user?.role === Role.ADMIN ||
+      (user?.role === Role.COACH && normalizedEmail === STAFF_COACH_EMAIL);
+
+    if (!isAuthorizedStaff) {
+      return createErrorResponse(
+        "This sign-in is for authorized administrators and coaches only.",
+        "STAFF_LOGIN_ONLY",
+      );
+    }
+
+    return result;
+  } catch (error) {
+    logger.error({ err: error, action: "preCheckStaffLogin" }, "Failed to verify staff login");
+    return createErrorResponse("Could not verify staff account. Please try again.", "INTERNAL_ERROR");
   }
 }
 

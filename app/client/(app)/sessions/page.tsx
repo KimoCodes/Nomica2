@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Role } from "@prisma/client";
-import { requireRole } from "@/lib/auth";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { SessionCard } from "@/components/sessions/session-card";
@@ -12,17 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Calendar,
-  CalendarCheck,
   CalendarX,
   Clock,
   CheckCircle2,
-  AlertCircle,
-  Loader2,
 } from "lucide-react";
 import { listSessionsAction, getSessionStatsAction } from "@/actions/session.actions";
 import { Skeleton } from "@/components/ui/skeleton";

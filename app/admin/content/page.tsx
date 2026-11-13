@@ -1,7 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import Image from "next/image";
 import { Role } from "@prisma/client";
-import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { ADMIN_NAV } from "@/constants/navigation";
 import { prisma } from "@/lib/prisma";

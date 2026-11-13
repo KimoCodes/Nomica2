@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { getAvailableCoaches, bookCoach, getClientBookings } from "@/server/services/coach-marketplace.service";
+import { getAvailableCoaches, bookCoach } from "@/server/services/coach-marketplace.service";
 import logger from "@/lib/logger";
 
 export async function GET(request: Request) {
   try {
-    const session = await requireAuth();
+    await requireAuth();
     const { searchParams } = new URL(request.url);
     const specialty = searchParams.get("specialty");
 

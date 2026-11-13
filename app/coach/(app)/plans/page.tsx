@@ -36,11 +36,6 @@ import {
   Search,
   Loader2,
   Users,
-  Eye,
-  Pencil,
-  Archive,
-  ChevronDown,
-  ChevronUp,
   Trash2,
 } from "lucide-react";
 import {
@@ -48,10 +43,6 @@ import {
   listCoachNutritionPlansAction,
   createExercisePlanAction,
   createNutritionPlanAction,
-  getExercisePlanAction,
-  getNutritionPlanAction,
-  updateExercisePlanAction,
-  updateNutritionPlanAction,
 } from "@/actions/plan.actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";

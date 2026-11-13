@@ -44,7 +44,7 @@ export async function createProductAction(
   input: ProductInput,
 ): Promise<ApiResponse<{ id: string }>> {
   try {
-    const session = await requireRole([Role.ADMIN]);
+    await requireRole([Role.ADMIN]);
 
     const slug = input.slug || slugify(input.name);
 
@@ -98,7 +98,7 @@ export async function updateProductAction(
   input: ProductInput,
 ): Promise<ApiResponse<{ id: string }>> {
   try {
-    const session = await requireRole([Role.ADMIN]);
+    await requireRole([Role.ADMIN]);
 
     const slug = input.slug || slugify(input.name);
 
@@ -155,7 +155,7 @@ export async function deleteProductAction(
   productId: string,
 ): Promise<ApiResponse<{ id: string }>> {
   try {
-    const session = await requireRole([Role.ADMIN]);
+    await requireRole([Role.ADMIN]);
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -201,7 +201,7 @@ export async function setProductStatusAction(
   status: ProductStatus,
 ): Promise<ApiResponse<{ id: string; status: ProductStatus }>> {
   try {
-    const session = await requireRole([Role.ADMIN]);
+    await requireRole([Role.ADMIN]);
 
     const allowed: ProductStatus[] = [
       ProductStatus.DRAFT,

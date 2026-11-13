@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Palette,
   Save,
   Plus,
   Trash2,
@@ -32,8 +31,6 @@ import {
   Sun,
   Moon,
   Monitor,
-  RotateCcw,
-  Eye,
 } from "lucide-react";
 import {
   getThemesAction,
@@ -42,7 +39,6 @@ import {
   publishThemeAction,
   deleteThemeAction,
   getDefaultThemeAction,
-  getPublishedThemeAction,
 } from "@/actions/site-theme.actions";
 import { ThemeMode } from "@prisma/client";
 import type { SiteThemeInput } from "@/server/services/site-theme.service";
@@ -97,11 +93,10 @@ const COLOR_FIELDS = [
 export default function ThemeManagerClient() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newThemeName, setNewThemeName] = useState("");
-  const [previewMode, setPreviewMode] = useState<ThemeMode>("SYSTEM");
 
   const loadThemes = async () => {
     setLoading(true);

@@ -1,13 +1,10 @@
-import { NotificationType, Role } from "@prisma/client";
+import { NotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/resend";
 import { sendCoachApprovalEmail, sendEmail } from "./email.service";
 import {
   renderEmailTemplate,
-  infoCard,
   textBlock,
-  boldText,
-  divider,
 } from "./email-templates";
 import logger from "@/lib/logger";
 

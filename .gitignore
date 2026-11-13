@@ -11,3 +11,6 @@ Untitled-*
 nomitips_before_migration_fix.sql
 env copy
 .DS_Store
+
+# Phase 3 pre-write database backups (never commit)
+backups/

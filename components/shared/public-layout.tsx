@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 import { CartCount } from "@/components/cart/cart-count";
+import { StaffLoginLink } from "@/components/shared/staff-login-link";
 
 type PublicLayoutProps = {
   children: ReactNode;
@@ -74,6 +75,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           <CartCount className="hidden sm:inline-flex" />
           {/* Desktop auth buttons */}
           <div className="hidden items-center gap-2 md:flex">
+            <StaffLoginLink />
             <Link
               href="/login"
               className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -87,6 +89,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               Get started
             </Link>
           </div>
+          <StaffLoginLink className="px-2.5 text-xs md:hidden" />
 
           {/* Mobile hamburger */}
           <button

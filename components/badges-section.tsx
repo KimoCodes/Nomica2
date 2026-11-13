@@ -1,4 +1,4 @@
-import { getAllBadges, checkUnlockedBadges, getPointsForNextBadge } from "@/server/services/fitness-engine/gamification";
+import { checkUnlockedBadges, getPointsForNextBadge } from "@/server/services/fitness-engine/gamification";
 import { prisma } from "@/lib/prisma";
 import { BadgesDisplay } from "@/components/badges-display";
 

@@ -124,6 +124,12 @@ export async function deleteProgramAction(
         "PROGRAM_HAS_ACTIVE_ASSIGNMENTS",
       );
     }
+    if (error instanceof Error && error.message === "PROGRAM_HAS_LINKED_PRODUCT") {
+      return createErrorResponse(
+        "Cannot delete a program while a published product still points to it. Archive the product first.",
+        "PROGRAM_HAS_LINKED_PRODUCT",
+      );
+    }
     logger.error({ err: error, action: "deleteProgramAction" }, "Failed to delete program");
     return createErrorResponse("Failed to delete program", "INTERNAL_ERROR");
   }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -18,16 +17,12 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Eye,
   Users,
   MousePointerClick,
   Activity,
-  AlertTriangle,
   Monitor,
-  Smartphone,
-  Tablet,
   Globe,
   TrendingUp,
   Clock,
@@ -84,7 +79,6 @@ function StatCard({
   value,
   icon: Icon,
   description,
-  trend,
   color = "text-primary",
 }: {
   title: string;
@@ -123,8 +117,6 @@ function ActivityBadge({ success }: { success: boolean }) {
 }
 
 export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
-  const [dateRange, setDateRange] = useState("30d");
-
   const visitsChartData = data.visitsByDay.map((d) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     visits: d.count,

@@ -7,7 +7,6 @@ import logger from "@/lib/logger";
 import { createErrorResponse, createSuccessResponse } from "@/server/utils/response";
 import type { ApiResponse } from "@/types";
 import {
-  getPageContentBySlug,
   getAllPageContentBySlug,
   getPublishedPageContent,
   getPageContentById,

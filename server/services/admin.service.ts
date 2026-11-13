@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, Difficulty, ProductKind, ProductStatus } from "@prisma/client";
+import { Prisma, Difficulty, ProductKind, ProductStatus, WebsiteAccessMode } from "@prisma/client";
+import { isIP } from "node:net";
 import { notifyCoachApproved } from "@/server/services/notification.service";
 
 /* -----------------------------
@@ -287,6 +288,16 @@ export async function updateProgramSellable(
 }
 
 export async function deleteProgram(id: string) {
+  // T4 orphan guard: a published Product must never lose its content source.
+  const publishedProduct = await prisma.product.findFirst({
+    where: { programId: id, status: ProductStatus.PUBLISHED },
+    select: { slug: true },
+  });
+
+  if (publishedProduct) {
+    throw new Error("PROGRAM_HAS_LINKED_PRODUCT");
+  }
+
   return prisma.program.delete({
     where: { id },
   });
@@ -462,6 +473,232 @@ export async function updateSiteSettings(data: {
     data: {
       ...data,
       siteName: data.siteName ?? "NomiTips",
+    },
+  });
+}
+
+export type WebsiteAccessModeValue = "NORMAL" | "COMING_SOON" | "MAINTENANCE";
+
+/**
+ * Read-only copy for the public coming-soon / maintenance pages.
+ * Never creates a row and never throws, so a database problem degrades the
+ * page to its built-in fallback text instead of a 500. Results are cached
+ * briefly so these high-traffic pages do not add a query per view.
+ */
+const PUBLIC_COPY_TTL_MS = 30_000;
+let publicCopyCache: { value: PublicAccessCopy | null; expiresAt: number } | null = null;
+
+export type PublicAccessCopy = {
+  comingSoonHeadline: string | null;
+  comingSoonMessage: string | null;
+  maintenanceHeadline: string | null;
+  maintenanceMessage: string | null;
+};
+
+export function invalidatePublicAccessCopy() {
+  publicCopyCache = null;
+}
+
+export async function getPublicAccessCopy(): Promise<PublicAccessCopy | null> {
+  if (publicCopyCache && Date.now() < publicCopyCache.expiresAt) {
+    return publicCopyCache.value;
+  }
+
+  try {
+    const value = await prisma.siteSettings.findFirst({
+      select: {
+        comingSoonHeadline: true,
+        comingSoonMessage: true,
+        maintenanceHeadline: true,
+        maintenanceMessage: true,
+      },
+    });
+    publicCopyCache = { value, expiresAt: Date.now() + PUBLIC_COPY_TTL_MS };
+    return value;
+  } catch {
+    publicCopyCache = { value: null, expiresAt: Date.now() + 5_000 };
+    return null;
+  }
+}
+
+export function parseWebsiteAccessMode(value?: string | null): WebsiteAccessModeValue {
+  switch (value?.toUpperCase()) {
+    case "COMING_SOON":
+      return "COMING_SOON";
+    case "MAINTENANCE":
+      return "MAINTENANCE";
+    case "NORMAL":
+    default:
+      return "NORMAL";
+  }
+}
+
+export async function getWebsiteAccessSettings() {
+  const siteSettings = await prisma.siteSettings.findFirst({
+    include: {
+      approvedIpAddresses: {
+        orderBy: { createdAt: "desc" },
+      },
+      accessAuditLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+    },
+  });
+
+  if (siteSettings) {
+    return siteSettings;
+  }
+
+  return prisma.siteSettings.create({
+    data: {
+      siteName: "NOMICA",
+      websiteAccessMode: WebsiteAccessMode.NORMAL,
+      publicAccessRestrictionEnabled: false,
+      comingSoonHeadline: "NomiTips is launching soon",
+      comingSoonMessage: "We’re building a premium experience to help you transform with confidence.",
+      comingSoonTimezone: "UTC",
+      maintenanceHeadline: "We’re making updates",
+      maintenanceMessage: "NomiTips is temporarily unavailable while we improve the experience.",
+      maintenanceTimezone: "UTC",
+    },
+    include: {
+      approvedIpAddresses: true,
+      accessAuditLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+    },
+  });
+}
+
+export async function upsertWebsiteAccessSettings(data: {
+  websiteAccessMode?: WebsiteAccessModeValue;
+  publicAccessRestrictionEnabled?: boolean;
+  comingSoonHeadline?: string | null;
+  comingSoonMessage?: string | null;
+  comingSoonLaunchAt?: Date | string | null;
+  comingSoonTimezone?: string | null;
+  comingSoonAutoSwitch?: boolean;
+  maintenanceHeadline?: string | null;
+  maintenanceMessage?: string | null;
+  maintenanceReturnAt?: Date | string | null;
+  maintenanceTimezone?: string | null;
+  lastAccessConfigUpdatedById?: string | null;
+}) {
+  const existing = await prisma.siteSettings.findFirst();
+
+  const toDate = (value: Date | string | null | undefined) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    return new Date(value);
+  };
+
+  const nextData = {
+    websiteAccessMode: data.websiteAccessMode ? WebsiteAccessMode[data.websiteAccessMode] : undefined,
+    publicAccessRestrictionEnabled: data.publicAccessRestrictionEnabled,
+    comingSoonHeadline: data.comingSoonHeadline,
+    comingSoonMessage: data.comingSoonMessage,
+    comingSoonLaunchAt: toDate(data.comingSoonLaunchAt),
+    comingSoonTimezone: data.comingSoonTimezone,
+    comingSoonAutoSwitch: data.comingSoonAutoSwitch,
+    maintenanceHeadline: data.maintenanceHeadline,
+    maintenanceMessage: data.maintenanceMessage,
+    maintenanceReturnAt: toDate(data.maintenanceReturnAt),
+    maintenanceTimezone: data.maintenanceTimezone,
+    lastAccessConfigUpdatedAt: new Date(),
+    lastAccessConfigUpdatedById: data.lastAccessConfigUpdatedById ?? null,
+  };
+
+  // Only `undefined` means "leave unchanged" — an explicit `null` must reach
+  // Prisma so nullable fields (dates, copy) can actually be cleared.
+  const cleaned = Object.fromEntries(
+    Object.entries(nextData).filter(([, value]) => value !== undefined),
+  ) as Record<string, unknown>;
+
+  if (existing) {
+    return prisma.siteSettings.update({
+      where: { id: existing.id },
+      data: cleaned,
+      include: {
+        approvedIpAddresses: true,
+        accessAuditLogs: { orderBy: { createdAt: "desc" }, take: 10 },
+      },
+    });
+  }
+
+  return prisma.siteSettings.create({
+    data: {
+      siteName: "NOMICA",
+      websiteAccessMode: WebsiteAccessMode.NORMAL,
+      publicAccessRestrictionEnabled: false,
+      comingSoonHeadline: "NomiTips is launching soon",
+      comingSoonMessage: "We’re building a premium experience to help you transform with confidence.",
+      comingSoonTimezone: "UTC",
+      maintenanceHeadline: "We’re making updates",
+      maintenanceMessage: "NomiTips is temporarily unavailable while we improve the experience.",
+      maintenanceTimezone: "UTC",
+      ...cleaned,
+    },
+    include: {
+      approvedIpAddresses: true,
+      accessAuditLogs: { orderBy: { createdAt: "desc" }, take: 10 },
+    },
+  });
+}
+
+export function isValidIpOrCidr(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  if (trimmed.includes("/")) {
+    const [network, prefix] = trimmed.split("/");
+    if (!network || !prefix) return false;
+    if (isIP(network) === 0) return false;
+    const cidr = Number(prefix);
+    if (!Number.isInteger(cidr)) return false;
+    return cidr >= 0 && cidr <= (isIP(network) === 4 ? 32 : 128);
+  }
+
+  return isIP(trimmed) !== 0;
+}
+
+export async function addApprovedIpAddress(siteSettingsId: string, input: {
+  value: string;
+  label?: string | null;
+  createdById: string;
+}) {
+  const trimmed = input.value.trim();
+  if (!isValidIpOrCidr(trimmed)) {
+    throw new Error("Invalid IP address or CIDR range");
+  }
+
+  return prisma.approvedIpAddress.create({
+    data: {
+      siteSettingsId,
+      value: trimmed,
+      label: input.label?.trim() || null,
+      createdById: input.createdById,
+    },
+  });
+}
+
+export async function removeApprovedIpAddress(siteSettingsId: string, id: string) {
+  return prisma.approvedIpAddress.deleteMany({
+    where: {
+      id,
+      siteSettingsId,
+    },
+  });
+}
+
+export async function logAccessAudit(siteSettingsId: string, action: string, details: string, performedById?: string | null) {
+  return prisma.siteAccessAuditLog.create({
+    data: {
+      siteSettingsId,
+      action,
+      details,
+      performedById: performedById ?? null,
     },
   });
 }

@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { GoalStatus } from "@prisma/client";
 
 export async function getGoals() {
   const session = await requireAuth();

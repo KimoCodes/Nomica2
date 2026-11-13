@@ -12,10 +12,10 @@ export const metadata: Metadata = {
 };
 
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; href: (id: string) => string }> = {
-  EXERCISE: { label: "Exercises", icon: Dumbbell, href: (id) => `/client/exercise-library` },
-  PROGRAM: { label: "Programs", icon: FolderOpen, href: (id) => `/programs` },
-  RECIPE: { label: "Recipes", icon: UtensilsCrossed, href: (id) => `/client/nutrition` },
-  ARTICLE: { label: "Articles", icon: BookOpen, href: (id) => `/client/progress` },
+  EXERCISE: { label: "Exercises", icon: Dumbbell, href: () => `/client/exercise-library` },
+  PROGRAM: { label: "Programs", icon: FolderOpen, href: () => `/programs` },
+  RECIPE: { label: "Recipes", icon: UtensilsCrossed, href: () => `/client/nutrition` },
+  ARTICLE: { label: "Articles", icon: BookOpen, href: () => `/client/progress` },
 };
 
 export default async function FavoritesPage() {

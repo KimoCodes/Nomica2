@@ -11,18 +11,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
   Calendar,
-  CalendarCheck,
   CalendarX,
   Clock,
   CheckCircle2,
   Search,
   Loader2,
-  Users,
 } from "lucide-react";
 import { listSessionsAction, getSessionStatsAction, completeSessionAction, markSessionMissedAction } from "@/actions/session.actions";
 import { Skeleton } from "@/components/ui/skeleton";

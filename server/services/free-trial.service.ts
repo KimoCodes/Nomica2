@@ -1,4 +1,4 @@
-import { FreeTrialStatus, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { invalidateRequestCache } from "@/lib/request-cache";
 import { createNotification } from "@/server/services/notification.service";

@@ -8,6 +8,7 @@ import {
   Role,
 } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PRODUCT_COPY } from "./content-v2";
 import { hashSync } from "bcrypt";
 import { ensureProgramContent } from "./program-content";
 
@@ -340,20 +341,33 @@ async function main() {
 
   // 2. Programs + Products
   for (const def of PROGRAMS) {
+    // Phase 2 copy (prisma/content-v2) is the source of truth for catalog
+    // items — without this, a re-seed would restore stale tagline-as-description
+    // copy and the retired "video demonstrations" claims (decision #6).
+    const v2 = PRODUCT_COPY.find((c) => c.slug === def.slug);
+
     const totalWeeks = def.durationWeeks ?? Math.ceil((def.durationDays ?? 21) / 7);
     const programData = {
       title: def.name,
-      description: def.tagline,
+      description: v2?.tagline ?? def.tagline,
       isSellable: true,
-      price: def.priceCents,
-      features: def.features,
-      difficulty: def.difficulty,
-      duration: totalWeeks,
+      price: v2?.priceCents ?? def.priceCents,
+      features: v2?.features ?? def.features,
+      difficulty: v2?.difficulty ?? def.difficulty,
+      duration: v2?.durationWeeks ?? totalWeeks,
     };
 
     // Reuse a Program row created earlier (e.g. admin-created template)
     // so we don't end up with duplicate content for the same catalog item.
-    let program = await prisma.program.findFirst({ where: { title: def.name } });
+    // Prefer the program already linked to this product — the Phase 3 loader
+    // may have retitled it since this seed last ran.
+    const existingProduct = await prisma.product.findUnique({ where: { slug: def.slug } });
+    let program = existingProduct?.programId
+      ? await prisma.program.findUnique({ where: { id: existingProduct.programId } })
+      : null;
+    if (!program) {
+      program = await prisma.program.findFirst({ where: { title: def.name } });
+    }
     if (program) {
       program = await prisma.program.update({ where: { id: program.id }, data: programData });
     } else {
@@ -366,7 +380,6 @@ async function main() {
       });
     }
 
-    const existingProduct = await prisma.product.findUnique({ where: { slug: def.slug } });
     const productData = {
       kind: def.kind,
       name: def.name,
@@ -383,6 +396,22 @@ async function main() {
       status: ProductStatus.PUBLISHED,
       sortOrder: def.sortOrder,
       programId: program.id,
+      ...(v2
+        ? {
+            name: v2.name,
+            tagline: v2.tagline,
+            description: v2.description,
+            priceCents: v2.priceCents,
+            durationLabel: v2.durationLabel,
+            durationWeeks: v2.durationWeeks ?? null,
+            durationDays: v2.durationDays ?? null,
+            daysPerWeek: v2.daysPerWeek ?? null,
+            focus: v2.focus ?? null,
+            features: v2.features,
+            equipment: v2.equipment,
+            sortOrder: v2.sortOrder,
+          }
+        : {}),
     };
 
     if (existingProduct) {

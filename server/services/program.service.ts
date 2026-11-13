@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ProductStatus } from "@prisma/client";
 import { requireCoachProfile } from "@/server/services/coach.service";
 import type {
   AddProgramExerciseInput,
@@ -107,6 +108,16 @@ export async function deleteProgram(coachUserId: string, programId: string) {
 
   if (activeAssignments > 0) {
     throw new Error("PROGRAM_HAS_ACTIVE_ASSIGNMENTS");
+  }
+
+  // T4 orphan guard: a published Product must never lose its content source.
+  const publishedProduct = await prisma.product.findFirst({
+    where: { programId, status: ProductStatus.PUBLISHED },
+    select: { slug: true },
+  });
+
+  if (publishedProduct) {
+    throw new Error("PROGRAM_HAS_LINKED_PRODUCT");
   }
 
   return prisma.program.delete({ where: { id: programId } });

@@ -102,6 +102,7 @@ export function VisitTracker() {
       }),
       keepalive: true,
     }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: initial page-view track runs only on mount
   }, []);
 
   return null;

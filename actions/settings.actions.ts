@@ -11,6 +11,13 @@ import {
   deleteProgram,
   updateLandingContent,
   updateSiteSettings,
+  upsertWebsiteAccessSettings,
+  addApprovedIpAddress,
+  removeApprovedIpAddress,
+  getWebsiteAccessSettings,
+  parseWebsiteAccessMode,
+  logAccessAudit,
+  invalidatePublicAccessCopy,
 } from "@/server/services/admin.service";
 
 import {
@@ -159,6 +166,12 @@ export async function deleteProgramAction(
 
     return createSuccessResponse({ id: result.id });
   } catch (error) {
+    if (error instanceof Error && error.message === "PROGRAM_HAS_LINKED_PRODUCT") {
+      return createErrorResponse(
+        "Cannot delete a program while a published product still points to it. Archive the product first.",
+        "PROGRAM_HAS_LINKED_PRODUCT",
+      );
+    }
     logger.error({ err: error, action: "deleteProgramAction" }, "Failed to delete program");
     return createErrorResponse("Failed to delete program", "INTERNAL_ERROR");
   }
@@ -230,5 +243,114 @@ export async function updateSiteSettingsAction(
   } catch (error) {
     logger.error({ err: error, action: "updateSiteSettingsAction" }, "Failed to update settings");
     return createErrorResponse("Failed to update settings", "INTERNAL_ERROR");
+  }
+}
+
+export async function updateWebsiteAccessSettingsAction(
+  data: {
+    websiteAccessMode?: "NORMAL" | "COMING_SOON" | "MAINTENANCE";
+    publicAccessRestrictionEnabled?: boolean;
+    comingSoonHeadline?: string | null;
+    comingSoonMessage?: string | null;
+    comingSoonLaunchAt?: string | null;
+    comingSoonTimezone?: string | null;
+    comingSoonAutoSwitch?: boolean;
+    maintenanceHeadline?: string | null;
+    maintenanceMessage?: string | null;
+    maintenanceReturnAt?: string | null;
+    maintenanceTimezone?: string | null;
+  },
+): Promise<ApiResponse<{ id: string }>> {
+  try {
+    const session = await requireRole([Role.ADMIN]);
+    const settings = await getWebsiteAccessSettings();
+    const result = await upsertWebsiteAccessSettings({
+      ...data,
+      websiteAccessMode: data.websiteAccessMode ? parseWebsiteAccessMode(data.websiteAccessMode) : undefined,
+      lastAccessConfigUpdatedById: session.user.id,
+    });
+
+    const changes: string[] = [];
+    if (settings.websiteAccessMode !== result.websiteAccessMode) {
+      changes.push(`mode ${settings.websiteAccessMode} → ${result.websiteAccessMode}`);
+    }
+    if (settings.publicAccessRestrictionEnabled !== result.publicAccessRestrictionEnabled) {
+      changes.push(`IP restriction ${result.publicAccessRestrictionEnabled ? "enabled" : "disabled"}`);
+    }
+    if (settings.comingSoonAutoSwitch !== result.comingSoonAutoSwitch) {
+      changes.push(`auto-switch ${result.comingSoonAutoSwitch ? "enabled" : "disabled"}`);
+    }
+
+    await logAccessAudit(
+      settings.id,
+      "SITE_ACCESS_UPDATED",
+      `${changes.length ? changes.join(", ") : "Access copy or schedule updated"} by ${session.user.email}`,
+      session.user.id,
+    );
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/access");
+    revalidatePath("/");
+    revalidatePath("/coming-soon");
+    revalidatePath("/maintenance");
+    invalidatePublicAccessCopy();
+
+    return createSuccessResponse({ id: result.id });
+  } catch (error) {
+    logger.error({ err: error, action: "updateWebsiteAccessSettingsAction" }, "Failed to update website access settings");
+    return createErrorResponse("Failed to update website access settings", "INTERNAL_ERROR");
+  }
+}
+
+export async function addApprovedIpAddressAction(
+  data: {
+    value: string;
+    label?: string;
+  },
+): Promise<ApiResponse<{ id: string }>> {
+  try {
+    const session = await requireRole([Role.ADMIN]);
+    const settings = await getWebsiteAccessSettings();
+    const result = await addApprovedIpAddress(settings.id, {
+      value: data.value,
+      label: data.label,
+      createdById: session.user.id,
+    });
+
+    await logAccessAudit(
+      settings.id,
+      "APPROVED_IP_ADDED",
+      `Approved IP ${data.value} added by ${session.user.email}`,
+      session.user.id,
+    );
+
+    revalidatePath("/admin/access");
+    return createSuccessResponse({ id: result.id });
+  } catch (error) {
+    logger.error({ err: error, action: "addApprovedIpAddressAction" }, "Failed to add approved IP");
+    return createErrorResponse(error instanceof Error ? error.message : "Failed to add approved IP", "VALIDATION_ERROR");
+  }
+}
+
+export async function removeApprovedIpAddressAction(id: string): Promise<ApiResponse<{ id: string }>> {
+  try {
+    const session = await requireRole([Role.ADMIN]);
+    const settings = await getWebsiteAccessSettings();
+    const result = await removeApprovedIpAddress(settings.id, id);
+
+    if (result.count > 0) {
+      await logAccessAudit(
+        settings.id,
+        "APPROVED_IP_REMOVED",
+        `Approved IP removed by ${session.user.email} (id=${id})`,
+        session.user.id,
+      );
+    }
+
+    revalidatePath("/admin/access");
+    return createSuccessResponse({ id });
+  } catch (error) {
+    logger.error({ err: error, action: "removeApprovedIpAddressAction" }, "Failed to remove approved IP");
+    return createErrorResponse("Failed to remove approved IP", "INTERNAL_ERROR");
   }
 }

@@ -225,6 +225,31 @@ export function getEffectiveAccessMode(
   return mode;
 }
 
+/**
+ * A past maintenance return time makes `getEffectiveAccessMode` open the site
+ * on the very next request, so saving one with MAINTENANCE selected would
+ * silently cancel maintenance seconds later. Returns an error message, or
+ * null when the value is acceptable.
+ */
+export function validateMaintenanceReturnAt(
+  mode: string | null | undefined,
+  returnAt: Date | string | null | undefined,
+  now: Date = new Date(),
+): string | null {
+  if (mode !== "MAINTENANCE" || returnAt === null || returnAt === undefined || returnAt === "") {
+    return null;
+  }
+
+  const timestamp = new Date(returnAt).getTime();
+  if (!Number.isFinite(timestamp)) {
+    return "Estimated return time is not a valid date.";
+  }
+  if (timestamp <= now.getTime()) {
+    return "Estimated return time has already passed — maintenance would end immediately. Clear it or pick a future time.";
+  }
+  return null;
+}
+
 export function isStaffRole(role: string | null, email?: string | null): boolean {
   return (
     role === "ADMIN" ||

@@ -41,6 +41,22 @@ function toDateTimeLocalInput(value: string | null | undefined) {
   return local.toISOString().slice(0, 16);
 }
 
+function maintenanceReturnStatus(mode: string, value: string | null | undefined) {
+  if (mode !== "MAINTENANCE" || !value) return null;
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return { tone: "error" as const, text: "Estimated return time is not a valid date." };
+  if (timestamp <= Date.now()) {
+    return {
+      tone: "error" as const,
+      text: "This time has already passed — saving now would end maintenance immediately. Clear it or pick a future time.",
+    };
+  }
+  return {
+    tone: "info" as const,
+    text: `Maintenance will automatically return to Normal Mode at ${new Date(timestamp).toLocaleString()}.`,
+  };
+}
+
 export function WebsiteAccessManager({
   initialSettings,
   detectedPublicIp,
@@ -282,6 +298,15 @@ export function WebsiteAccessManager({
                 onChange={(event) => setSettings((previous) => ({ ...previous, maintenanceReturnAt: event.target.value ? new Date(event.target.value).toISOString() : null }))}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
+              {(() => {
+                const status = maintenanceReturnStatus(settings.websiteAccessMode, settings.maintenanceReturnAt);
+                if (!status) return null;
+                return (
+                  <p className={`text-xs ${status.tone === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+                    {status.text}
+                  </p>
+                );
+              })()}
             </div>
           </div>
 

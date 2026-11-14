@@ -493,6 +493,7 @@ export type PublicAccessCopy = {
   comingSoonMessage: string | null;
   maintenanceHeadline: string | null;
   maintenanceMessage: string | null;
+  maintenanceReturnAt: Date | null;
 };
 
 export function invalidatePublicAccessCopy() {
@@ -511,6 +512,7 @@ export async function getPublicAccessCopy(): Promise<PublicAccessCopy | null> {
         comingSoonMessage: true,
         maintenanceHeadline: true,
         maintenanceMessage: true,
+        maintenanceReturnAt: true,
       },
     });
     publicCopyCache = { value, expiresAt: Date.now() + PUBLIC_COPY_TTL_MS };

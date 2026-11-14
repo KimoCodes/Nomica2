@@ -13,9 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, ArrowRight, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, Lock, ArrowRight, CheckCircle2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { trackLoading } from "@/components/ui/loading-bar";
+import { cn } from "@/lib/utils";
 
 type FieldErrors = {
   email?: string;
@@ -160,11 +161,14 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
   }
 
   return (
-    <div className="w-full max-w-sm">
+    <div className={cn("w-full", !staffLogin && "max-w-sm")}>
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className={cn(
+          "mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
+          staffLogin && "font-mono text-[11px] tracking-[0.15em] uppercase hover:text-foreground"
+        )}
         suppressHydrationWarning
       >
         <ArrowLeft className="size-4" />
@@ -172,10 +176,28 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
       </a>
 
       <CardHeader className="px-0 pb-6">
-        <CardTitle className="text-2xl font-bold">
+        <CardTitle
+          className={cn(
+            "text-2xl font-bold",
+            staffLogin && "flex items-center gap-2.5 text-xl tracking-tight"
+          )}
+        >
+          {staffLogin && (
+            <span
+              aria-hidden
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+            >
+              <ShieldCheck className="size-4" />
+            </span>
+          )}
           {staffLogin ? "Admin & Coach Login" : "Welcome back"}
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p
+          className={cn(
+            "text-sm text-muted-foreground",
+            staffLogin && "font-mono text-xs leading-relaxed"
+          )}
+        >
           {staffLogin
             ? "Sign in with an administrator account or nomitipscoaching@gmail.com."
             : "Sign in to your account to continue"}
@@ -201,7 +223,14 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">
+            <Label
+              htmlFor="email"
+              className={cn(
+                "text-sm font-medium",
+                staffLogin &&
+                  "font-mono text-[11px] tracking-[0.15em] text-muted-foreground uppercase"
+              )}
+            >
               Email
             </Label>
             <div className="relative">
@@ -214,7 +243,11 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
                 required
                 placeholder="you@example.com"
                 onBlur={(e) => validateField("email", e.target.value)}
-                className={`h-11 pl-10 ${fieldErrors.email ? "border-destructive" : ""}`}
+                className={cn(
+                  "h-11 pl-10",
+                  staffLogin && "bg-muted/40 font-mono text-sm",
+                  fieldErrors.email && "border-destructive"
+                )}
               />
             </div>
             {fieldErrors.email && (
@@ -223,7 +256,14 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">
+            <Label
+              htmlFor="password"
+              className={cn(
+                "text-sm font-medium",
+                staffLogin &&
+                  "font-mono text-[11px] tracking-[0.15em] text-muted-foreground uppercase"
+              )}
+            >
               Password
             </Label>
             <div className="relative">
@@ -236,7 +276,11 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
                 required
                 placeholder="••••••••"
                 onBlur={(e) => validateField("password", e.target.value)}
-                className={`h-11 pl-10 ${fieldErrors.password ? "border-destructive" : ""}`}
+                className={cn(
+                  "h-11 pl-10",
+                  staffLogin && "bg-muted/40 font-mono text-sm",
+                  fieldErrors.password && "border-destructive"
+                )}
               />
             </div>
             {fieldErrors.password && (
@@ -245,7 +289,10 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
             <div className="flex justify-end">
               <Link
                 href="/forgot-password"
-                className="text-xs font-medium text-primary hover:underline"
+                className={cn(
+                  "text-xs font-medium text-primary hover:underline",
+                  staffLogin && "font-mono text-[11px] tracking-[0.15em] uppercase"
+                )}
               >
                 Forgot password?
               </Link>
@@ -256,7 +303,11 @@ export function LoginForm({ staffLogin = false }: { staffLogin?: boolean }) {
         <CardFooter className="flex flex-col gap-4 px-0 pt-4">
           <LoadingButton
             type="submit"
-            className="w-full group"
+            className={cn(
+              "w-full group",
+              staffLogin &&
+                "h-11 font-mono text-xs font-semibold tracking-[0.2em] uppercase"
+            )}
             loading={isPending}
             loadingText="Signing in..."
           >

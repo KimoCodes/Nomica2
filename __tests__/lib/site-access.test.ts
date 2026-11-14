@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSiteAccessAllowed } from "@/lib/site-access";
+import { isSiteAccessAllowed, validateMaintenanceReturnAt } from "@/lib/site-access";
 
 describe("isSiteAccessAllowed", () => {
   it.each(["COMING_SOON", "MAINTENANCE"])(
@@ -181,5 +181,33 @@ describe("isSiteAccessAllowed", () => {
         new Date("2026-06-01T00:00:00.000Z"),
       ),
     ).toBe(false);
+  });
+});
+
+describe("validateMaintenanceReturnAt", () => {
+  const now = new Date("2026-06-01T12:00:00.000Z");
+
+  it("rejects a return time that has already passed in maintenance mode", () => {
+    expect(validateMaintenanceReturnAt("MAINTENANCE", "2026-06-01T00:45:00.000Z", now)).toMatch(
+      /already passed/,
+    );
+  });
+
+  it("rejects an unparseable return time in maintenance mode", () => {
+    expect(validateMaintenanceReturnAt("MAINTENANCE", "not-a-date", now)).toMatch(/not a valid date/);
+  });
+
+  it("accepts a future return time in maintenance mode", () => {
+    expect(validateMaintenanceReturnAt("MAINTENANCE", "2026-06-01T18:00:00.000Z", now)).toBeNull();
+  });
+
+  it("accepts a cleared return time in maintenance mode", () => {
+    expect(validateMaintenanceReturnAt("MAINTENANCE", null, now)).toBeNull();
+    expect(validateMaintenanceReturnAt("MAINTENANCE", undefined, now)).toBeNull();
+  });
+
+  it("ignores a past return time when the mode is not maintenance", () => {
+    expect(validateMaintenanceReturnAt("NORMAL", "2026-01-01T00:00:00.000Z", now)).toBeNull();
+    expect(validateMaintenanceReturnAt("COMING_SOON", "2026-01-01T00:00:00.000Z", now)).toBeNull();
   });
 });

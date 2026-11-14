@@ -275,6 +275,48 @@
   .animate-spinner-glow {
     animation: spinnerGlow 2s ease-in-out infinite;
   }
+
+  .mach-rotor {
+    transform-box: view-box;
+    transform-origin: 100px 100px;
+  }
+
+  .mach-spin {
+    animation: machRotate 36s linear infinite;
+  }
+
+  .mach-spin-reverse {
+    animation: machRotateReverse 24s linear infinite;
+  }
+
+  .mach-radar {
+    animation: machRotate 7s linear infinite;
+  }
+
+  .mach-led {
+    opacity: 1;
+    animation: machLed 1.8s ease-in-out infinite;
+  }
+
+  .mach-scan {
+    top: -4%;
+    opacity: 0;
+    animation: machScan 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .mach-seg {
+    opacity: 1;
+    animation: machSeg 2.2s ease-in-out infinite;
+  }
+
+  .mach-hazard {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      #f59e0b 0 8px,
+      #0a0b0e 8px 16px
+    );
+    animation: machHazard 0.9s linear infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -310,6 +352,38 @@
 @keyframes spinnerGlow {
   0%, 100% { box-shadow: 0 0 20px oklch(0.54 0.18 155 / 20%); }
   50% { box-shadow: 0 0 40px oklch(0.54 0.18 155 / 40%); }
+}
+
+@keyframes machRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes machRotateReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes machLed {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes machScan {
+  0% { top: -4%; opacity: 0; }
+  12% { opacity: 0.55; }
+  88% { opacity: 0.55; }
+  100% { top: 104%; opacity: 0; }
+}
+
+@keyframes machSeg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes machHazard {
+  from { background-position: 0 0; }
+  to { background-position: 32px 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

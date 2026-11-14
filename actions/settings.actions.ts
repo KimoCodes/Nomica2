@@ -24,6 +24,7 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/server/utils/response";
+import { validateMaintenanceReturnAt } from "@/lib/site-access";
 
 import { logActivity } from "@/server/services/analytics.service";
 import type { ApiResponse } from "@/types";
@@ -264,6 +265,15 @@ export async function updateWebsiteAccessSettingsAction(
   try {
     const session = await requireRole([Role.ADMIN]);
     const settings = await getWebsiteAccessSettings();
+
+    const nextMode = data.websiteAccessMode ?? settings.websiteAccessMode;
+    const nextReturnAt =
+      data.maintenanceReturnAt !== undefined ? data.maintenanceReturnAt : settings.maintenanceReturnAt;
+    const returnAtError = validateMaintenanceReturnAt(nextMode, nextReturnAt);
+    if (returnAtError) {
+      return createErrorResponse(returnAtError, "VALIDATION_ERROR");
+    }
+
     const result = await upsertWebsiteAccessSettings({
       ...data,
       websiteAccessMode: data.websiteAccessMode ? parseWebsiteAccessMode(data.websiteAccessMode) : undefined,

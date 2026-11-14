@@ -7,7 +7,7 @@ import {
   ProductStatus,
   Role,
 } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createPrismaAdapter } from "../lib/db-adapter";
 import { PRODUCT_COPY } from "./content-v2";
 import { hashSync } from "bcrypt";
 import { ensureProgramContent } from "./program-content";
@@ -308,7 +308,7 @@ const BUNDLES = [
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+  const adapter = createPrismaAdapter(process.env.DATABASE_URL);
   const prisma = new PrismaClient({ adapter });
 
   // 1. NomiTips head-coach account that owns catalog programs

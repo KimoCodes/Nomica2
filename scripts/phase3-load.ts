@@ -27,7 +27,7 @@ import "dotenv/config";
 import { readdirSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient, ProductKind, ProductStatus } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createPrismaAdapter } from "../lib/db-adapter";
 import { EXERCISES, PROGRAMS, PRODUCT_COPY } from "../prisma/content-v2";
 import type { ProductCopy } from "../prisma/content-v2";
 
@@ -55,7 +55,7 @@ function fail(msg: string): never {
 }
 
 const prisma = new PrismaClient({
-  adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }),
+  adapter: createPrismaAdapter(process.env.DATABASE_URL),
 });
 
 async function main() {

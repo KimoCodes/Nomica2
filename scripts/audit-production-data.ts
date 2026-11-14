@@ -13,7 +13,7 @@
 
 import "dotenv/config";
 import { PrismaClient, Role } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { createPrismaAdapter } from "../lib/db-adapter";
 
 // Known seed data identifiers
 const SEED_COACH_EMAIL = "coach@nomitips.com";
@@ -51,7 +51,7 @@ function classifyProduct(slug: string): Classification {
 }
 
 async function main() {
-  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+  const adapter = createPrismaAdapter(process.env.DATABASE_URL);
   const prisma = new PrismaClient({ adapter });
 
   console.log("═══════════════════════════════════════════════════════");

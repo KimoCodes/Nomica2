@@ -68,7 +68,7 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/admin.service.ts": 682,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/products/page.tsx": 188,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/products/product-actions.tsx": 467,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prisma/seed.ts": 520,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prisma/seed.ts": 548,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/scripts/audit-production-data.ts": 195,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/actions/order-admin.actions.ts": 238,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/orders/order-actions.tsx": 83,
@@ -148,9 +148,9 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/app/admin/content/settings/page.tsx": 31,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/.vscode/settings.json": 3,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/components/ui/loading-bar.tsx": 137,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/package.json": 77,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/package.json": 79,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/auth.ts": 72,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/prisma.ts": 35,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/prisma.ts": 38,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server.ts": 50,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/prodactivatebash": 9,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/constants/product-catalog.ts": 1,
@@ -207,5 +207,6 @@
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/video-feedback.service.ts": 105,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/free-trial.service.ts": 275,
   "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/page-content.service.ts": 253,
-  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/notification.service.ts": 567
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/server/services/notification.service.ts": 567,
+  "/Applications/XAMPP/xamppfiles/htdocs/Nomica2/lib/db-adapter.ts": 28
 }

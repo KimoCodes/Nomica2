@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
+import { createPrismaAdapter } from "@/lib/db-adapter";
 import logger from "@/lib/logger";
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,7 +8,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+  const adapter = createPrismaAdapter(process.env.DATABASE_URL);
   const timingEnabled = process.env.PERFORMANCE_TIMING === "1";
 
   if (timingEnabled) {

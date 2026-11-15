@@ -163,6 +163,7 @@ export default async function ProductPage({
                           alt={cover.alt}
                           fill
                           className="object-cover"
+                          style={{ objectPosition: cover.position }}
                           priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -581,15 +582,27 @@ export default async function ProductPage({
                           alt={pCover.alt}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          style={{ objectPosition: pCover.position }}
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center">
                           <Dumbbell className="size-8 text-primary/40" />
                         </div>
                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                      <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+                          {p.kind}
+                        </span>
+                        {p.focus && (
+                          <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+                            {p.focus}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="p-6">
-                      <h3 className="font-bold">{p.name}</h3>
+                      <h3 className="text-lg font-bold tracking-tight">{p.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {p.tagline}
                       </p>

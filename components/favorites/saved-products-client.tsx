@@ -99,7 +99,7 @@ export function SavedProductsClient() {
       {products.map((product) => {
         const cover = getProductImage(product);
         return (
-        <Card key={product.id} className="transition-all hover:-translate-y-0.5 hover:shadow-premium">
+        <Card key={product.id} className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg">
           <div className="relative aspect-[16/10] overflow-hidden bg-muted">
             {cover ? (
               <Image
@@ -107,18 +107,18 @@ export function SavedProductsClient() {
                 sizes="(max-width: 640px) 100vw, 33vw"
                 alt={cover.alt}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                style={{ objectPosition: cover.position }}
               />
             ) : null}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <span className="absolute bottom-3 left-3 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+              {product.kind === "BUNDLE" ? "Bundle" : "Program"}
+            </span>
           </div>
           <CardContent className="flex h-full flex-col p-5">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  {product.kind === "BUNDLE" ? "Bundle" : "Program"}
-                </p>
-                <h3 className="mt-1 font-bold">{product.name}</h3>
-              </div>
+              <h3 className="font-bold leading-tight">{product.name}</h3>
               <button
                 type="button"
                 onClick={() => removeItem(product.id)}

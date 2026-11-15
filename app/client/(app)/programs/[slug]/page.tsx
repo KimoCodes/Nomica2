@@ -68,7 +68,8 @@ export default async function OwnedProgramPage({
               sizes="(max-width: 768px) 100vw, 900px"
               alt={cover.alt}
               fill
-              className="object-cover object-top"
+              className="object-cover"
+              style={{ objectPosition: cover.position }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
           </div>

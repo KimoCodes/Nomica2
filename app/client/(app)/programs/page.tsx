@@ -54,7 +54,7 @@ export default async function MyProgramsPage() {
               const percent = totalWorkouts ? Math.min(100, Math.round((completed / totalWorkouts) * 100)) : 0;
               const cover = getProductImage(product);
               return (
-                <Card key={product.id} className="overflow-hidden">
+                <Card key={product.id} className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg">
                   <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     {cover ? (
                       <Image
@@ -62,15 +62,17 @@ export default async function MyProgramsPage() {
                         sizes="(max-width: 768px) 100vw, 33vw"
                         alt={cover.alt}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        style={{ objectPosition: cover.position }}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <Dumbbell className="size-8 text-primary/40" />
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
                     {totalWorkouts > 0 && (
-                      <div className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                      <div className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
                         {percent}%
                       </div>
                     )}

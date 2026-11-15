@@ -11,7 +11,9 @@ import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import {
   ArrowRight,
+  CalendarDays,
   CheckCircle2,
+  Clock,
   Dumbbell,
   Flame,
   Star,
@@ -221,28 +223,28 @@ export default async function ProgramsPage({
                               alt={cover.alt}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              style={{ objectPosition: cover.position }}
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center">
                               <Icon className="size-10 text-primary/40" />
                             </div>
                           )}
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
-                            <span className="rounded-full bg-black/50 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                          <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
                               {product.kind}
                             </span>
                             {product.focus && (
-                              <span className="ml-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+                              <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
                                 {product.focus}
                               </span>
                             )}
                           </div>
                           {index === 0 && (
-                            <div className="absolute right-4 top-4">
-                              <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                                MOST POPULAR
-                              </span>
-                            </div>
+                            <span className="absolute right-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg">
+                              MOST POPULAR
+                            </span>
                           )}
                         </div>
 
@@ -279,9 +281,15 @@ export default async function ProgramsPage({
                           )}
 
                           <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>⏱ {product.durationLabel}</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="size-3.5" />
+                              {product.durationLabel}
+                            </span>
                             {product.daysPerWeek && (
-                              <span>⚙ {product.daysPerWeek} days/week</span>
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarDays className="size-3.5" />
+                                {product.daysPerWeek} days/week
+                              </span>
                             )}
                           </div>
 

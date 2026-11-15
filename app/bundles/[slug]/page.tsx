@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getProductBySlug } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { getProductImage } from "@/constants/coach-images";
 import { CartProductButton } from "@/components/cart/cart-product-button";
 import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
@@ -154,24 +156,40 @@ export default async function BundleDetailPage({ params }: Props) {
                   <p className="text-sm font-medium text-muted-foreground">
                     Includes
                   </p>
-                  {products.slice(0, 5).map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 shadow-sm"
-                    >
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Dumbbell className="size-4" />
+                  {products.slice(0, 5).map((product) => {
+                    const pCover = getProductImage(product);
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3 shadow-sm"
+                      >
+                        <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                          {pCover ? (
+                            <Image
+                              src={pCover.src}
+                              sizes="40px"
+                              alt={pCover.alt}
+                              fill
+                              className="object-cover"
+                              style={{ objectPosition: pCover.position }}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Dumbbell className="size-4 text-primary/40" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">
+                            {product.name}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {product.tagline}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
-                          {product.name}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {product.tagline}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {products.length > 5 && (
                     <div className="rounded-xl border border-dashed border-border/50 p-3 text-center text-sm text-muted-foreground">
                       + {products.length - 5} more included
@@ -191,36 +209,47 @@ export default async function BundleDetailPage({ params }: Props) {
             </h2>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {products.map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`animate-slide-up stagger-${
-                    index + 1
-                  } rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Dumbbell className="size-5" />
+              {products.map((product, index) => {
+                const cover = getProductImage(product);
+                return (
+                  <div
+                    key={product.id}
+                    className={`animate-slide-up stagger-${
+                      index + 1
+                    } group overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg`}
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                      {cover ? (
+                        <Image
+                          src={cover.src}
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          alt={cover.alt}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          style={{ objectPosition: cover.position }}
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Dumbbell className="size-8 text-primary/40" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <span className="absolute bottom-3 left-3 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+                        {product.durationLabel}
+                      </span>
                     </div>
-                    <div>
+                    <div className="p-6">
                       <h3 className="font-bold">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                         {product.tagline}
                       </p>
+                      <div className="mt-3 text-sm font-medium text-primary">
+                        Value: {formatPrice(product.priceCents)}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="mt-4 flex items-center gap-4 text-sm">
-                    <span className="text-muted-foreground">
-                      {product.durationLabel}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 text-sm font-medium text-primary">
-                    Value: {formatPrice(product.priceCents)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

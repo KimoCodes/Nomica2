@@ -155,23 +155,27 @@ export default async function BundlesPage() {
                               alt={cover.alt}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
+                              style={{ objectPosition: cover.position }}
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center">
                               <Package className="size-10 text-primary/40" />
                             </div>
                           )}
-                          <div className="absolute left-4 top-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                index === 0
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-black/50 text-white backdrop-blur-sm"
-                              }`}
-                            >
-                              {index === 0 ? "BEST VALUE" : "BUNDLE"}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                          <div className="absolute inset-x-3 bottom-3 flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+                              Bundle
+                            </span>
+                            <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
+                              {(bundle.bundleItems ?? []).length} programs
                             </span>
                           </div>
+                          {index === 0 && (
+                            <span className="absolute right-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg">
+                              BEST VALUE
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-1 flex-col p-6">

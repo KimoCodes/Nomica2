@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import { listSavedProductsAction, toggleSavedProductAction } from "@/actions/favorite.actions";
 import { readCartIds, writeCartIds } from "@/components/cart/cart-storage";
+import { getProductImage } from "@/constants/coach-images";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,7 @@ type SavedProduct = {
   kind: string;
   priceCents: number;
   priceLabel: string;
+  imageUrl?: string | null;
 };
 
 export function SavedProductsClient() {
@@ -93,8 +96,21 @@ export function SavedProductsClient() {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => (
+      {products.map((product) => {
+        const cover = getProductImage(product);
+        return (
         <Card key={product.id} className="transition-all hover:-translate-y-0.5 hover:shadow-premium">
+          <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+            {cover ? (
+              <Image
+                src={cover.src}
+                sizes="(max-width: 640px) 100vw, 33vw"
+                alt={cover.alt}
+                fill
+                className="object-cover"
+              />
+            ) : null}
+          </div>
           <CardContent className="flex h-full flex-col p-5">
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -140,7 +156,8 @@ export function SavedProductsClient() {
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }

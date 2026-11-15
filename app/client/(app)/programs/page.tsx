@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
+import { getProductImage } from "@/constants/coach-images";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,12 +52,30 @@ export default async function MyProgramsPage() {
               const totalWorkouts = product.program?.weeks.reduce((sum, week) => sum + week.days.length, 0) ?? 0;
               const completed = product.program?.assignments.reduce((sum, assignment) => sum + assignment._count.completions, 0) ?? 0;
               const percent = totalWorkouts ? Math.min(100, Math.round((completed / totalWorkouts) * 100)) : 0;
+              const cover = getProductImage(product);
               return (
                 <Card key={product.id} className="overflow-hidden">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                    {cover ? (
+                      <Image
+                        src={cover.src}
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        alt={cover.alt}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Dumbbell className="size-8 text-primary/40" />
+                      </div>
+                    )}
+                    {totalWorkouts > 0 && (
+                      <div className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                        {percent}%
+                      </div>
+                    )}
+                  </div>
                   <CardContent className="flex h-full flex-col p-6">
-                    <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-primary/10">
-                      <Dumbbell className="size-5 text-primary" />
-                    </div>
                     <h3 className="text-lg font-semibold">{product.name}</h3>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{product.tagline ?? product.description}</p>
                     <div className="mt-4 flex items-center justify-between text-sm">

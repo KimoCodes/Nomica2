@@ -76,6 +76,7 @@ export async function getCatalogProducts(
         daysPerWeek: true,
         focus: true,
         features: true,
+        imageUrl: true,
         _count: {
           select: {
             purchases: { where: { status: "COMPLETED" } },

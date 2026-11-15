@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getCatalogProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { getProductImage, MARKETING_IMAGES } from "@/constants/coach-images";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import {
@@ -92,7 +94,7 @@ export default async function ProgramsPage({
               loop
               playsInline
               className="absolute inset-0 h-full w-full object-cover"
-              poster="/media/hero/hero-woman-deadlift.jpg"
+              poster={MARKETING_IMAGES.heroPoster.poster}
             >
               <source src="/media/workout-glutes-burner.mp4" type="video/mp4" />
             </video>
@@ -192,6 +194,7 @@ export default async function ProgramsPage({
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {products.map((product, index) => {
                     const Icon = kindIcons[product.kind] ?? Dumbbell;
+                    const cover = getProductImage(product);
                     const ownedBundleCount = product.kind === "BUNDLE"
                       ? product.bundleItems.filter(({ itemId }) =>
                         ownedIds.has(itemId)
@@ -204,110 +207,121 @@ export default async function ProgramsPage({
                         href={`/programs/${product.slug}`}
                         className={`animate-slide-up stagger-${
                           Math.min(index + 1, 8)
-                        } group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                        } group relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
                           index === 0
                             ? "border-primary shadow-premium scale-[1.02]"
                             : "border-border/50"
                         }`}
                       >
-                        {index === 0 && (
-                          <div className="absolute -top-3 left-6">
-                            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                              MOST POPULAR
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                            <Icon className="size-6 text-primary" />
-                          </div>
-                          <div>
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                          {cover ? (
+                            <Image
+                              src={cover.src}
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              alt={cover.alt}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Icon className="size-10 text-primary/40" />
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
+                            <span className="rounded-full bg-black/50 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
                               {product.kind}
                             </span>
                             {product.focus && (
-                              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              <span className="ml-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
                                 {product.focus}
                               </span>
                             )}
                           </div>
+                          {index === 0 && (
+                            <div className="absolute right-4 top-4">
+                              <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                                MOST POPULAR
+                              </span>
+                            </div>
+                          )}
                         </div>
 
-                        <h2 className="text-xl font-bold">{product.name}</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {product.tagline}
-                        </p>
+                        <div className="flex flex-1 flex-col p-6">
+                          <h2 className="text-xl font-bold">{product.name}</h2>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {product.tagline}
+                          </p>
 
-                        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                          {product.description}
-                        </p>
+                          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                            {product.description}
+                          </p>
 
-                        <div className="mt-4 flex items-baseline gap-2">
-                          <span className="text-3xl font-bold">
-                            {formatPrice(product.priceCents)}
-                          </span>
-                          {product.compareAtCents && (
-                            <span className="text-sm text-muted-foreground line-through">
-                              {formatPrice(product.compareAtCents)}
+                          <div className="mt-4 flex items-baseline gap-2">
+                            <span className="text-3xl font-bold">
+                              {formatPrice(product.priceCents)}
+                            </span>
+                            {product.compareAtCents && (
+                              <span className="text-sm text-muted-foreground line-through">
+                                {formatPrice(product.compareAtCents)}
+                              </span>
+                            )}
+                          </div>
+                          {ownedIds.has(product.id) && (
+                            <span className="mt-2 w-fit rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
+                              Owned · Open from My Programs
                             </span>
                           )}
-                        </div>
-                        {ownedIds.has(product.id) && (
-                          <span className="mt-2 w-fit rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                            Owned · Open from My Programs
-                          </span>
-                        )}
-                        {ownedBundleCount > 0 && !ownedIds.has(product.id) && (
-                          <span className="mt-2 w-fit rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                            You own {ownedBundleCount} of{" "}
-                            {product.bundleItems.length} included programs
-                          </span>
-                        )}
-
-                        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>⏱ {product.durationLabel}</span>
-                          {product.daysPerWeek && (
-                            <span>⚙ {product.daysPerWeek} days/week</span>
+                          {ownedBundleCount > 0 && !ownedIds.has(product.id) && (
+                            <span className="mt-2 w-fit rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                              You own {ownedBundleCount} of{" "}
+                              {product.bundleItems.length} included programs
+                            </span>
                           )}
-                        </div>
 
-                        <ul className="mt-4 flex-1 space-y-2">
-                          {product.features.slice(0, 4).map((feature) => (
-                            <li
-                              key={feature}
-                              className="flex items-center gap-2 text-sm"
-                            >
-                              <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
+                          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>⏱ {product.durationLabel}</span>
+                            {product.daysPerWeek && (
+                              <span>⚙ {product.daysPerWeek} days/week</span>
+                            )}
+                          </div>
 
-                        <div className="mt-6 flex items-center gap-2">
-                          <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Star className="size-3.5 fill-warning text-warning" />
-                            {product._count.reviews > 0
-                              ? `${product._count.reviews} review${
-                                product._count.reviews !== 1 ? "s" : ""
-                              }`
-                              : "New"}
-                          </span>
-                          {product._count.reviews > 0 && (
-                            <>
-                              <span className="text-muted-foreground">·</span>
-                              <span className="text-sm text-muted-foreground">
-                                {product._count.purchases} purchased
-                              </span>
-                            </>
-                          )}
-                        </div>
+                          <ul className="mt-4 flex-1 space-y-2">
+                            {product.features.slice(0, 4).map((feature) => (
+                              <li
+                                key={feature}
+                                className="flex items-center gap-2 text-sm"
+                              >
+                                <CheckCircle2 className="size-3.5 shrink-0 text-primary" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
 
-                        <div className="mt-4">
-                          <span className="inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
-                            View Program
-                            <ArrowRight className="size-4" />
-                          </span>
+                          <div className="mt-6 flex items-center gap-2">
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Star className="size-3.5 fill-warning text-warning" />
+                              {product._count.reviews > 0
+                                ? `${product._count.reviews} review${
+                                  product._count.reviews !== 1 ? "s" : ""
+                                }`
+                                : "New"}
+                            </span>
+                            {product._count.reviews > 0 && (
+                              <>
+                                <span className="text-muted-foreground">·</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {product._count.purchases} purchased
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="mt-4">
+                            <span className="inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
+                              View Program
+                              <ArrowRight className="size-4" />
+                            </span>
+                          </div>
                         </div>
                       </Link>
                     );

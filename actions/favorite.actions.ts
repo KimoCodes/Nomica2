@@ -78,6 +78,7 @@ type SavedProduct = {
   tagline: string | null;
   kind: string;
   priceCents: number;
+  imageUrl?: string | null;
 };
 
 export async function listSavedProductsAction() {
@@ -103,6 +104,7 @@ export async function listSavedProductsAction() {
           tagline: true,
           kind: true,
           priceCents: true,
+          imageUrl: true,
         },
       })
       : [];

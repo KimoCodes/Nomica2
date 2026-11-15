@@ -9,6 +9,7 @@ import { TestimonialCard } from "@/components/social-proof";
 import { getProducts, getPublishedReviews, getBundleProducts } from "@/server/services/product.service";
 import { getApprovedTransformations } from "@/server/services/transformation.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { getProductImage, MARKETING_IMAGES } from "@/constants/coach-images";
 import { getPublishedPageContent, getSectionText, getSectionMedia } from "@/lib/content";
 import {
   Dumbbell,
@@ -171,13 +172,11 @@ export default async function HomePage() {
 
   const coachWelcomeMedia = getSectionMedia(homeContent, "coach_welcome");
   const coachWelcomeVideo =
-    coachWelcomeMedia?.mimeType?.startsWith("video/")
-      ? coachWelcomeMedia.url
-      : "/media/coach-welcome.mp4";
+    coachWelcomeMedia?.mimeType?.startsWith("video/") ? coachWelcomeMedia.url : null;
   const coachWelcomePoster =
     (coachWelcomeMedia && !coachWelcomeMedia.mimeType?.startsWith("video/")
       ? coachWelcomeMedia.url
-      : coachWelcomeMedia?.thumbnailUrl) || "/media/coach-profile-1.jpg";
+      : coachWelcomeMedia?.thumbnailUrl) || MARKETING_IMAGES.coachWelcome.poster;
 
   return (
     <PublicLayout>
@@ -194,7 +193,7 @@ export default async function HomePage() {
                 loop
                 playsInline
                 className="absolute inset-0 h-full w-full object-cover"
-                poster={heroImage || "/media/coach-profile-1.jpg"}
+                poster={heroImage || MARKETING_IMAGES.heroPoster.poster}
               >
                 <source src={heroVideo} type="video/mp4" />
               </video>
@@ -205,7 +204,7 @@ export default async function HomePage() {
                 loop
                 playsInline
                 className="absolute inset-0 h-full w-full object-cover"
-                poster="/media/coach-profile-1.jpg"
+                poster={MARKETING_IMAGES.heroPoster.poster}
               >
                 <source src="/media/workout-glutes-quads-hamstrings.mp4" type="video/mp4" />
               </video>
@@ -279,7 +278,7 @@ export default async function HomePage() {
                         loop
                         playsInline
                         className="absolute inset-0 h-full w-full object-cover"
-                        poster={heroImage || "/media/coach-profile-2.jpg"}
+                        poster={heroImage || MARKETING_IMAGES.heroPreview.poster}
                       >
                         <source src={heroVideo || "/media/workout-leg-elevation.mp4"} type="video/mp4" />
                       </video>
@@ -290,7 +289,7 @@ export default async function HomePage() {
                         loop
                         playsInline
                         className="absolute inset-0 h-full w-full object-cover"
-                        poster="/media/coach-profile-2.jpg"
+                        poster={MARKETING_IMAGES.heroPreview.poster}
                       >
                         <source src="/media/workout-leg-elevation.mp4" type="video/mp4" />
                       </video>
@@ -433,16 +432,26 @@ export default async function HomePage() {
 
               <div className="group relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/50 ring-1 ring-white/10">
                 <div className="aspect-video relative bg-neutral-900">
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="absolute inset-0 h-full w-full object-cover"
-                    poster={coachWelcomePoster}
-                  >
-                    <source src={coachWelcomeVideo} type="video/mp4" />
-                  </video>
+                  {coachWelcomeVideo ? (
+                    <video
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 h-full w-full object-cover"
+                      poster={coachWelcomePoster}
+                    >
+                      <source src={coachWelcomeVideo} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <Image
+                      src={MARKETING_IMAGES.coachWelcome.src}
+                      sizes="(max-width: 768px) 100vw, 896px"
+                      alt={MARKETING_IMAGES.coachWelcome.alt}
+                      fill
+                      className="object-cover object-top"
+                    />
+                  )}
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30" />
                   <div className="absolute inset-0 ring-1 ring-inset ring-white/5" />
@@ -454,20 +463,22 @@ export default async function HomePage() {
                     </span>
                   </div>
 
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex size-20 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
-                      <Play className="ml-1 size-8 text-white" />
+                  {coachWelcomeVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex size-20 items-center justify-center rounded-full border border-white/30 bg-white/10 backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
+                        <Play className="ml-1 size-8 text-white" />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6">
                     <div className="flex items-center gap-3">
                       <div className="relative size-12 shrink-0 overflow-hidden rounded-full border-2 border-white/70">
                         <Image
-                          src="/media/coach-profile-1.jpg"
-                          alt="NomiTips head coach"
-                          fill
+                          src={MARKETING_IMAGES.coachAvatar.poster}
                           sizes="48px"
+                          alt={MARKETING_IMAGES.coachAvatar.alt}
+                          fill
                           className="object-cover"
                         />
                       </div>
@@ -520,67 +531,83 @@ export default async function HomePage() {
 
             {products.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {products.map((product, index) => (
+                {products.map((product, index) => {
+                  const cover = getProductImage(product);
+                  return (
                     <div
                       key={product.id}
-                      className={`group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
                         index === 0
                           ? "border-primary shadow-premium scale-[1.02]"
                           : "border-border/50"
                       }`}
                     >
-                      {index === 0 && (
-                        <div className="absolute -top-3 left-6">
-                          <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                            MOST POPULAR
+                      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                        {cover ? (
+                          <Image
+                            src={cover.src}
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            alt={cover.alt}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <Dumbbell className="size-10 text-primary/40" />
+                          </div>
+                        )}
+                        {index === 0 && (
+                          <div className="absolute right-4 top-4">
+                            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                              MOST POPULAR
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="text-lg font-bold">{product.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {product.tagline}
+                        </p>
+
+                        <div className="mt-4">
+                          <span className="text-3xl font-bold">
+                            {formatPrice(product.priceCents)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {" "}one-time
                           </span>
                         </div>
-                      )}
 
-                      <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
-                        <Dumbbell className="size-6 text-primary" />
+                        <ul className="mt-6 flex-1 space-y-3">
+                          {product.features.slice(0, 4).map((feature) => (
+                            <li
+                              key={feature}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+
+                        <Link
+                          href={`/programs/${product.slug}`}
+                          className={cn(
+                            buttonVariants({
+                              variant: index === 0 ? "default" : "outline",
+                            }),
+                            "mt-6 w-full group/btn",
+                          )}
+                        >
+                          Get Instant Access
+                          <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
+                        </Link>
                       </div>
-
-                      <h3 className="text-lg font-bold">{product.name}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {product.tagline}
-                      </p>
-
-                      <div className="mt-4">
-                        <span className="text-3xl font-bold">
-                          {formatPrice(product.priceCents)}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {" "}one-time
-                        </span>
-                      </div>
-
-                      <ul className="mt-6 flex-1 space-y-3">
-                        {product.features.slice(0, 4).map((feature) => (
-                          <li
-                            key={feature}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <CheckCircle2 className="size-4 shrink-0 text-primary" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-
-                      <Link
-                        href={`/programs/${product.slug}`}
-                        className={cn(
-                          buttonVariants({
-                            variant: index === 0 ? "default" : "outline",
-                          }),
-                          "mt-6 w-full group/btn",
-                        )}
-                      >
-                        Get Instant Access
-                        <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-0.5" />
-                      </Link>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center text-muted-foreground">

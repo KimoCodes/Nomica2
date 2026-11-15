@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PublicLayout } from "@/components/shared/public-layout";
 import { getBundleProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { getProductImage, MARKETING_IMAGES } from "@/constants/coach-images";
 import { CartProductButton } from "@/components/cart/cart-product-button";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
@@ -43,7 +45,7 @@ export default async function BundlesPage() {
               loop
               playsInline
               className="absolute inset-0 h-full w-full object-cover"
-              poster="/media/hero/hero-gym-equipment.jpg"
+              poster={MARKETING_IMAGES.heroPoster.poster}
             >
               <source
                 src="/media/workout-stretch-glutes.mp4"
@@ -132,46 +134,47 @@ export default async function BundlesPage() {
                       )
                       : 0;
 
+                    const cover = getProductImage(bundle);
+
                     return (
                       <article
                         key={bundle.id}
                         className={`animate-slide-up stagger-${
                           index + 1
-                        } group relative flex flex-col rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
+                        } group relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg ${
                           index === 0
                             ? "border-primary shadow-premium scale-[1.02]"
                             : "border-border/50"
                         }`}
                       >
-                        <div className="mb-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              index === 0
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {index === 0 ? "BEST VALUE" : "BUNDLE"}
-                          </span>
+                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                          {cover ? (
+                            <Image
+                              src={cover.src}
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              alt={cover.alt}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Package className="size-10 text-primary/40" />
+                            </div>
+                          )}
+                          <div className="absolute left-4 top-4">
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                index === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-black/50 text-white backdrop-blur-sm"
+                              }`}
+                            >
+                              {index === 0 ? "BEST VALUE" : "BUNDLE"}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Stacked Cards Visual */}
-                        <div className="relative mb-6 h-24">
-                          {(bundle.bundleItems ?? [])
-                            .slice(0, 3)
-                            .map((_, i) => (
-                              <div
-                                key={i}
-                                className="absolute left-0 right-4 rounded-xl border border-border/50 bg-muted/50"
-                                style={{
-                                  top: `${i * 12}px`,
-                                  height: "48px",
-                                  zIndex: 3 - i,
-                                }}
-                              />
-                            ))}
-                        </div>
-
+                        <div className="flex flex-1 flex-col p-6">
                         <h2 className="text-xl font-bold">
                           <Link
                             href={`/bundles/${bundle.slug}`}
@@ -240,6 +243,7 @@ export default async function BundlesPage() {
                               } included program(s). Incremental bundle pricing is not available yet.`
                               : undefined}
                           />
+                        </div>
                         </div>
                       </article>
                     );

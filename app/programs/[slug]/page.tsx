@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { PublicLayout } from "@/components/shared/public-layout";
 import {
@@ -7,6 +8,7 @@ import {
   getPublishedBundlesContaining,
 } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
+import { getProductImage } from "@/constants/coach-images";
 import { CartProductButton } from "@/components/cart/cart-product-button";
 import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
@@ -75,6 +77,7 @@ export default async function ProductPage({
     0,
   ) ?? 0;
   const isPaymentTest = product.slug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG;
+  const cover = getProductImage(product);
 
   const containingBundles = !isOwned && product.kind === "PROGRAM"
     ? await getPublishedBundlesContaining(product.id)
@@ -125,33 +128,60 @@ export default async function ProductPage({
                   </div>
                 )
                 : (
-                  <div className="aspect-[4/3] overflow-hidden rounded-3xl border border-border/50">
-                    <video
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="h-full w-full object-cover"
-                      poster="/media/hero/hero-gym-workout.jpg"
-                    >
-                      <source
-                        src={product.previewVideoUrl ?? "/media/workout-glutes-quads-inner-thighs.mp4"}
-                        type="video/mp4"
-                      />
-                    </video>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
-                      <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
-                        <Play className="size-8 text-white ml-1" />
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border/50 bg-muted">
+                    {product.previewVideoUrl ? (
+                      <>
+                        <video
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="absolute inset-0 h-full w-full object-cover"
+                          poster={cover?.poster}
+                        >
+                          <source src={product.previewVideoUrl} type="video/mp4" />
+                        </video>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/30 text-center">
+                          <div className="flex size-16 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer">
+                            <Play className="size-8 text-white ml-1" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white drop-shadow-lg">
+                              Preview Workouts
+                            </p>
+                            <p className="text-sm text-white/80 drop-shadow-lg">
+                              {totalWorkouts || "Sample"} exercises
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : cover ? (
+                      <>
+                        <Image
+                          src={cover.src}
+                          sizes="(max-width: 1024px) 100vw, 50vw"
+                          alt={cover.alt}
+                          fill
+                          className="object-cover"
+                          priority
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 p-6">
+                          <p className="font-semibold text-white drop-shadow-lg">
+                            {product.name}
+                          </p>
+                          <p className="text-sm text-white/80 drop-shadow-lg">
+                            {totalWorkouts || "Sample"} workouts
+                            {product.program?.weeks &&
+                              ` · ${product.program.weeks.length} weeks`}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Dumbbell className="size-12 text-primary/40" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-white drop-shadow-lg">
-                          Preview Workouts
-                        </p>
-                        <p className="text-sm text-white/80 drop-shadow-lg">
-                          {totalWorkouts || "Sample"} exercises
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
             </div>
@@ -535,32 +565,52 @@ export default async function ProductPage({
               You Might Also Like
             </h2>
             <div className="grid gap-6 md:grid-cols-3">
-              {relatedProducts.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/programs/${p.slug}`}
-                  className="group rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg"
-                >
-                  <h3 className="font-bold">{p.name}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {p.tagline}
-                  </p>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">
-                      {formatPrice(p.priceCents)}
-                    </span>
-                    {p.compareAtCents && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatPrice(p.compareAtCents)}
+              {relatedProducts.map((p) => {
+                const pCover = getProductImage(p);
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/programs/${p.slug}`}
+                    className="group overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                      {pCover ? (
+                        <Image
+                          src={pCover.src}
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          alt={pCover.alt}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Dumbbell className="size-8 text-primary/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-bold">{p.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {p.tagline}
+                      </p>
+                      <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-2xl font-bold">
+                          {formatPrice(p.priceCents)}
+                        </span>
+                        {p.compareAtCents && (
+                          <span className="text-sm text-muted-foreground line-through">
+                            {formatPrice(p.compareAtCents)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
+                        View Program
+                        <ArrowRight className="size-4" />
                       </span>
-                    )}
-                  </div>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:gap-2 transition-all">
-                    View Program
-                    <ArrowRight className="size-4" />
-                  </span>
-                </Link>
-              ))}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Role } from "@prisma/client";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasProductEntitlement } from "@/server/services/entitlement.service";
 import { getProtectedProductProgram } from "@/server/services/product.service";
+import { getProductImage } from "@/constants/coach-images";
 import { CLIENT_NAV } from "@/constants/navigation";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +53,7 @@ export default async function OwnedProgramPage({
     })
     : [];
   const completedDays = completedDayRows.length;
+  const cover = getProductImage(fullProduct);
 
   return (
     <DashboardLayout title={fullProduct.name} navItems={[...CLIENT_NAV]} userName={session.user.name} userRole="Client">
@@ -58,6 +61,18 @@ export default async function OwnedProgramPage({
         <Link href="/client/programs" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> My Programs
         </Link>
+        {cover && (
+          <div className="relative aspect-[16/7] overflow-hidden rounded-2xl border border-border/50 bg-muted">
+            <Image
+              src={cover.src}
+              sizes="(max-width: 768px) 100vw, 900px"
+              alt={cover.alt}
+              fill
+              className="object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          </div>
+        )}
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{fullProduct.name}</h2>
           <p className="mt-2 max-w-3xl text-muted-foreground">{fullProduct.description}</p>

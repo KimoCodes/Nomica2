@@ -38,7 +38,7 @@ export function TransformationSubmitForm({
   function handleBeforeSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1.5 * 1024 * 1024 * 1024) {
+      if (file.size > 50 * 1024 * 1024) {
         setError("File must be under 50MB");
         return;
       }
@@ -51,7 +51,7 @@ export function TransformationSubmitForm({
   function handleAfterSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1.5 * 1024 * 1024 * 1024) {
+      if (file.size > 50 * 1024 * 1024) {
         setError("File must be under 50MB");
         return;
       }
@@ -92,8 +92,18 @@ export function TransformationSubmitForm({
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to submit transformation");
+        let message = `Submission failed (HTTP ${response.status})`;
+        if (response.status === 413) {
+          message = "File is too large — exceeds the server upload limit (100 MB max).";
+        } else {
+          try {
+            const data = await response.json();
+            if (data?.error) message = data.error;
+          } catch {
+            // non-JSON error response (e.g. proxy error page)
+          }
+        }
+        throw new Error(message);
       }
 
       setSuccess(true);

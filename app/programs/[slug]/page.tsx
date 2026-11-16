@@ -8,23 +8,31 @@ import {
   getPublishedBundlesContaining,
 } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
-import { getProductImage } from "@/constants/coach-images";
+import {
+  getProductImage,
+  MARKETING_IMAGES,
+} from "@/constants/coach-images";
+import {
+  formatDifficultyLabel,
+  formatFocusLabel,
+  STRIPE_PAYMENT_TEST_PRODUCT_SLUG,
+} from "@/constants/product-catalog";
 import { CartProductButton } from "@/components/cart/cart-product-button";
 import { SaveProductButton } from "@/components/favorites/save-product-button";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
-import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
 import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  CalendarDays,
   CheckCircle2,
   Clock,
   CreditCard,
   Dumbbell,
+  Gauge,
   Play,
   Star,
-  Zap,
 } from "lucide-react";
 
 export const runtime = "nodejs";
@@ -78,6 +86,25 @@ export default async function ProductPage({
   ) ?? 0;
   const isPaymentTest = product.slug === STRIPE_PAYMENT_TEST_PRODUCT_SLUG;
   const cover = getProductImage(product);
+
+  const focusLabel = formatFocusLabel(product.focus);
+  const difficultyLabel = formatDifficultyLabel(product.program?.difficulty ?? null);
+  const weeksCount = product.program?.weeks?.length ?? 0;
+  const kindWord = product.kind === "CHALLENGE" ? "challenge" : "program";
+  const descriptionParagraphs = (product.description ?? "")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const coach = product.program?.coach ?? null;
+  const coachPhoto = coach?.user.avatar ?? MARKETING_IMAGES.coachAvatar.src;
+  const coachPhotoPosition = coach?.user.avatar
+    ? undefined
+    : MARKETING_IMAGES.coachAvatar.position;
+  const thirdStat = product.daysPerWeek
+    ? { value: String(product.daysPerWeek), label: "Days / Week" }
+    : difficultyLabel
+    ? { value: difficultyLabel, label: "Level" }
+    : { value: "—", label: "Days / Week" };
 
   const containingBundles = !isOwned && product.kind === "PROGRAM"
     ? await getPublishedBundlesContaining(product.id)
@@ -150,7 +177,7 @@ export default async function ProductPage({
                               Preview Workouts
                             </p>
                             <p className="text-sm text-white/80 drop-shadow-lg">
-                              {totalWorkouts || "Sample"} exercises
+                              {totalWorkouts || "Sample"} workouts
                             </p>
                           </div>
                         </div>
@@ -193,9 +220,9 @@ export default async function ProductPage({
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   {isPaymentTest ? "PAYMENT TEST" : product.kind}
                 </span>
-                {(product.focus || !isPaymentTest) && (
+                {!isPaymentTest && focusLabel && (
                   <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                    {product.focus ?? "All levels"}
+                    {focusLabel}
                   </span>
                 )}
               </div>
@@ -225,21 +252,35 @@ export default async function ProductPage({
                 )}
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Clock className="size-4" />
                   {product.durationLabel}
                 </span>
+                {weeksCount > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="size-4" />
+                    {weeksCount} week{weeksCount === 1 ? "" : "s"}
+                  </span>
+                )}
+                {totalWorkouts > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <Dumbbell className="size-4" />
+                    {totalWorkouts} workout{totalWorkouts === 1 ? "" : "s"}
+                  </span>
+                )}
                 {product.daysPerWeek && (
                   <span className="flex items-center gap-1.5">
                     <BarChart3 className="size-4" />
                     {product.daysPerWeek} days/week
                   </span>
                 )}
-                <span className="flex items-center gap-1.5">
-                  <Zap className="size-4" />
-                  {product.focus ?? "All levels"}
-                </span>
+                {difficultyLabel && (
+                  <span className="flex items-center gap-1.5">
+                    <Gauge className="size-4" />
+                    {difficultyLabel}
+                  </span>
+                )}
               </div>
 
               {product.equipment.length > 0 && (
@@ -349,35 +390,123 @@ export default async function ProductPage({
           </div>
         </section>
 
-        {/* What's Inside - Program Structure */}
+        {/* Introduction + Coach */}
+        {!isPaymentTest && (descriptionParagraphs.length > 0 || coach) && (
+          <section className="px-4 pb-4">
+            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
+              {descriptionParagraphs.length > 0 && (
+                <div className={coach ? "lg:col-span-2" : "lg:col-span-3"}>
+                  <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+                    About this {kindWord}
+                  </h2>
+                  <div className="mt-4 max-w-3xl space-y-4 leading-7 text-muted-foreground">
+                    {descriptionParagraphs.map((paragraph) => (
+                      <p key={paragraph}>{paragraph}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {coach && (
+                <aside className="h-fit rounded-2xl border border-border/50 bg-card p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/30">
+                      <Image
+                        src={coachPhoto}
+                        sizes="64px"
+                        alt={coach.user.name}
+                        fill
+                        className="object-cover"
+                        style={{ objectPosition: coachPhotoPosition }}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{coach.user.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Program coach
+                        {coach.yearsExperience
+                          ? ` · ${coach.yearsExperience}+ years experience`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                  {coach.bio && (
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                      {coach.bio}
+                    </p>
+                  )}
+                  {coach.specialties.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {coach.specialties.slice(0, 6).map((specialty) => (
+                        <span
+                          key={specialty}
+                          className="rounded-full bg-muted px-2.5 py-1 text-xs text-foreground"
+                        >
+                          {specialty}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </aside>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Week by Week - Program Structure */}
         {product.program?.weeks && product.program.weeks.length > 0 && (
           <section className="px-4 py-16 md:py-24">
             <div className="mx-auto max-w-6xl">
               <div className="mb-12 text-center">
                 <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  Program Structure
+                  Week by Week
                 </h2>
+                <p className="mt-3 text-muted-foreground">
+                  {weeksCount} week{weeksCount === 1 ? "" : "s"} ·{" "}
+                  {totalWorkouts} training day{totalWorkouts === 1 ? "" : "s"}
+                </p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-3">
-                {product.program.weeks.slice(0, 3).map((week, index) => (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {product.program.weeks.map((week, index) => (
                   <div
                     key={week.id}
                     className={`animate-slide-up stagger-${
-                      index + 1
+                      Math.min(index + 1, 8)
                     } rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-premium`}
                   >
-                    <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary/10">
-                      <span className="text-lg font-bold text-primary">
-                        {String(week.weekNumber).padStart(2, "0")}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                        <span className="text-sm font-bold text-primary">
+                          {String(week.weekNumber).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate font-bold">
+                          {week.title ?? `Week ${week.weekNumber}`}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {week.days.length} training day
+                          {week.days.length === 1 ? "" : "s"}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold">
-                      {week.title ?? `Week ${week.weekNumber}`}
-                    </h3>
-                    <p className="mt-4 text-sm font-medium text-primary">
-                      {week.days.length} training days
-                    </p>
+                    {week.days.length > 0 && (
+                      <ul className="mt-4 space-y-1.5">
+                        {week.days.map((day) => (
+                          <li
+                            key={day.id}
+                            className="flex items-baseline gap-2 text-sm"
+                          >
+                            <span className="text-xs font-medium tabular-nums text-primary">
+                              D{day.dayNumber}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {day.title ?? `Workout ${day.dayNumber}`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>
@@ -391,12 +520,12 @@ export default async function ProductPage({
             <div className="grid items-center gap-12 lg:grid-cols-2">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  {isPaymentTest ? "Payment Test Details" : "Everything You Need"}
+                  {isPaymentTest ? "Payment Test Details" : "What's Included"}
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground">
                   {isPaymentTest
                     ? "This product is only for verifying payment processing. It includes no workouts or training materials."
-                    : "This isn't just a workout PDF. It's a complete system designed to deliver results."}
+                    : "Everything you get with your purchase:"}
                 </p>
                 <ul className="mt-8 space-y-4">
                   {product.features.map((feature) => (
@@ -459,8 +588,10 @@ export default async function ProductPage({
                             <p className="text-xs text-muted-foreground">Weeks</p>
                           </div>
                           <div className="rounded-xl bg-muted/50 p-4 text-center">
-                            <p className="text-2xl font-bold">100%</p>
-                            <p className="text-xs text-muted-foreground">Guided</p>
+                            <p className="text-2xl font-bold">{thirdStat.value}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {thirdStat.label}
+                            </p>
                           </div>
                         </>
                       )}
@@ -536,7 +667,9 @@ export default async function ProductPage({
             <p className="mt-4 text-lg text-muted-foreground">
               {isPaymentTest
                 ? "Complete the one-time $0.50 checkout to test payment processing. No workouts or training materials are provided."
-                : "Join women who transformed their bodies with this program."}
+                : totalWorkouts > 0
+                ? `${product.durationLabel} · ${totalWorkouts} workouts · ${weeksCount} week${weeksCount === 1 ? "" : "s"} of training`
+                : "One-time payment — no subscription, no renewal."}
             </p>
             <div className="mt-8">
               {isOwned && isPaymentTest
@@ -596,7 +729,7 @@ export default async function ProductPage({
                         </span>
                         {p.focus && (
                           <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-                            {p.focus}
+                            {formatFocusLabel(p.focus)}
                           </span>
                         )}
                       </div>

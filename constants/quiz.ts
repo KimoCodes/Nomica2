@@ -276,12 +276,12 @@ export function getQuizRecommendation(answers: QuizAnswer[]): QuizRecommendation
 
   return {
     type: "product",
-    id: "8-week-glute-growth-blueprint",
-    name: "8-Week Glute Growth Blueprint",
+    id: "8-week-glutes-and-quads-growth-blueprint",
+    name: "8 Weeks Glutes & Quads Growth Blueprint",
     reason:
       "Our most popular program. A complete glute-building blueprint focused on shape, strength, and long-term results.",
     price: 29.99,
     cta: "Start Building",
-    href: "/programs/8-week-glute-growth-blueprint",
+    href: "/programs/8-week-glutes-and-quads-growth-blueprint",
   };
 }

@@ -10,7 +10,10 @@ import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, BookOpen, Dumbbell } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Clock, Dumbbell } from "lucide-react";
+
+const glassChip =
+  "inline-flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm";
 
 export default async function MyProgramsPage() {
   const session = await requireRole([Role.CLIENT]);
@@ -53,6 +56,10 @@ export default async function MyProgramsPage() {
               const completed = product.program?.assignments.reduce((sum, assignment) => sum + assignment._count.completions, 0) ?? 0;
               const percent = totalWorkouts ? Math.min(100, Math.round((completed / totalWorkouts) * 100)) : 0;
               const cover = getProductImage(product);
+              const started = percent > 0;
+              const finished = totalWorkouts > 0 && percent >= 100;
+              const statusLabel = finished ? "Completed" : started ? "In progress" : "Not started";
+              const ctaLabel = finished ? "View Program" : started ? "Continue Program" : "Start Program";
               return (
                 <Card key={product.id} className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg">
                   <div className="relative aspect-[16/10] overflow-hidden bg-muted">
@@ -70,19 +77,27 @@ export default async function MyProgramsPage() {
                         <Dumbbell className="size-8 text-primary/40" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                     {totalWorkouts > 0 && (
-                      <div className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-                        {percent}%
-                      </div>
+                      <span className={cn(glassChip, "absolute left-3 top-3")}>
+                        {finished && <CheckCircle2 className="size-3" />}
+                        {statusLabel}
+                      </span>
+                    )}
+                    {totalWorkouts > 0 && (
+                      <span className={cn(glassChip, "absolute right-3 top-3")}>{percent}%</span>
                     )}
                   </div>
                   <CardContent className="flex h-full flex-col p-6">
                     <h3 className="text-lg font-semibold">{product.name}</h3>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{product.tagline ?? product.description}</p>
-                    <div className="mt-4 flex items-center justify-between text-sm">
-                      <span>{product.durationLabel}</span>
-                      <span>{totalWorkouts} workouts</span>
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock className="size-3.5" /> {product.durationLabel}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Dumbbell className="size-3.5" /> {totalWorkouts} workouts
+                      </span>
                     </div>
                     {totalWorkouts > 0 && (
                       <div className="mt-5">
@@ -95,7 +110,7 @@ export default async function MyProgramsPage() {
                       </div>
                     )}
                     <Link href={`/client/programs/${product.slug}`} className={cn(buttonVariants(), "mt-6 w-full justify-between")}>
-                      Open Program <ArrowRight className="size-4" />
+                      {ctaLabel} <ArrowRight className="size-4" />
                     </Link>
                   </CardContent>
                 </Card>

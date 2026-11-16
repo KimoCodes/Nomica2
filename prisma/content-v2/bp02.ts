@@ -2,7 +2,7 @@ import type { ProgramV2 } from "./types";
 import { cd, ex, wu } from "./warmup";
 
 /**
- * BP-02 · 8-Week Glute Growth Blueprint (docs/PHASE1-PROGRAM-BLUEPRINTS.md)
+ * BP-02 · 8 Weeks Glutes & Quads Growth Blueprint (docs/PHASE1-PROGRAM-BLUEPRINTS.md)
  * 8 weeks × 5 days · lower-body hypertrophy with upper-body maintenance.
  * Five session roles: barbell strength (3–5 reps), hypertrophy volume (8–12),
  * upper + core maintenance (8–12), posterior chain (6–10), glute peak
@@ -12,8 +12,8 @@ import { cd, ex, wu } from "./warmup";
  */
 
 export const BP02: ProgramV2 = {
-  slug: "8-week-glute-growth-blueprint",
-  title: "8-Week Glute Growth Blueprint",
+  slug: "8-week-glutes-and-quads-growth-blueprint",
+  title: "8 Weeks Glutes & Quads Growth Blueprint",
   weeks: [
     // ── Week 1 · Foundation ────────────────────────────────────────────────
     {

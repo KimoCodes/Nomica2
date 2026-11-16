@@ -1,8 +1,8 @@
 import { getAppUrl } from "@/lib/resend";
+import { SUPPORT_EMAIL } from "@/constants/support";
 
 const APP_URL = getAppUrl();
 const SITE_NAME = "NomiTips";
-const SUPPORT_EMAIL = "support@nomitips.com";
 
 type EmailTemplateOptions = {
   preheader?: string;

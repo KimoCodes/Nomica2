@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import type { Transformation } from "@/constants/transformations";
 
@@ -80,34 +79,6 @@ export function TransformationCarousel({
             href={`/transformations/${t.id}`}
             className="group flex min-w-[320px] max-w-[360px] snap-center flex-col rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg md:min-w-[400px]"
           >
-            {/* Before/After */}
-            <div className="mb-4 grid grid-cols-2 gap-2">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
-                <Image
-                  src="/media/hero/hero-woman-weights.jpg"
-                  alt={`${t.name} before transformation`}
-                  fill
-                  sizes="200px"
-                  className="object-cover"
-                />
-                <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-                  Before
-                </span>
-              </div>
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-primary/10">
-                <Image
-                  src="/media/hero/hero-woman-squat.jpg"
-                  alt={`${t.name} after transformation`}
-                  fill
-                  sizes="200px"
-                  className="object-cover"
-                />
-                <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2 py-0.5 text-xs font-medium text-primary-foreground backdrop-blur-sm">
-                  After
-                </span>
-              </div>
-            </div>
-
             {/* User Info */}
             <div className="flex items-center gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">

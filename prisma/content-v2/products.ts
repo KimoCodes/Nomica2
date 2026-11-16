@@ -85,8 +85,8 @@ Safety: hinge with a neutral spine, keep the dumbbells close to your legs, and d
 
   // ── BP-02 ────────────────────────────────────────────────────────────────
   {
-    slug: "8-week-glute-growth-blueprint",
-    name: "8-Week Glute Growth Blueprint",
+    slug: "8-week-glutes-and-quads-growth-blueprint",
+    name: "8 Weeks Glutes & Quads Growth Blueprint",
     kind: ProductKind.PROGRAM,
     tagline:
       "Eight weeks of lower-body hypertrophy: heavy days, volume days and a planned deload, built around the glutes.",

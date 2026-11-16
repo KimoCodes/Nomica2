@@ -27,13 +27,6 @@ type CoachMarketplaceProps = {
   onViewProfile?: (coachId: string) => void;
 };
 
-const brandCoachPhotos = [
-  "/media/coach-profile-1.jpg",
-  "/media/coach-profile-2.jpg",
-  "/media/coach-profile-3.jpg",
-  "/media/coach-profile-4.jpg",
-];
-
 export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachMarketplaceProps) {
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -100,10 +93,7 @@ export function CoachMarketplace({ coaches, onBookCoach, onViewProfile }: CoachM
           </div>
         ) : (
           filtered.map((coach) => {
-            const fallbackAvatar = brandCoachPhotos[
-              Math.abs(coach.name.split("").reduce((total, char) => total + char.charCodeAt(0), 0)) % brandCoachPhotos.length
-            ] || brandCoachPhotos[0];
-            const coachAvatar = coach.avatar || fallbackAvatar;
+            const coachAvatar = coach.avatar;
 
             return (
             <Card

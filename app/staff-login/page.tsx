@@ -17,7 +17,7 @@ const CORNER_BRACKETS = [
 
 const BRIEFING_POINTS = [
   "Science-backed progressive overload programs",
-  "Video-guided workouts with form demos",
+  "Structured workouts with step-by-step exercise instructions",
   "Real coach feedback and support",
 ];
 

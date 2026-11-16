@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PublicLayout } from "@/components/shared/public-layout";
+import { SUPPORT_EMAIL, SUPPORT_EMAIL_COMPOSE_URL } from "@/constants/support";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -148,10 +149,12 @@ export default function TermsPage() {
               <p>
                 For questions about these Terms, contact us at{" "}
                 <a
-                  href="mailto:support@nomitips.com"
+                  href={SUPPORT_EMAIL_COMPOSE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  support@nomitips.com
+                  {SUPPORT_EMAIL}
                 </a>
                 .
               </p>

@@ -7,6 +7,7 @@ import { PublicLayout } from "@/components/shared/public-layout";
 import { getCatalogProducts } from "@/server/services/product.service";
 import { formatPrice } from "@/constants/subscriptions";
 import { getProductImage, MARKETING_IMAGES } from "@/constants/coach-images";
+import { formatFocusLabel } from "@/constants/product-catalog";
 import { auth } from "@/lib/auth";
 import { getOwnedCatalogProductIds } from "@/server/services/entitlement.service";
 import {
@@ -62,6 +63,16 @@ export default async function ProgramsPage({
     ? new Set(await getOwnedCatalogProductIds(session.user.id))
     : new Set<string>();
 
+  // "MOST POPULAR" only when purchase data supports it — first product with
+  // the highest completed-purchase count, otherwise no badge.
+  const maxPurchases = products.reduce(
+    (max, p) => Math.max(max, p._count.purchases),
+    0,
+  );
+  const popularSlug = maxPurchases > 0
+    ? products.find((p) => p._count.purchases === maxPurchases)?.slug ?? null
+    : null;
+
   function buildHref(kind: string | undefined) {
     const sp = new URLSearchParams();
     if (kind) sp.set("kind", kind);
@@ -115,8 +126,8 @@ export default async function ProgramsPage({
             </h1>
 
             <p className="mt-4 animate-slide-up stagger-2 text-lg text-muted-foreground">
-              Structured programs designed to deliver real results. Every rep
-              has a purpose.
+              Structured weekly programs, challenges, and bundles with clear
+              training plans and one-time pricing.
             </p>
           </div>
         </section>
@@ -237,11 +248,11 @@ export default async function ProgramsPage({
                             </span>
                             {product.focus && (
                               <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-                                {product.focus}
+                                {formatFocusLabel(product.focus)}
                               </span>
                             )}
                           </div>
-                          {index === 0 && (
+                          {product.slug === popularSlug && (
                             <span className="absolute right-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg">
                               MOST POPULAR
                             </span>
@@ -252,10 +263,6 @@ export default async function ProgramsPage({
                           <h2 className="text-xl font-bold">{product.name}</h2>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {product.tagline}
-                          </p>
-
-                          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                            {product.description}
                           </p>
 
                           <div className="mt-4 flex items-baseline gap-2">

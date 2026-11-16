@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 import { CartCount } from "@/components/cart/cart-count";
 import { StaffLoginLink } from "@/components/shared/staff-login-link";
+import { SUPPORT_EMAIL, SUPPORT_EMAIL_COMPOSE_URL } from "@/constants/support";
 
 type PublicLayoutProps = {
   children: ReactNode;
@@ -267,11 +268,16 @@ export function PublicLayout({ children }: PublicLayoutProps) {
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="mailto:support@nomitips.com"
+                    href={SUPPORT_EMAIL_COMPOSE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    support@nomitips.com
+                    {SUPPORT_EMAIL}
                   </a>
+                </li>
+                <li className="text-xs text-muted-foreground/80">
+                  System Designer and Manager/Operator
                 </li>
                 <li>
                   <Link

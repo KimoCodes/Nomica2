@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Star, CheckCircle2, MessageSquare } from "lucide-react";
+import { Star, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ReviewPromptProps = {
@@ -87,27 +87,8 @@ export function ReviewPrompt({
   }
 
   if (completedDays < totalDays) {
-    return (
-      <Card>
-        <CardContent className="flex items-center gap-3 p-4">
-          <MessageSquare className="size-5 shrink-0 text-muted-foreground" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">
-              {completedDays} of {totalDays} workouts complete
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Finish the program to share your experience.
-            </p>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${Math.min(100, Math.round((completedDays / Math.max(1, totalDays)) * 100))}%` }}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    // In-progress state: the program hero shows progress — nothing to add here.
+    return null;
   }
 
   function submit() {

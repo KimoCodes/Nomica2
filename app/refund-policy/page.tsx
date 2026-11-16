@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PublicLayout } from "@/components/shared/public-layout";
+import { SUPPORT_EMAIL, SUPPORT_EMAIL_COMPOSE_URL } from "@/constants/support";
 
 export const metadata: Metadata = {
   title: "Refund Policy",
@@ -45,10 +46,12 @@ export default function RefundPolicyPage() {
                 <li>
                   <strong>Email:</strong> Send a request to{" "}
                   <a
-                    href="mailto:support@nomitips.com"
+                    href={SUPPORT_EMAIL_COMPOSE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    support@nomitips.com
+                    {SUPPORT_EMAIL}
                   </a>{" "}
                   with your account email and reason for the refund
                 </li>
@@ -121,10 +124,12 @@ export default function RefundPolicyPage() {
               <p>
                 For refund-related questions, contact us at{" "}
                 <a
-                  href="mailto:support@nomitips.com"
+                  href={SUPPORT_EMAIL_COMPOSE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  support@nomitips.com
+                  {SUPPORT_EMAIL}
                 </a>
                 .
               </p>

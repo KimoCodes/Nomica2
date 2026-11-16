@@ -276,7 +276,7 @@ export const PROGRAM_CONTENT: Record<string, ProgramTemplate> = {
     ],
   },
 
-  "8-week-glute-growth-blueprint": {
+  "8-week-glutes-and-quads-growth-blueprint": {
     weeks: 8,
     daysPerWeek: 5,
     rotation: [

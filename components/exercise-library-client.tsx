@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { CLIENT_NAV } from "@/constants/navigation";
 import {
   MUSCLE_GROUP_LABELS,
@@ -280,36 +279,37 @@ export function ExerciseLibraryClient({
                 className={`animate-slide-up stagger-${(index % 6) + 1} group overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-premium`}
               >
                 {exercise.videoUrl && videosEnabled ? (
-                  <div className="relative aspect-video bg-muted overflow-hidden">
-                    <Image
-                      src="/media/hero/hero-gym-workout.jpg"
-                      alt={`${exercise.name} demo`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/30" />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                      <div className="flex size-12 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform group-hover:scale-110">
-                        <Play className="size-5 text-white ml-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => setPreviewVideo({ url: exercise.videoUrl!, name: exercise.name })}
+                    className="relative block aspect-video w-full overflow-hidden bg-muted"
+                  >
+                    {exercise.videoUrl.match(/\.(mp4|mov|webm)/i) ? (
+                      <video
+                        src={exercise.videoUrl}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Play className="size-10 text-muted-foreground/40" />
                       </div>
+                    )}
+                    <span className="absolute inset-0 bg-black/30" />
+                    <span className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                      <span className="flex size-12 items-center justify-center rounded-full bg-primary/30 backdrop-blur-sm transition-transform group-hover:scale-110">
+                        <Play className="size-5 text-white ml-0.5" />
+                      </span>
                       <span className="text-xs font-medium text-white drop-shadow-lg">
                         Watch demo
                       </span>
-                    </div>
-                  </div>
+                    </span>
+                  </button>
                 ) : (
-                  <div className="relative aspect-video bg-muted overflow-hidden">
-                    <Image
-                      src="/media/hero/hero-woman-weights.jpg"
-                      alt="Exercise demo"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover opacity-50"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Dumbbell className="size-10 text-white/40" />
-                    </div>
+                  <div className="relative flex aspect-video w-full items-center justify-center bg-muted">
+                    <Dumbbell className="size-10 text-muted-foreground/30" />
                   </div>
                 )}
                 <CardContent className="p-4">

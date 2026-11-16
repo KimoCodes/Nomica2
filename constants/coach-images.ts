@@ -77,14 +77,14 @@ const PRODUCT_IMAGES: Record<string, CoachImage> = {
     "50% 55%",
   ),
   "21-day-strong-abs-and-core-challenge": coachImage(
-    "strong-abs-and-core",
-    "NomiTips coach in a half-kneeling position with a resistance band",
-    "50% 30%",
+    "rest-bench-shoe",
+    "NomiTips coach seated on a bench in the gym",
+    "50% 25%",
   ),
   "30-day-low-impact-cardio-burn": coachImage(
-    "lifestyle-playful",
-    "NomiTips coach training outdoors",
-    "50% 22%",
+    "action-plate-crouch",
+    "NomiTips coach crouching with battle ropes",
+    "50% 35%",
   ),
   "14-day-tabata-and-cardio-challenge": coachImage(
     "action-squat-reach",

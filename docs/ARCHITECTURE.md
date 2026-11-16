@@ -7,7 +7,7 @@ _Last updated: 2026-08-04 (M0 consolidation)._
 - **`clean_workout_programs_catalog.pdf` is canonical for all fitness content and pricing.**
   - Programs (one-time purchase, lifetime access):
     - 6-Week Dumbbell Glute Growth — 6 wk, 5 d/wk — $19.99
-    - 8-Week Glute Growth Blueprint — 8 wk, 5 d/wk — $29.99 (most popular)
+    - 8 Weeks Glutes & Quads Growth Blueprint — 8 wk, 5 d/wk — $29.99 (most popular)
     - 6-Week Glutes & Quads Builder — 6 wk, 5 d/wk — $19.99
     - 6-Week Full Body Dumbbell Sculpt — 6 wk, 5 d/wk — $19.99
     - 4-Week Resistance Band Full Body Sculpt — 4 wk, 5 d/wk — $14.99

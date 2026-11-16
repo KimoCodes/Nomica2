@@ -10,6 +10,7 @@ import { getProducts, getPublishedReviews, getBundleProducts } from "@/server/se
 import { getApprovedTransformations } from "@/server/services/transformation.service";
 import { formatPrice } from "@/constants/subscriptions";
 import { getProductImage, MARKETING_IMAGES } from "@/constants/coach-images";
+import { formatFocusLabel } from "@/constants/product-catalog";
 import { getPublishedPageContent, getSectionText, getSectionMedia } from "@/lib/content";
 import {
   Dumbbell,
@@ -32,11 +33,11 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "NomiTips — Structured Fitness Coaching for Women",
   description:
-    "Science-backed workout programs with progressive overload, video demos, and real coach support. Stop guessing. Start seeing results.",
+    "Science-backed workout programs with progressive overload, step-by-step instructions, and real coach support. Stop guessing. Start seeing results.",
   openGraph: {
     title: "NomiTips — Structured Fitness Coaching for Women",
     description:
-      "Personalized fitness coaching with progressive overload science, video demos, and real coach support.",
+      "Personalized fitness coaching with progressive overload science, step-by-step instructions, and real coach support.",
   },
 };
 
@@ -80,7 +81,7 @@ const steps = [
     icon: Dumbbell,
     title: "SCULPT",
     description:
-      "Follow your personalized program with video demos, progressive overload, and coach support.",
+      "Follow your personalized program with clear exercise instructions, progressive overload, and coach support.",
   },
   {
     number: "03",
@@ -132,7 +133,7 @@ const faqs = [
   {
     question: "I'm a complete beginner. Is this for me?",
     answer:
-      "Yes. Every program includes beginner modifications and video demos for every exercise. You'll never feel lost.",
+      "Yes. Every program includes beginner modifications and step-by-step instructions for every exercise. You'll never feel lost.",
   },
   {
     question: "I don't have much time. How long are the workouts?",
@@ -167,6 +168,15 @@ export default async function HomePage() {
   ]);
 
   const heroMedia = getSectionMedia(homeContent, "hero");
+
+  // "MOST POPULAR" only when purchase data supports it.
+  const maxHomePurchases = products.reduce(
+    (max, p) => Math.max(max, p._count.purchases),
+    0,
+  );
+  const popularSlug = maxHomePurchases > 0
+    ? products.find((p) => p._count.purchases === maxHomePurchases)?.slug ?? null
+    : null;
   const heroVideo = heroMedia?.mimeType?.startsWith("video/") ? heroMedia.url : null;
   const heroImage = heroMedia && !heroMedia.mimeType?.startsWith("video/") ? heroMedia.url : (heroMedia?.thumbnailUrl || null);
 
@@ -226,7 +236,7 @@ export default async function HomePage() {
                 </h1>
 
                 <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/80">
-                  {getSectionText(homeContent, "hero", "description", "Follow progressive overload programs designed for women who want to build strength and confidence — with video demos, coach support, and a clear path forward.")}
+                  {getSectionText(homeContent, "hero", "description", "Follow progressive overload programs designed for women who want to build strength and confidence — with exercise instructions, coach support, and a clear path forward.")}
                 </p>
 
                 <div className="mt-10 flex flex-wrap gap-4">
@@ -566,11 +576,11 @@ export default async function HomePage() {
                           </span>
                           {product.focus && (
                             <span className="rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-                              {product.focus}
+                              {formatFocusLabel(product.focus)}
                             </span>
                           )}
                         </div>
-                        {index === 0 && (
+                        {product.slug === popularSlug && (
                           <span className="absolute right-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg">
                             MOST POPULAR
                           </span>

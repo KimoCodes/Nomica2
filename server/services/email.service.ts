@@ -3,6 +3,7 @@ import { sendSmtpEmail } from "@/lib/smtp";
 import { prisma } from "@/lib/prisma";
 import logger from "@/lib/logger";
 import { STRIPE_PAYMENT_TEST_PRODUCT_SLUG } from "@/constants/product-catalog";
+import { SUPPORT_EMAIL } from "@/constants/support";
 import { infoCard, renderEmailTemplate, textBlock } from "./email-templates";
 
 type EmailProvider = "resend" | "smtp" | "none";
@@ -112,7 +113,7 @@ export async function sendPaymentStatusEmail(
         ]),
       ].join(""),
       action: { label: actionLabel, url: actionUrl },
-      footer: "Questions about this payment? Reply to this email or contact support@nomitips.com.",
+      footer: `Questions about this payment? Reply to this email or contact ${SUPPORT_EMAIL}.`,
     }),
   );
 }
@@ -366,7 +367,7 @@ export async function sendOrderConfirmationEmail(
       action: paymentTestOnly
         ? { label: "View Order", url: ordersUrl }
         : { label: "Open My Programs", url: programsUrl },
-      footer: "Need help with your order? Contact support@nomitips.com.",
+      footer: `Need help with your order? Contact ${SUPPORT_EMAIL}.`,
     }),
   );
 }

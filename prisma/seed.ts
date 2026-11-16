@@ -102,9 +102,9 @@ const PROGRAMS: ProgramProduct[] = [
     sortOrder: 2,
   },
   {
-    slug: "8-week-glute-growth-blueprint",
+    slug: "8-week-glutes-and-quads-growth-blueprint",
     kind: ProductKind.PROGRAM,
-    name: "8-Week Glute Growth Blueprint",
+    name: "8 Weeks Glutes & Quads Growth Blueprint",
     tagline:
       "A complete glute-building blueprint focused on shape, strength, and long-term results.",
     priceCents: 2999,

@@ -28,7 +28,7 @@ const fail = (msg: string) => errors.push(msg);
 /** Expected structure per blueprint (slug → [weeks, daysPerWeek]). */
 const EXPECTED: Record<string, [number, number]> = {
   "21-day-booty-band-challenge": [3, 5],
-  "8-week-glute-growth-blueprint": [8, 5],
+  "8-week-glutes-and-quads-growth-blueprint": [8, 5],
   "21-day-strong-abs-and-core-challenge": [3, 5],
   "6-week-full-body-dumbbell-sculpt": [6, 5],
   "4-week-resistance-band-full-body-sculpt": [4, 5],

@@ -19,7 +19,7 @@ import { createPrismaAdapter } from "../lib/db-adapter";
 const SEED_COACH_EMAIL = "coach@nomitips.com";
 const SEED_PRODUCT_SLUGS = [
   "21-day-booty-band-challenge", "6-week-dumbbell-glute-growth",
-  "8-week-glute-growth-blueprint", "6-week-glutes-and-quads-builder",
+  "8-week-glutes-and-quads-growth-blueprint", "6-week-glutes-and-quads-builder",
   "21-day-strong-abs-and-core-challenge", "6-week-full-body-dumbbell-sculpt",
   "30-day-low-impact-cardio-burn", "4-week-resistance-band-full-body-sculpt",
   "14-day-tabata-and-cardio-challenge", "4-week-upper-body-dumbbell-sculpt",

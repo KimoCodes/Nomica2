@@ -16,7 +16,7 @@
 | # | Program | ID | Category | Intended objective |
 |---|---|---|---|---|
 | B1 | 21-Day Booty Band Challenge | `cmv5x6sbi00d28ukwn0bnk7br` | Band activation challenge | Teach glute activation and five foundational movement patterns; build the technique base that the paid glute programs assume |
-| B2 | 8-Week Glute Growth Blueprint | `cmv5x7v3q00dc8ukw77vhpojq` | Lower-body hypertrophy | Intermediate glute hypertrophy over a full eight-week block with barbell, dumbbell and bench |
+| B2 | 8 Weeks Glutes & Quads Growth Blueprint | `cmv5x7v3q00dc8ukw77vhpojq` | Lower-body hypertrophy | Intermediate glute hypertrophy over a full eight-week block with barbell, dumbbell and bench |
 | B3 | 21-Day Strong Abs & Core Challenge | `cmv5xaclg00dm8ukwjstlb16f` | Trunk motor control | Build bracing, anti-extension and anti-rotation control plus local trunk endurance |
 | B4 | 6-Week Full Body Dumbbell Sculpt | `cmv5xb2ea00dr8ukwolzowrq7` | Full-body strength-endurance | Cover six movement patterns twice weekly with dumbbells only |
 | B5 | 4-Week Resistance Band Full Body Sculpt | `cmv5xbva100dw8ukwhek7tdqe` | Band circuit conditioning | Full-body strength and work capacity with one band and no other equipment |
@@ -181,7 +181,7 @@ Rewrite the 92-character description into a full introduction (purpose, audience
 
 ---
 
-## BP-02 · 8-Week Glute Growth Blueprint
+## BP-02 · 8 Weeks Glutes & Quads Growth Blueprint
 
 **1. Program identity**
 `cmv5x7v3q00dc8ukw77vhpojq` · PROGRAM · $29.99 · INTERMEDIATE · 8 weeks · 5 days/week · dumbbells, barbell, bench · home or gym · currently 8 wk / 40 days / 200 entries.

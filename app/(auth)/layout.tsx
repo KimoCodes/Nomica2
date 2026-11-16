@@ -36,7 +36,7 @@ export default function AuthLayout({
               </li>
               <li className="flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-primary" />
-                Video-guided workouts with form demos
+                Structured workouts with step-by-step exercise instructions
               </li>
               <li className="flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-primary" />

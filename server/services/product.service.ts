@@ -110,6 +110,9 @@ export async function getProductBySlug(slug: string) {
     include: {
       program: {
         include: {
+          coach: {
+            include: { user: { select: { name: true, avatar: true } } },
+          },
           weeks: {
             orderBy: { weekNumber: "asc" },
             include: {

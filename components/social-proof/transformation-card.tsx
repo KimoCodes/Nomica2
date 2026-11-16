@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { BadgeCheck } from "lucide-react";
 import type { Transformation } from "@/constants/transformations";
 
@@ -57,34 +56,6 @@ export function TransformationCard({
         href={`/transformations/${t.id}`}
         className="group flex flex-col rounded-2xl border border-border/50 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-premium-lg"
       >
-        {/* Before/After */}
-        <div className="mb-4 grid grid-cols-2 gap-2">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-muted">
-            <Image
-              src="/media/hero/hero-woman-deadlift.jpg"
-              alt={`${t.name} before transformation`}
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-            <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-              Before
-            </span>
-          </div>
-          <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-primary/10">
-            <Image
-              src="/media/hero/hero-fitness-class.jpg"
-              alt={`${t.name} after transformation`}
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover"
-            />
-            <span className="absolute bottom-2 left-2 rounded-full bg-primary/80 px-2 py-0.5 text-xs font-medium text-primary-foreground backdrop-blur-sm">
-              After
-            </span>
-          </div>
-        </div>
-
         <div className="flex items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             {t.name

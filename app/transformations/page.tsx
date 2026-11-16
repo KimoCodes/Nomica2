@@ -20,7 +20,7 @@ export const runtime = "nodejs";
 export const metadata: Metadata = {
   title: "Transformations",
   description:
-    "See real women's fitness transformations with NomiTips. Before & after results, success stories, and testimonials from our members.",
+    "Member transformation stories and reviews from NomiTips programs.",
 };
 
 export default async function TransformationsPage() {
@@ -64,8 +64,9 @@ export default async function TransformationsPage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl animate-slide-up stagger-2 text-lg text-muted-foreground">
-              Every transformation here started with a NomiTips program.
-              These are real members who transformed their bodies with NomiTips.
+              {featured.length + TRANSFORMATIONS.length > 0
+                ? "Every transformation here started with a NomiTips program."
+                : "Transformation stories will appear here as our members share their journeys."}
             </p>
           </div>
         </section>
@@ -96,7 +97,9 @@ export default async function TransformationsPage() {
               All Transformations
             </h2>
             <p className="mb-12 text-center text-lg text-muted-foreground">
-              These members followed the system and got results.
+              {TRANSFORMATIONS.length > 0
+                ? "These members followed the system and got results."
+                : "Member stories will appear here as they're shared."}
             </p>
 
             {TRANSFORMATIONS.length > 0 ? (

@@ -140,7 +140,7 @@ Each row answers three questions: what does the source actually say, where can a
 | 21-Day Strong Abs & Core | 3 wk | R10 (min 4 wk for performance effects) | Positioned as motor-control and endurance base; explicitly states that longer training is needed for measurable change |
 | 4-Week Upper Body / Resistance Band | 4 wk | R10 minimum 4 wk; R1 novice loading | A full first adaptation block — technique consolidation plus initial strength gains |
 | 6-Week Full Body Sculpt | 6 wk | R11/R12 deload every 4–6 wk | Deload placed in week 4 |
-| 8-Week Glute Growth Blueprint | 8 wk | R11/R12 deload every 4–6 wk | Deload placed in week 4, consolidation in week 8 |
+| 8 Weeks Glutes & Quads Growth Blueprint | 8 wk | R11/R12 deload every 4–6 wk | Deload placed in week 4, consolidation in week 8 |
 | 30-Day / 14-Day challenges | 4.3 wk / 2 wk | R4 (Tabata was 6 wk) | Interval quality improves; no claim of VO₂max testing outcomes |
 
 ---
